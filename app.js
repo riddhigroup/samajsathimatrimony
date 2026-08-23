@@ -1,6 +1,25 @@
 // ============================================
-// SAMAJ SAATHI MATRIMONY - FRONTEND APP
+// SAMAJ SAATHI MATRIMONY
+// SUPABASE CONNECTED FRONTEND
 // ============================================
+
+// --------------------------------------------
+// SUPABASE CONFIG
+// --------------------------------------------
+
+const SUPABASE_URL =
+  "https://drrsborerbgzthxdazqu.supabase.co";
+
+// IMPORTANT:
+// Paste your own sb_publishable_... key here.
+const SUPABASE_PUBLISHABLE_KEY =
+  "PASTE_YOUR_SB_PUBLISHABLE_KEY_HERE";
+
+const supabaseClient = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
 
 // --------------------------------------------
 // DEMO PROFILES
@@ -57,20 +76,35 @@ const profiles = [
 const grid = document.getElementById("profiles");
 
 if (grid) {
+
   grid.innerHTML = profiles.map(p => `
+
     <article class="profile">
+
       <div class="profile-img ${p.photo}">
         <span class="profile-tag">✓ Verified</span>
       </div>
 
       <div class="profile-body">
+
         <b>${p.name}, ${p.age}</b>
+
         <small>${p.city}</small>
-        <small>${p.community} · ${p.surname} · ${p.kul}</small>
-        <small class="match">${p.match}% Match</small>
+
+        <small>
+          ${p.community} · ${p.surname} · ${p.kul}
+        </small>
+
+        <small class="match">
+          ${p.match}% Match
+        </small>
+
       </div>
+
     </article>
+
   `).join("");
+
 }
 
 
@@ -79,69 +113,60 @@ if (grid) {
 // --------------------------------------------
 
 function scrollToId(id) {
-  document.getElementById(id)?.scrollIntoView({
-    behavior: "smooth"
-  });
+
+  document
+    .getElementById(id)
+    ?.scrollIntoView({
+      behavior: "smooth"
+    });
+
 }
 
 
 // --------------------------------------------
-// GENERATE USER ID
+// USER ID
 // --------------------------------------------
 
 function generateUserId() {
 
-  let lastNumber =
-    parseInt(localStorage.getItem("samajSaathiLastUserId")) || 100000;
+  const random =
+    Math.floor(
+      100000 +
+      Math.random() * 900000
+    );
 
-  lastNumber++;
+  return "SS" + random;
 
-  localStorage.setItem(
-    "samajSaathiLastUserId",
-    lastNumber
-  );
-
-  return "SS" + lastNumber;
 }
 
 
 // --------------------------------------------
-// GENERATE USERNAME
+// USERNAME
 // --------------------------------------------
 
-function generateUsername(firstName, lastName) {
+function generateUsername(
+  firstName,
+  lastName
+) {
 
   const first =
-    firstName.toLowerCase().replace(/[^a-z]/g, "");
+    firstName
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
 
   const last =
-    lastName.toLowerCase().replace(/[^a-z]/g, "");
+    lastName
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
 
   const random =
-    Math.floor(100 + Math.random() * 900);
+    Math.floor(
+      100 +
+      Math.random() * 900
+    );
 
   return `${first}.${last}${random}`;
-}
 
-
-// --------------------------------------------
-// GENERATE PASSWORD
-// --------------------------------------------
-
-function generatePassword() {
-
-  const chars =
-    "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-
-  let password = "";
-
-  for (let i = 0; i < 8; i++) {
-    password += chars.charAt(
-      Math.floor(Math.random() * chars.length)
-    );
-  }
-
-  return password;
 }
 
 
@@ -160,37 +185,45 @@ function openModal(type) {
   if (!modal || !c) return;
 
 
-  // ------------------------------------------
+  // ==========================================
   // LOGIN
-  // ------------------------------------------
+  // ==========================================
 
   if (type === "login") {
 
     c.innerHTML = `
 
-      <span class="eyebrow">WELCOME BACK</span>
+      <span class="eyebrow">
+        WELCOME BACK
+      </span>
 
-      <h2>Login to SamajSaathi</h2>
+      <h2>
+        Login to SamajSaathi
+      </h2>
 
       <p>
         Access your profile, matches and interests.
       </p>
 
+
       <div class="form-grid">
 
         <div class="field full">
-          <label>User ID or Username</label>
+
+          <label>Email</label>
 
           <input
-            id="loginUsername"
-            type="text"
-            placeholder="Enter User ID or username"
-            autocomplete="username"
+            id="loginEmail"
+            type="email"
+            placeholder="Enter your email"
+            autocomplete="email"
           >
+
         </div>
 
 
         <div class="field full">
+
           <label>Password</label>
 
           <input
@@ -199,11 +232,14 @@ function openModal(type) {
             placeholder="Enter password"
             autocomplete="current-password"
           >
+
         </div>
 
       </div>
 
+
       <div id="loginMessage"></div>
+
 
       <div class="modal-actions">
 
@@ -217,15 +253,25 @@ function openModal(type) {
 
       </div>
 
+
       <p style="
         margin-top:18px;
         font-size:13px;
         text-align:center;
       ">
+
         Don't have an account?
-        <a href="#" onclick="openModal('register');return false;">
+
+        <a
+          href="#"
+          onclick="
+            openModal('register');
+            return false;
+          "
+        >
           Create Profile
         </a>
+
       </p>
 
     `;
@@ -233,21 +279,24 @@ function openModal(type) {
   }
 
 
-  // ------------------------------------------
+  // ==========================================
   // REGISTER
-  // ------------------------------------------
+  // ==========================================
 
   else {
 
     c.innerHTML = `
 
-      <span class="eyebrow">CREATE YOUR PROFILE</span>
+      <span class="eyebrow">
+        CREATE YOUR PROFILE
+      </span>
 
-      <h2>Begin your journey.</h2>
+      <h2>
+        Begin your journey.
+      </h2>
 
       <p>
         Tell us a little about yourself.
-        You can complete the rest of your profile later.
       </p>
 
 
@@ -255,36 +304,71 @@ function openModal(type) {
 
 
         <div class="field">
+
           <label>First Name *</label>
 
           <input
             id="firstName"
             placeholder="First name"
           >
+
         </div>
 
 
         <div class="field">
+
           <label>Last Name *</label>
 
           <input
             id="lastName"
             placeholder="Last name"
           >
+
+        </div>
+
+
+        <div class="field full">
+
+          <label>Email *</label>
+
+          <input
+            id="email"
+            type="email"
+            placeholder="your@email.com"
+            autocomplete="email"
+          >
+
         </div>
 
 
         <div class="field">
+
+          <label>Password *</label>
+
+          <input
+            id="password"
+            type="password"
+            placeholder="Create password"
+            autocomplete="new-password"
+          >
+
+        </div>
+
+
+        <div class="field">
+
           <label>Date of Birth *</label>
 
           <input
             id="dob"
             type="date"
           >
+
         </div>
 
 
         <div class="field">
+
           <label>Gender *</label>
 
           <select id="gender">
@@ -306,11 +390,9 @@ function openModal(type) {
         </div>
 
 
-        <div class="field full">
+        <div class="field">
 
-          <label>
-            Community / Jati
-          </label>
+          <label>Community / Jati</label>
 
           <select id="community">
 
@@ -410,10 +492,12 @@ function openModal(type) {
       </div>
 
     `;
+
   }
 
 
   modal.classList.add("show");
+
 }
 
 
@@ -431,6 +515,7 @@ function closeModal() {
     modal.classList.remove("show");
 
   }
+
 }
 
 
@@ -438,34 +523,62 @@ function closeModal() {
 // REGISTER USER
 // --------------------------------------------
 
-function registerUser() {
+async function registerUser() {
 
   const firstName =
-    document.getElementById("firstName")?.value.trim();
+    document.getElementById(
+      "firstName"
+    )?.value.trim();
 
   const lastName =
-    document.getElementById("lastName")?.value.trim();
+    document.getElementById(
+      "lastName"
+    )?.value.trim();
+
+  const email =
+    document.getElementById(
+      "email"
+    )?.value.trim();
+
+  const password =
+    document.getElementById(
+      "password"
+    )?.value;
 
   const dob =
-    document.getElementById("dob")?.value;
+    document.getElementById(
+      "dob"
+    )?.value;
 
   const gender =
-    document.getElementById("gender")?.value;
+    document.getElementById(
+      "gender"
+    )?.value;
 
   const community =
-    document.getElementById("community")?.value;
+    document.getElementById(
+      "community"
+    )?.value;
 
   const surname =
-    document.getElementById("surname")?.value;
+    document.getElementById(
+      "surname"
+    )?.value;
 
   const kul =
-    document.getElementById("kul")?.value;
+    document.getElementById(
+      "kul"
+    )?.value;
 
   const city =
-    document.getElementById("city")?.value.trim();
+    document.getElementById(
+      "city"
+    )?.value.trim();
 
   const message =
-    document.getElementById("registerMessage");
+    document.getElementById(
+      "registerMessage"
+    );
 
 
   // ------------------------------------------
@@ -475,71 +588,102 @@ function registerUser() {
   if (
     !firstName ||
     !lastName ||
+    !email ||
+    !password ||
     !dob ||
     !gender ||
     !city
   ) {
 
-    if (message) {
-
-      message.innerHTML = `
-
-        <div style="
-          margin-top:15px;
-          padding:12px;
-          border-radius:10px;
-          background:#fff3f3;
-          color:#b42318;
-        ">
-
-          Please fill in all required fields.
-
-        </div>
-
-      `;
-
-    }
+    showMessage(
+      message,
+      "Please fill in all required fields.",
+      "error"
+    );
 
     return;
+
+  }
+
+
+  if (password.length < 6) {
+
+    showMessage(
+      message,
+      "Password must be at least 6 characters.",
+      "error"
+    );
+
+    return;
+
   }
 
 
   // ------------------------------------------
-  // CHECK EXISTING LOGIN
+  // CREATE SUPABASE AUTH USER
   // ------------------------------------------
 
-  const existingUser =
-    localStorage.getItem("samajSaathiUser");
+  showMessage(
+    message,
+    "Creating your account...",
+    "info"
+  );
 
-  if (existingUser) {
 
-    if (message) {
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signUp({
 
-      message.innerHTML = `
+      email,
+      password,
 
-        <div style="
-          margin-top:15px;
-          padding:12px;
-          border-radius:10px;
-          background:#fff3f3;
-          color:#b42318;
-        ">
+      options: {
 
-          An account already exists on this browser.
-          Please use Login instead.
+        data: {
 
-        </div>
+          first_name:
+            firstName,
 
-      `;
+          last_name:
+            lastName
 
-    }
+        }
+
+      }
+
+    });
+
+
+  if (error) {
+
+    showMessage(
+      message,
+      error.message,
+      "error"
+    );
 
     return;
+
+  }
+
+
+  if (!data.user) {
+
+    showMessage(
+      message,
+      "Account could not be created.",
+      "error"
+    );
+
+    return;
+
   }
 
 
   // ------------------------------------------
-  // CREATE ACCOUNT
+  // CREATE PROFILE
   // ------------------------------------------
 
   const userId =
@@ -551,72 +695,150 @@ function registerUser() {
       lastName
     );
 
-  const password =
-    generatePassword();
+
+  const {
+    error: profileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .insert({
+
+        id:
+          data.user.id,
+
+        full_name:
+          `${firstName} ${lastName}`,
+
+        gender:
+          gender === "Woman"
+            ? "female"
+            : "male",
+
+        date_of_birth:
+          dob,
+
+        age:
+          calculateAge(dob),
+
+        city:
+          city,
+
+        community:
+          community,
+
+        surname:
+          surname,
+
+        kul:
+          kul,
+
+        is_active:
+          true
+
+      });
 
 
-  const user = {
+  if (profileError) {
 
-    userId,
+    console.error(
+      profileError
+    );
 
-    username,
+    showMessage(
+      message,
+      "Account created, but profile setup failed: " +
+      profileError.message,
+      "error"
+    );
 
-    password,
+    return;
+
+  }
+
+
+  // ------------------------------------------
+  // SAVE NON-SENSITIVE DISPLAY DATA
+  // ------------------------------------------
+
+  localStorage.setItem(
+    "samajSaathiUserId",
+    userId
+  );
+
+  localStorage.setItem(
+    "samajSaathiUsername",
+    username
+  );
+
+
+  // ------------------------------------------
+  // SUCCESS
+  // ------------------------------------------
+
+  showRegistrationSuccess({
 
     firstName,
-
     lastName,
+    email,
+    userId,
+    username
 
-    dob,
+  });
 
-    gender,
-
-    community,
-
-    surname,
-
-    kul,
-
-    city,
-
-    createdAt:
-      new Date().toISOString()
-
-  };
-
-
-  // ------------------------------------------
-  // SAVE USER
-  // ------------------------------------------
-
-  localStorage.setItem(
-    "samajSaathiUser",
-    JSON.stringify(user)
-  );
-
-
-  localStorage.setItem(
-    "samajSaathiProfile",
-    JSON.stringify(user)
-  );
-
-
-  // ------------------------------------------
-  // SUCCESS SCREEN
-  // ------------------------------------------
-
-  showRegistrationSuccess(user);
 }
 
 
 // --------------------------------------------
-// REGISTRATION SUCCESS
+// AGE CALCULATOR
 // --------------------------------------------
 
-function showRegistrationSuccess(user) {
+function calculateAge(
+  dateString
+) {
+
+  const birth =
+    new Date(dateString);
+
+  const today =
+    new Date();
+
+  let age =
+    today.getFullYear() -
+    birth.getFullYear();
+
+  const month =
+    today.getMonth() -
+    birth.getMonth();
+
+  if (
+    month < 0 ||
+    (
+      month === 0 &&
+      today.getDate() < birth.getDate()
+    )
+  ) {
+
+    age--;
+
+  }
+
+  return age;
+
+}
+
+
+// --------------------------------------------
+// SUCCESS MESSAGE
+// --------------------------------------------
+
+function showRegistrationSuccess(
+  user
+) {
 
   const c =
-    document.getElementById("modalContent");
+    document.getElementById(
+      "modalContent"
+    );
 
   if (!c) return;
 
@@ -642,12 +864,12 @@ function showRegistrationSuccess(user) {
 
       <h2>
         Welcome to SamajSaathi,
-        ${user.firstName}!
+        ${escapeHTML(user.firstName)}!
       </h2>
 
 
       <p>
-        Your matrimonial profile has been started successfully.
+        Your account has been created successfully.
       </p>
 
 
@@ -658,7 +880,6 @@ function showRegistrationSuccess(user) {
         background:#f8f1f3;
         text-align:left;
       ">
-
 
         <div style="
           margin-bottom:12px;
@@ -671,7 +892,7 @@ function showRegistrationSuccess(user) {
             font-size:20px;
             margin-top:4px;
           ">
-            ${user.userId}
+            ${escapeHTML(user.userId)}
           </strong>
 
         </div>
@@ -687,7 +908,7 @@ function showRegistrationSuccess(user) {
             display:block;
             margin-top:4px;
           ">
-            ${user.username}
+            ${escapeHTML(user.username)}
           </strong>
 
         </div>
@@ -695,14 +916,13 @@ function showRegistrationSuccess(user) {
 
         <div>
 
-          <small>Temporary Password</small>
+          <small>Email</small>
 
           <strong style="
             display:block;
             margin-top:4px;
-            letter-spacing:1px;
           ">
-            ${user.password}
+            ${escapeHTML(user.email)}
           </strong>
 
         </div>
@@ -719,13 +939,8 @@ function showRegistrationSuccess(user) {
         margin-bottom:18px;
       ">
 
-        <strong>
-          Please save your User ID, username and password.
-        </strong>
-
-        <br>
-
-        You will need them to log in.
+        Please check your email if email confirmation
+        is enabled in Supabase.
 
       </div>
 
@@ -735,32 +950,32 @@ function showRegistrationSuccess(user) {
         <button
           class="btn primary"
           type="button"
-          onclick="openDashboard()"
+          onclick="openModal('login')"
         >
-          Go to My Profile →
+          Go to Login →
         </button>
 
       </div>
 
-
     </div>
 
   `;
+
 }
 
 
 // --------------------------------------------
-// LOGIN USER
+// LOGIN
 // --------------------------------------------
 
-function loginUser() {
+async function loginUser() {
 
-  const loginUsername =
+  const email =
     document.getElementById(
-      "loginUsername"
+      "loginEmail"
     )?.value.trim();
 
-  const loginPassword =
+  const password =
     document.getElementById(
       "loginPassword"
     )?.value;
@@ -772,127 +987,68 @@ function loginUser() {
 
 
   if (
-    !loginUsername ||
-    !loginPassword
+    !email ||
+    !password
   ) {
 
-    if (message) {
-
-      message.innerHTML = `
-
-        <div style="
-          margin-top:15px;
-          padding:12px;
-          border-radius:10px;
-          background:#fff3f3;
-          color:#b42318;
-        ">
-
-          Please enter your User ID/username
-          and password.
-
-        </div>
-
-      `;
-
-    }
-
-    return;
-  }
-
-
-  const savedUser =
-    localStorage.getItem(
-      "samajSaathiUser"
+    showMessage(
+      message,
+      "Please enter your email and password.",
+      "error"
     );
 
-
-  if (!savedUser) {
-
-    if (message) {
-
-      message.innerHTML = `
-
-        <div style="
-          margin-top:15px;
-          padding:12px;
-          border-radius:10px;
-          background:#fff3f3;
-          color:#b42318;
-        ">
-
-          No SamajSaathi account was found
-          on this browser.
-
-          <br><br>
-
-          Please create your profile first.
-
-        </div>
-
-      `;
-
-    }
-
     return;
+
   }
 
 
-  const user =
-    JSON.parse(savedUser);
-
-
-  const usernameMatches =
-    loginUsername.toLowerCase() ===
-      user.username.toLowerCase() ||
-    loginUsername.toUpperCase() ===
-      user.userId.toUpperCase();
-
-
-  const passwordMatches =
-    loginPassword === user.password;
-
-
-  if (
-    !usernameMatches ||
-    !passwordMatches
-  ) {
-
-    if (message) {
-
-      message.innerHTML = `
-
-        <div style="
-          margin-top:15px;
-          padding:12px;
-          border-radius:10px;
-          background:#fff3f3;
-          color:#b42318;
-        ">
-
-          Incorrect User ID/username or password.
-
-        </div>
-
-      `;
-
-    }
-
-    return;
-  }
-
-
-  // ------------------------------------------
-  // LOGIN SUCCESS
-  // ------------------------------------------
-
-  localStorage.setItem(
-    "samajSaathiLoggedIn",
-    "true"
+  showMessage(
+    message,
+    "Logging in...",
+    "info"
   );
 
 
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signInWithPassword({
+
+      email,
+      password
+
+    });
+
+
+  if (error) {
+
+    showMessage(
+      message,
+      error.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  if (!data.user) {
+
+    showMessage(
+      message,
+      "Login failed.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
   openDashboard();
+
 }
 
 
@@ -900,26 +1056,57 @@ function loginUser() {
 // DASHBOARD
 // --------------------------------------------
 
-function openDashboard() {
+async function openDashboard() {
 
-  const savedUser =
-    localStorage.getItem(
-      "samajSaathiUser"
-    );
+  const {
+    data: {
+      user
+    }
+  } =
+    await supabaseClient.auth.getUser();
 
-  if (!savedUser) {
 
-    openModal("register");
+  if (!user) {
+
+    openModal("login");
 
     return;
+
   }
 
 
-  const user =
-    JSON.parse(savedUser);
+  const {
+    data: profile,
+    error
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+
+  if (error) {
+
+    console.error(error);
+
+    alert(
+      "Profile could not be loaded."
+    );
+
+    return;
+
+  }
 
 
   closeModal();
+
+
+  document
+    .getElementById(
+      "samajSaathiDashboard"
+    )
+    ?.remove();
 
 
   const dashboard =
@@ -1005,7 +1192,8 @@ function openDashboard() {
           <h1 style="
             margin:8px 0;
           ">
-            Hello, ${user.firstName}!
+            Hello,
+            ${escapeHTML(profile.full_name)}!
           </h1>
 
           <p>
@@ -1024,50 +1212,38 @@ function openDashboard() {
 
 
           ${dashboardItem(
-            "User ID",
-            user.userId
-          )}
-
-
-          ${dashboardItem(
-            "Username",
-            user.username
-          )}
-
-
-          ${dashboardItem(
             "Name",
-            `${user.firstName} ${user.lastName}`
+            profile.full_name
           )}
 
+          ${dashboardItem(
+            "Age",
+            profile.age
+          )}
 
           ${dashboardItem(
             "Gender",
-            user.gender
+            profile.gender
           )}
-
 
           ${dashboardItem(
             "Community",
-            user.community
+            profile.community
           )}
-
 
           ${dashboardItem(
             "Surname",
-            user.surname
+            profile.surname
           )}
-
 
           ${dashboardItem(
             "Kul / Clan",
-            user.kul
+            profile.kul
           )}
-
 
           ${dashboardItem(
             "City",
-            user.city
+            profile.city
           )}
 
         </div>
@@ -1085,9 +1261,8 @@ function openDashboard() {
           </h2>
 
           <p>
-            Your profile has been created.
-            Matching features can be connected
-            to the SamajSaathi backend next.
+            Your profile is connected to the
+            SamajSaathi database.
           </p>
 
         </div>
@@ -1103,6 +1278,7 @@ function openDashboard() {
   document.body.appendChild(
     dashboard
   );
+
 }
 
 
@@ -1110,7 +1286,10 @@ function openDashboard() {
 // DASHBOARD ITEM
 // --------------------------------------------
 
-function dashboardItem(label, value) {
+function dashboardItem(
+  label,
+  value
+) {
 
   return `
 
@@ -1126,16 +1305,19 @@ function dashboardItem(label, value) {
         color:#777;
         margin-bottom:7px;
       ">
-        ${label}
+        ${escapeHTML(label)}
       </small>
 
       <strong>
-        ${value || "Not specified"}
+        ${escapeHTML(
+          value || "Not specified"
+        )}
       </strong>
 
     </div>
 
   `;
+
 }
 
 
@@ -1143,11 +1325,9 @@ function dashboardItem(label, value) {
 // LOGOUT
 // --------------------------------------------
 
-function logoutUser() {
+async function logoutUser() {
 
-  localStorage.removeItem(
-    "samajSaathiLoggedIn"
-  );
+  await supabaseClient.auth.signOut();
 
 
   document
@@ -1166,7 +1346,77 @@ function logoutUser() {
 
 
 // --------------------------------------------
-// CLOSE MODAL BY CLICKING OUTSIDE
+// SHOW MESSAGE
+// --------------------------------------------
+
+function showMessage(
+  element,
+  text,
+  type
+) {
+
+  if (!element) return;
+
+
+  let background =
+    "#f8f1f3";
+
+  let color =
+    "#6f1025";
+
+
+  if (type === "error") {
+
+    background =
+      "#fff3f3";
+
+    color =
+      "#b42318";
+
+  }
+
+
+  element.innerHTML = `
+
+    <div style="
+      margin-top:15px;
+      padding:12px;
+      border-radius:10px;
+      background:${background};
+      color:${color};
+    ">
+
+      ${escapeHTML(text)}
+
+    </div>
+
+  `;
+
+}
+
+
+// --------------------------------------------
+// HTML ESCAPE
+// --------------------------------------------
+
+function escapeHTML(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+// --------------------------------------------
+// CLOSE MODAL OUTSIDE CLICK
 // --------------------------------------------
 
 const modal =
@@ -1193,14 +1443,16 @@ if (modal) {
 
 
 // --------------------------------------------
-// ESC KEY CLOSE
+// ESC KEY
 // --------------------------------------------
 
 document.addEventListener(
   "keydown",
   e => {
 
-    if (e.key === "Escape") {
+    if (
+      e.key === "Escape"
+    ) {
 
       closeModal();
 
@@ -1208,3 +1460,28 @@ document.addEventListener(
 
   }
 );
+
+
+// --------------------------------------------
+// CHECK EXISTING SESSION
+// --------------------------------------------
+
+(async function checkSession() {
+
+  const {
+    data: {
+      session
+    }
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  if (session) {
+
+    console.log(
+      "SamajSaathi user already logged in."
+    );
+
+  }
+
+})();
