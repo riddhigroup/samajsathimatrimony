@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#6f1025">
+<title>SamajSaathi — SC Matrimony</title>
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#home"><span class="brand-mark">SS</span><span><b>SamajSaathi</b><small>SC MATRIMONY</small></span></a>
+  <nav><a href="#home">Home</a><a href="#discover">Find Matches</a><a href="#how">How It Works</a><a href="#safety">Safety</a></nav>
+  <div class="actions"><button class="btn ghost" onclick="openModal('login')">Login</button><button class="btn primary" onclick="openModal('register')">Create Profile</button></div>
+</header>
+
+<main id="home">
+<section class="hero">
+ <div class="hero-copy">
+  <span class="eyebrow">EXCLUSIVELY FOR SC COMMUNITIES</span>
+  <h1>Find a life partner<br><em>within your community.</em></h1>
+  <p>Meaningful connections, trusted profiles and privacy-first matchmaking for adults and families looking for a compatible life partner.</p>
+  <div class="hero-buttons"><button class="btn primary xl" onclick="openModal('register')">Find Your Match <span>→</span></button><button class="text-btn" onclick="scrollToId('how')">How it works <span>↗</span></button></div>
+  <div class="trust-row"><span>✓ Verified profiles</span><span>✓ Privacy first</span><span>✓ Community focused</span></div>
+ </div>
+ <div class="hero-art">
+   <div class="glow"></div>
+   <div class="hero-card main-card">
+     <div class="photo couple-photo"><div class="photo-overlay"></div><span class="verified">✓ Verified</span></div>
+     <div class="hero-profile"><div><b>Ananya & Rahul</b><small>98% compatible</small></div><span class="heart">♥</span></div>
+   </div>
+   <div class="float-card match-card"><span class="mini-icon">♥</span><div><b>New Match</b><small>98% compatibility</small></div></div>
+   <div class="float-card safe-card"><span class="mini-icon">✓</span><div><b>Privacy protected</b><small>Your details stay in your control</small></div></div>
+ </div>
+</section>
+
+<section class="stats"><div><b>100%</b><span>Community focused</span></div><div><b>Private</b><span>Contact details hidden</span></div><div><b>Smart</b><span>Preference-based matching</span></div><div><b>Secure</b><span>Report & block tools</span></div></section>
+
+<section class="section" id="discover">
+ <div class="section-head"><div><span class="eyebrow">DISCOVER</span><h2>Profiles made for meaningful introductions.</h2></div><button class="btn ghost" onclick="openModal('register')">View all matches →</button></div>
+ <div class="profiles" id="profiles"></div>
+</section>
+
+<section class="section split" id="how">
+ <div class="feature-art"><div class="rings"></div><div class="phone"><div class="phone-head">Your Matches <span>♡</span></div><div class="phone-match"><span class="avatar a1"></span><div><b>Priya, 27</b><small>94% Match · Siliguri</small></div><i>♥</i></div><div class="phone-match"><span class="avatar a2"></span><div><b>Neha, 26</b><small>91% Match · Alipurduar</small></div><i>♥</i></div><div class="phone-match"><span class="avatar a3"></span><div><b>Anjali, 29</b><small>89% Match · Kolkata</small></div><i>♥</i></div></div></div>
+ <div class="copy"><span class="eyebrow">HOW IT WORKS</span><h2>Simple for you. Comfortable for your family.</h2><p>Create a thoughtful profile, tell us what you are looking for and discover compatible people without giving away your private contact details.</p>
+ <div class="steps"><div><strong>01</strong><span><b>Create your profile</b><small>Add your education, family, community and preferences.</small></span></div><div><strong>02</strong><span><b>Discover compatible profiles</b><small>Use smart matching and filters to narrow your search.</small></span></div><div><strong>03</strong><span><b>Connect with consent</b><small>Send interest and start a private conversation after a mutual match.</small></span></div></div></div>
+</section>
+
+<section class="section band" id="safety"><div class="band-inner"><div><span class="eyebrow">TRUST & SAFETY</span><h2>Your privacy is part of the product.</h2><p>Phone numbers and email addresses remain hidden by default. Control who can see your photos and profile information.</p></div><div class="safety-grid"><div>✓<b>Verified profiles</b><small>Mobile, email and photo verification.</small></div><div>⌁<b>Private messaging</b><small>Connect without revealing your number.</small></div><div>⚑<b>Report & block</b><small>Tools to handle suspicious behaviour.</small></div><div>◉<b>Profile control</b><small>Edit, deactivate or delete your account.</small></div></div></div></section>
+
+<section class="cta"><span class="eyebrow">START YOUR JOURNEY</span><h2>One community. Meaningful connections.</h2><p>Build your profile today and discover people who share your hopes for the future.</p><button class="btn light xl" onclick="openModal('register')">Create Your Profile →</button></section>
+</main>
+
+<footer><div class="footer-brand"><span class="brand-mark">SS</span><div><b>SamajSaathi</b><small>SC MATRIMONY</small></div></div><div class="footer-links"><a>Privacy</a><a>Terms</a><a>Safety</a><a>Contact</a></div><p>© 2026 SamajSaathi. Designed for respectful matrimonial connections.</p></footer>
+
+<div class="modal" id="modal"><div class="modal-box"><button class="close" onclick="closeModal()">×</button><div id="modalContent"></div></div></div>
+<script src="app.js"></script>
+</body></html>
