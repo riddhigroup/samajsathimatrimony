@@ -32,7 +32,6 @@ async function loadProfiles() {
 
   if (!grid) return;
 
-
   grid.innerHTML = `
     <div style="
       grid-column:1/-1;
@@ -43,7 +42,6 @@ async function loadProfiles() {
       Loading profiles...
     </div>
   `;
-
 
   try {
 
@@ -70,14 +68,12 @@ async function loadProfiles() {
           ascending: false
         });
 
-
     if (result.error) {
 
       console.error(
         "PROFILES LOAD ERROR:",
         result.error
       );
-
 
       grid.innerHTML = `
         <div style="
@@ -101,10 +97,8 @@ async function loadProfiles() {
       return;
     }
 
-
     const realProfiles =
       result.data || [];
-
 
     if (realProfiles.length === 0) {
 
@@ -129,7 +123,6 @@ async function loadProfiles() {
       return;
     }
 
-
     grid.innerHTML =
       realProfiles.map(function (p) {
 
@@ -137,7 +130,6 @@ async function loadProfiles() {
           [p.city, p.state]
             .filter(Boolean)
             .join(", ");
-
 
         let photoHtml = `
 
@@ -176,10 +168,8 @@ async function loadProfiles() {
                 p.profile_photo
               );
 
-
           const photoUrl =
             publicResult.data?.publicUrl;
-
 
           if (photoUrl) {
 
@@ -211,7 +201,6 @@ async function loadProfiles() {
 
         }
 
-
         return `
 
           <article class="profile">
@@ -231,14 +220,12 @@ async function loadProfiles() {
                 }
               </b>
 
-
               <small>
                 ${escapeHtml(
                   location ||
                   "Location not specified"
                 )}
               </small>
-
 
               <small>
 
@@ -262,7 +249,6 @@ async function loadProfiles() {
 
               </small>
 
-
               <small class="match">
                 SamajSaathi Member
               </small>
@@ -275,7 +261,6 @@ async function loadProfiles() {
 
       }).join("");
 
-
     console.log(
       "Real profiles loaded:",
       realProfiles.length
@@ -287,7 +272,6 @@ async function loadProfiles() {
       "PROFILES ERROR:",
       error
     );
-
 
     grid.innerHTML = `
       <div style="
@@ -358,19 +342,16 @@ function generateUsername(
       .toLowerCase()
       .replace(/[^a-z]/g, "");
 
-
   const last =
     String(lastName)
       .toLowerCase()
       .replace(/[^a-z]/g, "");
-
 
   const random =
     Math.floor(
       100 +
       Math.random() * 900
     );
-
 
   return (
     first +
@@ -391,9 +372,7 @@ function generatePassword() {
   const chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
-
   let password = "";
-
 
   for (
     let i = 0;
@@ -410,7 +389,6 @@ function generatePassword() {
       );
 
   }
-
 
   return password;
 
@@ -430,7 +408,6 @@ function openModal(type) {
     document.getElementById(
       "modalContent"
     );
-
 
   if (!modal || !content) {
 
@@ -455,16 +432,13 @@ function openModal(type) {
         WELCOME BACK
       </span>
 
-
       <h2>
         Login to SamajSaathi
       </h2>
 
-
       <p>
         Access your profile, matches and interests.
       </p>
-
 
       <div class="form-grid">
 
@@ -483,7 +457,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
           <label>
@@ -501,9 +474,7 @@ function openModal(type) {
 
       </div>
 
-
       <div id="loginMessage"></div>
-
 
       <div class="modal-actions">
 
@@ -516,7 +487,6 @@ function openModal(type) {
         </button>
 
       </div>
-
 
       <p style="
         margin-top:18px;
@@ -555,19 +525,15 @@ function openModal(type) {
         CREATE YOUR PROFILE
       </span>
 
-
       <h2>
         Begin your journey.
       </h2>
-
 
       <p>
         Tell us a little about yourself.
       </p>
 
-
       <div class="form-grid">
-
 
         <div class="field">
 
@@ -582,7 +548,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -595,7 +560,6 @@ function openModal(type) {
           >
 
         </div>
-
 
         <div class="field full">
 
@@ -612,7 +576,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -625,7 +588,6 @@ function openModal(type) {
           >
 
         </div>
-
 
         <div class="field">
 
@@ -651,7 +613,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -671,7 +632,6 @@ function openModal(type) {
           </select>
 
         </div>
-
 
         <div class="field">
 
@@ -701,7 +661,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -726,7 +685,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
           <label>
@@ -742,9 +700,7 @@ function openModal(type) {
 
       </div>
 
-
       <div id="registerMessage"></div>
-
 
       <div class="modal-actions">
 
@@ -761,7 +717,6 @@ function openModal(type) {
     `;
 
   }
-
 
   modal.classList.add("show");
 
@@ -797,54 +752,45 @@ async function registerUser() {
       "firstName"
     )?.value.trim();
 
-
   const lastName =
     document.getElementById(
       "lastName"
     )?.value.trim();
-
 
   const email =
     document.getElementById(
       "email"
     )?.value.trim();
 
-
   const dob =
     document.getElementById(
       "dob"
     )?.value;
-
 
   const gender =
     document.getElementById(
       "gender"
     )?.value;
 
-
   const community =
     document.getElementById(
       "community"
     )?.value;
-
 
   const surname =
     document.getElementById(
       "surname"
     )?.value;
 
-
   const kul =
     document.getElementById(
       "kul"
     )?.value;
 
-
   const city =
     document.getElementById(
       "city"
     )?.value.trim();
-
 
   const message =
     document.getElementById(
@@ -882,16 +828,13 @@ async function registerUser() {
   const password =
     generatePassword();
 
-
   const fullName =
     firstName +
     " " +
     lastName;
 
-
   const displayUserId =
     generateUserId();
-
 
   const username =
     generateUsername(
@@ -901,6 +844,10 @@ async function registerUser() {
 
 
   try {
+
+    // ======================================
+    // CREATE SUPABASE AUTH ACCOUNT
+    // ======================================
 
     const result =
       await supabaseClient.auth.signUp({
@@ -938,7 +885,6 @@ async function registerUser() {
     const data =
       result.data;
 
-
     const error =
       result.error;
 
@@ -970,7 +916,62 @@ async function registerUser() {
 
 
     // ======================================
-    // SAVE PROFILE IF SESSION EXISTS
+    // SAVE LOCAL LOGIN DETAILS
+    // ======================================
+
+    localStorage.setItem(
+      "samajSaathiUserId",
+      displayUserId
+    );
+
+    localStorage.setItem(
+      "samajSaathiUsername",
+      username
+    );
+
+
+    // ======================================
+    // PROFILE DATA
+    // ======================================
+
+    const profileData = {
+
+      id:
+        data.user.id,
+
+      full_name:
+        fullName,
+
+      gender:
+        gender,
+
+      date_of_birth:
+        dob,
+
+      age:
+        calculateAge(dob),
+
+      city:
+        city,
+
+      community:
+        community,
+
+      surname:
+        surname,
+
+      kul:
+        kul,
+
+      is_active:
+        true
+
+    };
+
+
+    // ======================================
+    // IMPORTANT
+    // SAVE PROFILE WHEN SESSION EXISTS
     // ======================================
 
     if (data.session) {
@@ -978,33 +979,12 @@ async function registerUser() {
       const profileResult =
         await supabaseClient
           .from("profiles")
-          .upsert({
-
-            id: data.user.id,
-
-            full_name: fullName,
-
-            gender: gender,
-
-            date_of_birth: dob,
-
-            age: calculateAge(dob),
-
-            city: city,
-
-            community: community,
-
-            surname: surname,
-
-            kul: kul,
-
-            is_active: true
-
-          }, {
-
-            onConflict: "id"
-
-          });
+          .upsert(
+            profileData,
+            {
+              onConflict: "id"
+            }
+          );
 
 
       if (profileResult.error) {
@@ -1014,10 +994,9 @@ async function registerUser() {
           profileResult.error
         );
 
-
         showMessage(
           message,
-          "Account created but profile could not be saved: " +
+          "Account created, but profile could not be saved: " +
           profileResult.error.message,
           "error"
         );
@@ -1025,18 +1004,6 @@ async function registerUser() {
         return;
 
       }
-
-
-      localStorage.setItem(
-        "samajSaathiUserId",
-        displayUserId
-      );
-
-
-      localStorage.setItem(
-        "samajSaathiUsername",
-        username
-      );
 
 
       showRegistrationSuccess({
@@ -1056,29 +1023,46 @@ async function registerUser() {
       });
 
 
-      // Refresh homepage profiles
       await loadProfiles();
-
 
     }
 
+
+    // ======================================
+    // EMAIL CONFIRMATION REQUIRED
+    // ======================================
+
     else {
 
-      // Email confirmation required
+      /*
+       * IMPORTANT:
+       *
+       * If Supabase Email Confirmation
+       * is enabled, there is no session yet.
+       *
+       * We store the profile data temporarily
+       * in localStorage.
+       *
+       * After email confirmation and login,
+       * loginUser() will save the profile.
+       */
 
-      showMessage(
-        message,
-        "Account created successfully. Please confirm your email, then login.",
-        "info"
+      localStorage.setItem(
+        "samajSaathiPendingProfile",
+        JSON.stringify(profileData)
       );
 
 
-      // Show credentials
       contentAfterSignup(
+
         firstName,
+
         displayUserId,
+
         username,
+
         password
+
       );
 
     }
@@ -1089,7 +1073,6 @@ async function registerUser() {
       "REGISTER ERROR:",
       err
     );
-
 
     showMessage(
       message,
@@ -1111,24 +1094,19 @@ function calculateAge(dateString) {
 
   if (!dateString) return null;
 
-
   const birthDate =
     new Date(dateString);
 
-
   const today =
     new Date();
-
 
   let age =
     today.getFullYear() -
     birthDate.getFullYear();
 
-
   const month =
     today.getMonth() -
     birthDate.getMonth();
-
 
   if (
     month < 0 ||
@@ -1142,7 +1120,6 @@ function calculateAge(dateString) {
     age--;
 
   }
-
 
   return age;
 
@@ -1165,9 +1142,7 @@ function contentAfterSignup(
       "modalContent"
     );
 
-
   if (!content) return;
-
 
   content.innerHTML = `
 
@@ -1181,23 +1156,19 @@ function contentAfterSignup(
         ✓
       </div>
 
-
       <span class="eyebrow">
         ACCOUNT CREATED
       </span>
-
 
       <h2>
         Welcome to SamajSaathi,
         ${escapeHtml(firstName)}!
       </h2>
 
-
       <p>
         Please confirm your email address,
         then login to continue.
       </p>
-
 
       <div style="
         margin:20px 0;
@@ -1208,7 +1179,10 @@ function contentAfterSignup(
       ">
 
         <div>
-          <small>User ID</small>
+
+          <small>
+            User ID
+          </small>
 
           <strong style="
             display:block;
@@ -1216,14 +1190,16 @@ function contentAfterSignup(
           ">
             ${escapeHtml(userId)}
           </strong>
-        </div>
 
+        </div>
 
         <br>
 
-
         <div>
-          <small>Username</small>
+
+          <small>
+            Username
+          </small>
 
           <strong style="
             display:block;
@@ -1231,14 +1207,16 @@ function contentAfterSignup(
           ">
             ${escapeHtml(username)}
           </strong>
-        </div>
 
+        </div>
 
         <br>
 
-
         <div>
-          <small>Temporary Password</small>
+
+          <small>
+            Temporary Password
+          </small>
 
           <strong style="
             display:block;
@@ -1246,10 +1224,24 @@ function contentAfterSignup(
           ">
             ${escapeHtml(password)}
           </strong>
+
         </div>
 
       </div>
 
+      <div style="
+        padding:12px;
+        border-radius:10px;
+        background:#fff8e6;
+        color:#7a4d00;
+        font-size:13px;
+        margin-bottom:18px;
+      ">
+
+        Please save your User ID,
+        Username and Password.
+
+      </div>
 
       <div class="modal-actions">
 
@@ -1283,9 +1275,7 @@ function showRegistrationSuccess(
       "modalContent"
     );
 
-
   if (!content) return;
-
 
   content.innerHTML = `
 
@@ -1300,22 +1290,18 @@ function showRegistrationSuccess(
         ✓
       </div>
 
-
       <span class="eyebrow">
         ACCOUNT CREATED
       </span>
-
 
       <h2>
         Welcome to SamajSaathi,
         ${escapeHtml(user.firstName)}!
       </h2>
 
-
       <p>
         Your matrimonial profile has been created successfully.
       </p>
-
 
       <div style="
         margin:20px 0;
@@ -1341,7 +1327,6 @@ function showRegistrationSuccess(
 
         </div>
 
-
         <div style="margin-bottom:12px;">
 
           <small>
@@ -1356,7 +1341,6 @@ function showRegistrationSuccess(
           </strong>
 
         </div>
-
 
         <div>
 
@@ -1376,7 +1360,6 @@ function showRegistrationSuccess(
 
       </div>
 
-
       <div style="
         padding:12px;
         border-radius:10px;
@@ -1395,7 +1378,6 @@ function showRegistrationSuccess(
         Login uses your email and password.
 
       </div>
-
 
       <div class="modal-actions">
 
@@ -1427,12 +1409,10 @@ async function loginUser() {
       "loginEmail"
     )?.value.trim();
 
-
   const password =
     document.getElementById(
       "loginPassword"
     )?.value;
-
 
   const message =
     document.getElementById(
@@ -1466,9 +1446,11 @@ async function loginUser() {
       await supabaseClient.auth
         .signInWithPassword({
 
-          email: email,
+          email:
+            email,
 
-          password: password
+          password:
+            password
 
         });
 
@@ -1499,6 +1481,13 @@ async function loginUser() {
     }
 
 
+    // ======================================
+    // SAVE PENDING PROFILE AFTER LOGIN
+    // ======================================
+
+    await savePendingProfile();
+
+
     await openDashboard();
 
 
@@ -1508,7 +1497,6 @@ async function loginUser() {
       "LOGIN ERROR:",
       err
     );
-
 
     showMessage(
       message,
@@ -1523,6 +1511,90 @@ async function loginUser() {
 
 
 // ============================================
+// SAVE PENDING PROFILE
+// ============================================
+
+async function savePendingProfile() {
+
+  const pending =
+    localStorage.getItem(
+      "samajSaathiPendingProfile"
+    );
+
+  if (!pending) return;
+
+
+  let profileData;
+
+  try {
+
+    profileData =
+      JSON.parse(pending);
+
+  } catch (error) {
+
+    console.error(
+      "PENDING PROFILE JSON ERROR:",
+      error
+    );
+
+    localStorage.removeItem(
+      "samajSaathiPendingProfile"
+    );
+
+    return;
+
+  }
+
+
+  const sessionResult =
+    await supabaseClient.auth
+      .getSession();
+
+  const session =
+    sessionResult.data?.session;
+
+  if (!session) return;
+
+
+  profileData.id =
+    session.user.id;
+
+
+  const result =
+    await supabaseClient
+      .from("profiles")
+      .upsert(
+        profileData,
+        {
+          onConflict: "id"
+        }
+      );
+
+
+  if (result.error) {
+
+    console.error(
+      "PENDING PROFILE SAVE ERROR:",
+      result.error
+    );
+
+    return;
+
+  }
+
+
+  localStorage.removeItem(
+    "samajSaathiPendingProfile"
+  );
+
+
+  await loadProfiles();
+
+}
+
+
+// ============================================
 // OPEN DASHBOARD
 // ============================================
 
@@ -1531,7 +1603,6 @@ async function openDashboard() {
   const sessionResult =
     await supabaseClient.auth
       .getSession();
-
 
   const session =
     sessionResult.data?.session;
@@ -1544,6 +1615,10 @@ async function openDashboard() {
     return;
 
   }
+
+
+  // Make sure pending profile is saved
+  await savePendingProfile();
 
 
   const userId =
@@ -1564,7 +1639,6 @@ async function openDashboard() {
       "PROFILE LOAD ERROR:",
       profileResult.error
     );
-
 
     alert(
       "Profile could not be loaded: " +
@@ -1625,7 +1699,6 @@ async function openDashboard() {
       overflow:auto;
     ">
 
-
       <div style="
         background:#6f1025;
         color:#fff;
@@ -1637,7 +1710,6 @@ async function openDashboard() {
         flex-wrap:wrap;
       ">
 
-
         <div>
 
           <div style="
@@ -1647,13 +1719,11 @@ async function openDashboard() {
             SamajSaathi
           </div>
 
-
           <small>
             My Profile
           </small>
 
         </div>
-
 
         <button
           type="button"
@@ -1689,7 +1759,6 @@ async function openDashboard() {
           margin-bottom:25px;
           text-align:center;
         ">
-
 
           <span class="eyebrow">
             PROFILE PHOTO
@@ -1749,7 +1818,6 @@ async function openDashboard() {
             "
           ></div>
 
-
         </div>
 
 
@@ -1762,11 +1830,9 @@ async function openDashboard() {
           margin-bottom:25px;
         ">
 
-
           <span class="eyebrow">
             WELCOME
           </span>
-
 
           <h1 style="
             margin:8px 0;
@@ -1777,11 +1843,9 @@ async function openDashboard() {
 
           </h1>
 
-
           <p>
             Your SamajSaathi profile is ready.
           </p>
-
 
         </div>
 
@@ -1795,54 +1859,45 @@ async function openDashboard() {
           gap:15px;
         ">
 
-
           ${dashboardItem(
             "Name",
             profile.full_name
           )}
-
 
           ${dashboardItem(
             "Gender",
             profile.gender
           )}
 
-
           ${dashboardItem(
             "Date of Birth",
             profile.date_of_birth
           )}
-
 
           ${dashboardItem(
             "Age",
             profile.age
           )}
 
-
           ${dashboardItem(
             "City",
             profile.city
           )}
-
 
           ${dashboardItem(
             "Community",
             profile.community
           )}
 
-
           ${dashboardItem(
             "Surname",
             profile.surname
           )}
 
-
           ${dashboardItem(
             "Kul / Clan",
             profile.kul
           )}
-
 
           ${dashboardItem(
             "Marital Status",
@@ -1861,16 +1916,13 @@ async function openDashboard() {
           border:1px solid #eee;
         ">
 
-
           <h2>
             ✏️ Update Profile
           </h2>
 
-
           <p>
             Update your profile information below.
           </p>
-
 
           <div class="form-grid">
 
@@ -1880,7 +1932,6 @@ async function openDashboard() {
               <label>
                 Full Name
               </label>
-
 
               <input
                 id="editFullName"
@@ -1898,7 +1949,6 @@ async function openDashboard() {
                 Gender
               </label>
 
-
               <select id="editGender">
 
                 <option
@@ -1911,7 +1961,6 @@ async function openDashboard() {
                 >
                   Woman
                 </option>
-
 
                 <option
                   value="male"
@@ -1935,7 +1984,6 @@ async function openDashboard() {
                 Date of Birth
               </label>
 
-
               <input
                 id="editDob"
                 type="date"
@@ -1953,7 +2001,6 @@ async function openDashboard() {
                 Community / Jati
               </label>
 
-
               <select id="editCommunity">
 
                 <option
@@ -1966,7 +2013,6 @@ async function openDashboard() {
                 >
                   Dom
                 </option>
-
 
                 <option
                   value="Other SC Community"
@@ -1991,7 +2037,6 @@ async function openDashboard() {
                 Surname
               </label>
 
-
               <select id="editSurname">
 
                 <option
@@ -2005,7 +2050,6 @@ async function openDashboard() {
                   Rauth
                 </option>
 
-
                 <option
                   value="Basfor"
                   ${
@@ -2017,7 +2061,6 @@ async function openDashboard() {
                   Basfor
                 </option>
 
-
                 <option
                   value="Bansfor"
                   ${
@@ -2028,7 +2071,6 @@ async function openDashboard() {
                 >
                   Bansfor
                 </option>
-
 
                 <option
                   value="Other"
@@ -2052,7 +2094,6 @@ async function openDashboard() {
                 Kul / Clan
               </label>
 
-
               <select id="editKul">
 
                 <option
@@ -2067,7 +2108,6 @@ async function openDashboard() {
                   Piari Baiswar
                 </option>
 
-
                 <option
                   value="Other"
                   ${
@@ -2078,7 +2118,6 @@ async function openDashboard() {
                 >
                   Other
                 </option>
-
 
                 <option
                   value="Not Known"
@@ -2101,7 +2140,6 @@ async function openDashboard() {
               <label>
                 Current City
               </label>
-
 
               <input
                 id="editCity"
@@ -2135,7 +2173,6 @@ async function openDashboard() {
 
           </div>
 
-
         </div>
 
 
@@ -2151,7 +2188,6 @@ async function openDashboard() {
           <h2>
             Find Your Matches
           </h2>
-
 
           <p>
             Your profile is connected to the SamajSaathi database.
@@ -2254,7 +2290,6 @@ async function uploadProfilePhoto() {
       "profilePhotoInput"
     );
 
-
   const message =
     document.getElementById(
       "photoMessage"
@@ -2355,10 +2390,6 @@ async function uploadProfilePhoto() {
       .toLowerCase();
 
 
-  // IMPORTANT:
-  // User ID is the first folder.
-  // This matches Storage RLS policies.
-
   const filePath =
     userId +
     "/profile." +
@@ -2435,7 +2466,6 @@ async function uploadProfilePhoto() {
       uploadResult.error
     );
 
-
     showMessage(
       message,
       "Photo upload failed: " +
@@ -2449,7 +2479,7 @@ async function uploadProfilePhoto() {
 
 
   // ========================================
-  // SAVE PHOTO PATH IN PROFILES TABLE
+  // SAVE PHOTO PATH
   // ========================================
 
   const profileResult =
@@ -2474,7 +2504,6 @@ async function uploadProfilePhoto() {
       profileResult.error
     );
 
-
     showMessage(
       message,
       "Photo uploaded, but profile could not be updated: " +
@@ -2486,10 +2515,6 @@ async function uploadProfilePhoto() {
 
   }
 
-
-  // ========================================
-  // SHOW PHOTO
-  // ========================================
 
   await loadProfilePhoto(
     filePath
@@ -2504,6 +2529,9 @@ async function uploadProfilePhoto() {
 
 
   input.value = "";
+
+
+  await loadProfiles();
 
 }
 
@@ -2651,7 +2679,6 @@ async function updateProfile() {
       result.error
     );
 
-
     showMessage(
       message,
       "Profile update failed: " +
@@ -2669,6 +2696,9 @@ async function updateProfile() {
     "Profile updated successfully!",
     "info"
   );
+
+
+  await loadProfiles();
 
 
   setTimeout(
@@ -2701,7 +2731,6 @@ function dashboardItem(
       padding:18px;
     ">
 
-
       <small style="
         display:block;
         color:#777;
@@ -2712,7 +2741,6 @@ function dashboardItem(
 
       </small>
 
-
       <strong>
 
         ${escapeHtml(
@@ -2720,7 +2748,6 @@ function dashboardItem(
         )}
 
       </strong>
-
 
     </div>
 
@@ -2772,7 +2799,6 @@ async function logoutUser() {
   });
 
 
-  // Reload real profiles
   await loadProfiles();
 
 }
@@ -2923,7 +2949,6 @@ document.addEventListener(
     );
 
 
-    // Load REAL Supabase profiles
     await loadProfiles();
 
 
