@@ -1,3 +1,4 @@
+```javascript
 // ============================================
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
@@ -528,59 +529,35 @@ function closeModal() {
 async function registerUser() {
 
   const firstName =
-    document.getElementById(
-      "firstName"
-    )?.value.trim();
+    document.getElementById("firstName")?.value.trim();
 
   const lastName =
-    document.getElementById(
-      "lastName"
-    )?.value.trim();
+    document.getElementById("lastName")?.value.trim();
 
   const email =
-    document.getElementById(
-      "email"
-    )?.value.trim();
+    document.getElementById("email")?.value.trim();
 
   const dob =
-    document.getElementById(
-      "dob"
-    )?.value;
+    document.getElementById("dob")?.value;
 
   const gender =
-    document.getElementById(
-      "gender"
-    )?.value;
+    document.getElementById("gender")?.value;
 
   const community =
-    document.getElementById(
-      "community"
-    )?.value;
+    document.getElementById("community")?.value;
 
   const surname =
-    document.getElementById(
-      "surname"
-    )?.value;
+    document.getElementById("surname")?.value;
 
   const kul =
-    document.getElementById(
-      "kul"
-    )?.value;
+    document.getElementById("kul")?.value;
 
   const city =
-    document.getElementById(
-      "city"
-    )?.value.trim();
+    document.getElementById("city")?.value.trim();
 
   const message =
-    document.getElementById(
-      "registerMessage"
-    );
+    document.getElementById("registerMessage");
 
-
-  // ==========================================
-  // VALIDATION
-  // ==========================================
 
   if (
     !firstName ||
@@ -598,6 +575,7 @@ async function registerUser() {
     );
 
     return;
+
   }
 
 
@@ -607,10 +585,6 @@ async function registerUser() {
     "info"
   );
 
-
-  // ==========================================
-  // CREATE AUTH ACCOUNT
-  // ==========================================
 
   const password =
     generatePassword();
@@ -634,9 +608,8 @@ async function registerUser() {
   } =
     await supabaseClient.auth.signUp({
 
-      email: email,
-
-      password: password,
+      email,
+      password,
 
       options: {
 
@@ -673,6 +646,7 @@ async function registerUser() {
     );
 
     return;
+
   }
 
 
@@ -685,12 +659,9 @@ async function registerUser() {
     );
 
     return;
+
   }
 
-
-  // ==========================================
-  // CHECK SESSION
-  // ==========================================
 
   if (!data.session) {
 
@@ -701,12 +672,9 @@ async function registerUser() {
     );
 
     return;
+
   }
 
-
-  // ==========================================
-  // SAVE PROFILE
-  // ==========================================
 
   const {
     error: profileError
@@ -760,12 +728,9 @@ async function registerUser() {
     );
 
     return;
+
   }
 
-
-  // ==========================================
-  // SAVE DISPLAY INFO LOCALLY
-  // ==========================================
 
   localStorage.setItem(
     "samajSaathiUserId",
@@ -777,10 +742,6 @@ async function registerUser() {
     username
   );
 
-
-  // ==========================================
-  // SUCCESS
-  // ==========================================
 
   showRegistrationSuccess({
 
@@ -808,11 +769,10 @@ async function registerUser() {
 function showRegistrationSuccess(user) {
 
   const c =
-    document.getElementById(
-      "modalContent"
-    );
+    document.getElementById("modalContent");
 
   if (!c) return;
+
 
   c.innerHTML = `
 
@@ -946,19 +906,13 @@ function showRegistrationSuccess(user) {
 async function loginUser() {
 
   const email =
-    document.getElementById(
-      "loginEmail"
-    )?.value.trim();
+    document.getElementById("loginEmail")?.value.trim();
 
   const password =
-    document.getElementById(
-      "loginPassword"
-    )?.value;
+    document.getElementById("loginPassword")?.value;
 
   const message =
-    document.getElementById(
-      "loginMessage"
-    );
+    document.getElementById("loginMessage");
 
 
   if (!email || !password) {
@@ -970,6 +924,7 @@ async function loginUser() {
     );
 
     return;
+
   }
 
 
@@ -986,11 +941,8 @@ async function loginUser() {
   } =
     await supabaseClient.auth.signInWithPassword({
 
-      email:
-        email,
-
-      password:
-        password
+      email,
+      password
 
     });
 
@@ -1004,6 +956,7 @@ async function loginUser() {
     );
 
     return;
+
   }
 
 
@@ -1016,6 +969,7 @@ async function loginUser() {
     );
 
     return;
+
   }
 
 
@@ -1045,16 +999,13 @@ async function openDashboard() {
     openModal("login");
 
     return;
+
   }
 
 
   const authUser =
     session.user;
 
-
-  // ==========================================
-  // GET PROFILE
-  // ==========================================
 
   const {
     data: profile,
@@ -1080,6 +1031,7 @@ async function openDashboard() {
     );
 
     return;
+
   }
 
 
@@ -1087,9 +1039,7 @@ async function openDashboard() {
 
 
   document
-    .getElementById(
-      "samajSaathiDashboard"
-    )
+    .getElementById("samajSaathiDashboard")
     ?.remove();
 
 
@@ -1160,6 +1110,93 @@ async function openDashboard() {
       ">
 
 
+        <!-- =================================
+             PROFILE PHOTO
+        ================================== -->
+
+        <div style="
+          background:#f8f1f3;
+          border-radius:18px;
+          padding:25px;
+          margin-bottom:25px;
+          text-align:center;
+        ">
+
+          <span class="eyebrow">
+            PROFILE PHOTO
+          </span>
+
+          <div style="
+            margin:20px auto;
+            width:150px;
+            height:150px;
+            border-radius:50%;
+            overflow:hidden;
+            background:#eee;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+          ">
+
+            ${
+              profile.profile_photo
+                ? `
+                  <img
+                    src="${escapeHtml(profile.profile_photo)}"
+                    alt="Profile Photo"
+                    style="
+                      width:100%;
+                      height:100%;
+                      object-fit:cover;
+                    "
+                  >
+                `
+                : `
+                  <span style="
+                    font-size:55px;
+                    color:#aaa;
+                  ">
+                    👤
+                  </span>
+                `
+            }
+
+          </div>
+
+
+          <input
+            id="profilePhotoInput"
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style="
+              display:block;
+              margin:15px auto;
+              max-width:100%;
+            "
+          >
+
+
+          <button
+            class="btn primary"
+            type="button"
+            onclick="uploadProfilePhoto()"
+          >
+            📷 Upload / Change Photo
+          </button>
+
+
+          <div
+            id="photoMessage"
+            style="margin-top:10px;"
+          ></div>
+
+        </div>
+
+
+        <!-- =================================
+             WELCOME
+        ================================== -->
+
         <div style="
           background:#f8f1f3;
           border-radius:18px;
@@ -1184,6 +1221,10 @@ async function openDashboard() {
 
         </div>
 
+
+        <!-- =================================
+             PROFILE INFORMATION
+        ================================== -->
 
         <div style="
           display:grid;
@@ -1235,6 +1276,227 @@ async function openDashboard() {
         </div>
 
 
+        <!-- =================================
+             UPDATE PROFILE
+        ================================== -->
+
+        <div style="
+          margin-top:30px;
+          padding:25px;
+          border-radius:14px;
+          border:1px solid #eee;
+        ">
+
+          <h2>
+            ✏️ Update Profile
+          </h2>
+
+          <p>
+            Update your profile information below.
+          </p>
+
+
+          <div class="form-grid">
+
+            <div class="field full">
+
+              <label>
+                Full Name
+              </label>
+
+              <input
+                id="editFullName"
+                value="${escapeHtml(profile.full_name || "")}"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Gender
+              </label>
+
+              <select id="editGender">
+
+                <option
+                  value="female"
+                  ${profile.gender === "female" ? "selected" : ""}
+                >
+                  Woman
+                </option>
+
+                <option
+                  value="male"
+                  ${profile.gender === "male" ? "selected" : ""}
+                >
+                  Man
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Date of Birth
+              </label>
+
+              <input
+                id="editDob"
+                type="date"
+                value="${escapeHtml(profile.date_of_birth || "")}"
+              >
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Community / Jati
+              </label>
+
+              <select id="editCommunity">
+
+                <option
+                  value="Dom"
+                  ${profile.community === "Dom" ? "selected" : ""}
+                >
+                  Dom
+                </option>
+
+                <option
+                  value="Other SC Community"
+                  ${profile.community === "Other SC Community" ? "selected" : ""}
+                >
+                  Other SC Community
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Surname
+              </label>
+
+              <select id="editSurname">
+
+                <option
+                  value="Rauth"
+                  ${profile.surname === "Rauth" ? "selected" : ""}
+                >
+                  Rauth
+                </option>
+
+                <option
+                  value="Basfor"
+                  ${profile.surname === "Basfor" ? "selected" : ""}
+                >
+                  Basfor
+                </option>
+
+                <option
+                  value="Bansfor"
+                  ${profile.surname === "Bansfor" ? "selected" : ""}
+                >
+                  Bansfor
+                </option>
+
+                <option
+                  value="Other"
+                  ${profile.surname === "Other" ? "selected" : ""}
+                >
+                  Other
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field">
+
+              <label>
+                Kul / Clan
+              </label>
+
+              <select id="editKul">
+
+                <option
+                  value="Piari Baiswar"
+                  ${profile.kul === "Piari Baiswar" ? "selected" : ""}
+                >
+                  Piari Baiswar
+                </option>
+
+                <option
+                  value="Other"
+                  ${profile.kul === "Other" ? "selected" : ""}
+                >
+                  Other
+                </option>
+
+                <option
+                  value="Not Known"
+                  ${profile.kul === "Not Known" ? "selected" : ""}
+                >
+                  Not Known
+                </option>
+
+              </select>
+
+            </div>
+
+
+            <div class="field full">
+
+              <label>
+                Current City
+              </label>
+
+              <input
+                id="editCity"
+                value="${escapeHtml(profile.city || "")}"
+              >
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="updateProfileMessage"
+            style="margin-top:15px;"
+          ></div>
+
+
+          <div class="modal-actions">
+
+            <button
+              class="btn primary"
+              type="button"
+              onclick="updateProfile()"
+            >
+              💾 Save Profile Changes
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <!-- =================================
+             MATCHES
+        ================================== -->
+
         <div style="
           margin-top:30px;
           padding:20px;
@@ -1263,6 +1525,462 @@ async function openDashboard() {
 
   document.body.appendChild(
     dashboard
+  );
+
+}
+
+
+// ============================================
+// UPLOAD PROFILE PHOTO
+// ============================================
+
+async function uploadProfilePhoto() {
+
+  const input =
+    document.getElementById(
+      "profilePhotoInput"
+    );
+
+  const message =
+    document.getElementById(
+      "photoMessage"
+    );
+
+
+  if (!input?.files?.length) {
+
+    showMessage(
+      message,
+      "Please choose a photo first.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const file =
+    input.files[0];
+
+
+  // Limit: 5 MB
+
+  if (file.size > 5 * 1024 * 1024) {
+
+    showMessage(
+      message,
+      "Photo must be smaller than 5 MB.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const allowedTypes = [
+    "image/jpeg",
+    "image/png",
+    "image/webp"
+  ];
+
+
+  if (!allowedTypes.includes(file.type)) {
+
+    showMessage(
+      message,
+      "Please select a JPG, PNG or WEBP image.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const {
+    data: sessionData
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  const session =
+    sessionData?.session;
+
+
+  if (!session) {
+
+    showMessage(
+      message,
+      "Please login first.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const userId =
+    session.user.id;
+
+
+  const extension =
+    file.name
+      .split(".")
+      .pop()
+      .toLowerCase();
+
+
+  const filePath =
+    `private/${userId}/profile.${extension}`;
+
+
+  showMessage(
+    message,
+    "Uploading photo...",
+    "info"
+  );
+
+
+  // Remove previous common photo names
+
+  const oldFiles = [
+    `private/${userId}/profile.jpg`,
+    `private/${userId}/profile.jpeg`,
+    `private/${userId}/profile.png`,
+    `private/${userId}/profile.webp`
+  ];
+
+
+  await supabaseClient
+    .storage
+    .from("profile-photos")
+    .remove(oldFiles);
+
+
+  const {
+    error: uploadError
+  } =
+    await supabaseClient
+      .storage
+      .from("profile-photos")
+      .upload(
+        filePath,
+        file,
+        {
+          upsert: true,
+          contentType: file.type
+        }
+      );
+
+
+  if (uploadError) {
+
+    console.error(
+      "PHOTO UPLOAD ERROR:",
+      uploadError
+    );
+
+    showMessage(
+      message,
+      "Photo upload failed: " +
+      uploadError.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  // ==========================================
+  // PRIVATE FILE URL
+  // ==========================================
+
+  const {
+    data: signedData,
+    error: signedError
+  } =
+    await supabaseClient
+      .storage
+      .from("profile-photos")
+      .createSignedUrl(
+        filePath,
+        60 * 60 * 24 * 7
+      );
+
+
+  if (signedError) {
+
+    console.error(
+      "SIGNED URL ERROR:",
+      signedError
+    );
+
+    showMessage(
+      message,
+      "Photo uploaded, but preview URL could not be created.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const photoUrl =
+    signedData?.signedUrl;
+
+
+  // ==========================================
+  // SAVE PHOTO PATH IN PROFILES
+  // ==========================================
+
+  const {
+    error: profileError
+  } =
+    await supabaseClient
+      .from("profiles")
+      .update({
+
+        profile_photo:
+          filePath
+
+      })
+      .eq(
+        "id",
+        userId
+      );
+
+
+  if (profileError) {
+
+    console.error(
+      "PHOTO PROFILE UPDATE ERROR:",
+      profileError
+    );
+
+    showMessage(
+      message,
+      "Photo uploaded, but profile could not be updated: " +
+      profileError.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    message,
+    "Profile photo uploaded successfully!",
+    "info"
+  );
+
+
+  // Replace preview image
+
+  const photoBox =
+    input
+      .parentElement
+      ?.querySelector(
+        "div[style*='border-radius:50%']"
+      );
+
+
+  if (photoBox) {
+
+    photoBox.innerHTML = `
+
+      <img
+        src="${escapeHtml(photoUrl)}"
+        alt="Profile Photo"
+        style="
+          width:100%;
+          height:100%;
+          object-fit:cover;
+        "
+      >
+
+    `;
+
+  }
+
+}
+
+
+// ============================================
+// UPDATE PROFILE
+// ============================================
+
+async function updateProfile() {
+
+  const message =
+    document.getElementById(
+      "updateProfileMessage"
+    );
+
+
+  const {
+    data: sessionData
+  } =
+    await supabaseClient.auth.getSession();
+
+
+  const session =
+    sessionData?.session;
+
+
+  if (!session) {
+
+    showMessage(
+      message,
+      "Please login first.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  const userId =
+    session.user.id;
+
+
+  const fullName =
+    document.getElementById(
+      "editFullName"
+    )?.value.trim();
+
+
+  const gender =
+    document.getElementById(
+      "editGender"
+    )?.value;
+
+
+  const dob =
+    document.getElementById(
+      "editDob"
+    )?.value;
+
+
+  const community =
+    document.getElementById(
+      "editCommunity"
+    )?.value;
+
+
+  const surname =
+    document.getElementById(
+      "editSurname"
+    )?.value;
+
+
+  const kul =
+    document.getElementById(
+      "editKul"
+    )?.value;
+
+
+  const city =
+    document.getElementById(
+      "editCity"
+    )?.value.trim();
+
+
+  if (!fullName || !city) {
+
+    showMessage(
+      message,
+      "Name and city are required.",
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    message,
+    "Saving changes...",
+    "info"
+  );
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("profiles")
+      .update({
+
+        full_name:
+          fullName,
+
+        gender:
+          gender,
+
+        date_of_birth:
+          dob || null,
+
+        community:
+          community,
+
+        surname:
+          surname,
+
+        kul:
+          kul,
+
+        city:
+          city
+
+      })
+      .eq(
+        "id",
+        userId
+      );
+
+
+  if (error) {
+
+    console.error(
+      "PROFILE UPDATE ERROR:",
+      error
+    );
+
+    showMessage(
+      message,
+      "Profile update failed: " +
+      error.message,
+      "error"
+    );
+
+    return;
+
+  }
+
+
+  showMessage(
+    message,
+    "Profile updated successfully!",
+    "info"
+  );
+
+
+  // Reload dashboard
+
+  setTimeout(
+    () => {
+      openDashboard();
+    },
+    700
   );
 
 }
@@ -1459,3 +2177,4 @@ document.addEventListener(
   }
 
 })();
+```
