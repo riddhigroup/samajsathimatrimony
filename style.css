@@ -1595,3 +1595,184 @@ footer p{
 
 }
 ```
+```css
+/* =========================================================
+   FINAL BUTTON COLOR FIX — SAMAJ SAATHI
+   DO NOT REMOVE EXISTING CSS
+   ========================================================= */
+
+/* Base button */
+button.btn,
+a.btn,
+.btn {
+  font-family: "DM Sans", sans-serif !important;
+  font-weight: 700 !important;
+  text-decoration: none !important;
+  cursor: pointer !important;
+  transition: all .2s ease !important;
+}
+
+/* =========================
+   LOGIN
+   ========================= */
+
+.topbar .actions .btn.ghost {
+  background: transparent !important;
+  color: #241c1d !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+}
+
+.topbar .actions .btn.ghost:hover {
+  background: #fbf1ed !important;
+  color: #681126 !important;
+}
+
+
+/* =========================
+   CREATE PROFILE
+   ========================= */
+
+.topbar .actions .btn.primary {
+  background: #681126 !important;
+  color: #ffffff !important;
+  border: 1px solid #681126 !important;
+  box-shadow: 0 8px 20px rgba(104,17,38,.16) !important;
+}
+
+.topbar .actions .btn.primary:hover {
+  background: #861b35 !important;
+  color: #ffffff !important;
+  border-color: #861b35 !important;
+}
+
+
+/* =========================
+   FIND YOUR MATCH
+   ========================= */
+
+.hero-buttons .btn.primary {
+  background: #681126 !important;
+  color: #ffffff !important;
+  border: 1px solid #681126 !important;
+  box-shadow: 0 10px 25px rgba(104,17,38,.18) !important;
+}
+
+.hero-buttons .btn.primary:hover {
+  background: #861b35 !important;
+  color: #ffffff !important;
+  border-color: #861b35 !important;
+}
+
+
+/* =========================
+   VIEW ALL MATCHES
+   ========================= */
+
+.section-head .btn {
+  background: #ffffff !important;
+  color: #681126 !important;
+  border: 1px solid #681126 !important;
+  box-shadow: none !important;
+}
+
+.section-head .btn:hover {
+  background: #681126 !important;
+  color: #ffffff !important;
+  border-color: #681126 !important;
+}
+
+
+/* =========================
+   CREATE YOUR PROFILE
+   ========================= */
+
+.cta .btn,
+.cta a.btn {
+  background: #ffffff !important;
+  color: #681126 !important;
+  border: 1px solid #ffffff !important;
+  box-shadow: 0 8px 20px rgba(0,0,0,.12) !important;
+}
+
+.cta .btn:hover,
+.cta a.btn:hover {
+  background: #f7e9e7 !important;
+  color: #681126 !important;
+  border-color: #f7e9e7 !important;
+}
+
+
+/* =========================
+   TEXT BUTTON
+   ========================= */
+
+.hero-buttons .text-btn {
+  background: transparent !important;
+  color: #681126 !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.hero-buttons .text-btn:hover {
+  background: transparent !important;
+  color: #861b35 !important;
+}
+
+
+/* =========================
+   MODAL BUTTONS
+   ========================= */
+
+.modal-actions .btn.primary {
+  background: #681126 !important;
+  color: #ffffff !important;
+  border-color: #681126 !important;
+}
+
+.modal-actions .btn.primary:hover {
+  background: #861b35 !important;
+  color: #ffffff !important;
+  border-color: #861b35 !important;
+}
+
+.modal-actions .btn:not(.primary) {
+  background: #ffffff !important;
+  color: #681126 !important;
+  border: 1px solid #681126 !important;
+}
+
+.modal-actions .btn:not(.primary):hover {
+  background: #681126 !important;
+  color: #ffffff !important;
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media(max-width:560px){
+
+  .topbar .actions .btn.primary {
+    background: #681126 !important;
+    color: #ffffff !important;
+  }
+
+  .hero-buttons .btn.primary {
+    background: #681126 !important;
+    color: #ffffff !important;
+  }
+
+  .section-head .btn {
+    background: #ffffff !important;
+    color: #681126 !important;
+  }
+
+  .cta .btn {
+    background: #ffffff !important;
+    color: #681126 !important;
+  }
+}
+```
+
