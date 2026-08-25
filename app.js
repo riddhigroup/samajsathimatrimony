@@ -1,3 +1,4 @@
+```javascript
 // ============================================
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
@@ -22,8 +23,7 @@ const supabaseClient =
 
 
 // ============================================
-// LOAD REAL PROFILES
-// PUBLIC HOME PROFILE LIST
+// LOAD PROFILES FOR PUBLIC DISCOVER
 // ============================================
 
 async function loadProfiles() {
@@ -46,8 +46,14 @@ async function loadProfiles() {
 
   try {
 
-    const result =
-      await supabaseClient
+    const sessionResult =
+      await supabaseClient.auth.getSession();
+
+    const currentUser =
+      sessionResult.data?.session?.user;
+
+    let query =
+      supabaseClient
         .from("profiles")
         .select(`
           id,
@@ -69,6 +75,12 @@ async function loadProfiles() {
           ascending: false
         });
 
+    if (currentUser) {
+      query = query.neq("id", currentUser.id);
+    }
+
+    const result = await query;
+
     if (result.error) {
 
       console.error(
@@ -83,25 +95,18 @@ async function loadProfiles() {
           padding:40px;
           color:#b42318;
         ">
-
-          <h3>
-            Unable to load profiles
-          </h3>
-
-          <p>
-            ${escapeHtml(result.error.message)}
-          </p>
-
+          <h3>Unable to load profiles</h3>
+          <p>${escapeHtml(result.error.message)}</p>
         </div>
       `;
 
       return;
     }
 
-    const realProfiles =
+    const profiles =
       result.data || [];
 
-    if (realProfiles.length === 0) {
+    if (profiles.length === 0) {
 
       grid.innerHTML = `
         <div style="
@@ -109,15 +114,8 @@ async function loadProfiles() {
           text-align:center;
           padding:40px;
         ">
-
-          <h3>
-            No profiles available yet.
-          </h3>
-
-          <p>
-            New members will appear here after registration.
-          </p>
-
+          <h3>No profiles available yet.</h3>
+          <p>New members will appear here after registration.</p>
         </div>
       `;
 
@@ -125,152 +123,21 @@ async function loadProfiles() {
     }
 
     grid.innerHTML =
-      realProfiles.map(function (p) {
+      profiles.map(
+        function (p) {
 
-        const location =
-          [p.city, p.state]
-            .filter(Boolean)
-            .join(", ");
-
-        let photoHtml = `
-
-          <div class="profile-img">
-
-            <span style="
-              font-size:55px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              height:100%;
-            ">
-              👤
-            </span>
-
-            <span class="profile-tag">
-              ✓ Verified
-            </span>
-
-          </div>
-
-        `;
-
-
-        // ====================================
-        // PROFILE PHOTO
-        // ====================================
-
-        if (p.profile_photo) {
-
-          const publicResult =
-            supabaseClient
-              .storage
-              .from("profile-photos")
-              .getPublicUrl(
-                p.profile_photo
-              );
-
-          const photoUrl =
-            publicResult.data?.publicUrl;
-
-          if (photoUrl) {
-
-            photoHtml = `
-
-              <div class="profile-img">
-
-                <img
-                  src="${escapeHtml(photoUrl)}"
-                  alt="${escapeHtml(
-                    p.full_name || "Profile"
-                  )}"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                  "
-                >
-
-                <span class="profile-tag">
-                  ✓ Verified
-                </span>
-
-              </div>
-
-            `;
-
-          }
+          return createProfileCard(
+            p,
+            false
+          );
 
         }
-
-        return `
-
-          <article class="profile">
-
-            ${photoHtml}
-
-            <div class="profile-body">
-
-              <b>
-                ${escapeHtml(
-                  p.full_name || "Member"
-                )}
-                ${
-                  p.age
-                    ? ", " + escapeHtml(p.age)
-                    : ""
-                }
-              </b>
-
-              <small>
-                ${escapeHtml(
-                  location ||
-                  "Location not specified"
-                )}
-              </small>
-
-              <small>
-
-                ${escapeHtml(
-                  p.community || ""
-                )}
-
-                ${
-                  p.surname
-                    ? " · " +
-                      escapeHtml(p.surname)
-                    : ""
-                }
-
-                ${
-                  p.kul
-                    ? " · " +
-                      escapeHtml(p.kul)
-                    : ""
-                }
-
-              </small>
-
-              <small class="match">
-                SamajSaathi Member
-              </small>
-
-            </div>
-
-          </article>
-
-        `;
-
-      }).join("");
-
-    console.log(
-      "Real profiles loaded:",
-      realProfiles.length
-    );
+      ).join("");
 
   } catch (error) {
 
     console.error(
-      "PROFILES ERROR:",
+      "PUBLIC PROFILES ERROR:",
       error
     );
 
@@ -281,75 +148,75 @@ async function loadProfiles() {
         padding:40px;
         color:#b42318;
       ">
-
         Something went wrong while loading profiles.
-
       </div>
     `;
-
   }
-
 }
 
 
 // ============================================
 // FIND YOUR MATCHES
-// DATABASE MATCHING
 // ============================================
 
 async function loadMatches() {
 
   const container =
     document.getElementById(
-      "matchesGrid"
+      "matchesContainer"
     );
 
   if (!container) return;
 
-
   container.innerHTML = `
     <div style="
       text-align:center;
-      padding:35px;
+      padding:35px 15px;
       color:#6f1025;
     ">
-      💕 Finding your matches...
+      <div style="
+        font-size:35px;
+        margin-bottom:10px;
+      ">
+        💕
+      </div>
+
+      <strong>
+        Finding your matches...
+      </strong>
     </div>
   `;
 
-
   try {
 
-    // ========================================
-    // GET CURRENT SESSION
-    // ========================================
-
     const sessionResult =
-      await supabaseClient.auth
-        .getSession();
+      await supabaseClient.auth.getSession();
 
     const session =
       sessionResult.data?.session;
-
 
     if (!session) {
 
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:35px;
+          padding:30px;
         ">
 
           <h3>
-            Please login to find your matches.
+            Login to Find Your Matches
           </h3>
+
+          <p>
+            Please login to see profiles matching your gender preference.
+          </p>
 
           <button
             class="btn primary"
             type="button"
             onclick="openModal('login')"
           >
-            Login
+            🔐 Login to Continue
           </button>
 
         </div>
@@ -364,15 +231,24 @@ async function loadMatches() {
 
 
     // ========================================
-    // GET MY PROFILE
+    // GET CURRENT USER PROFILE
     // ========================================
 
-    const myProfileResult =
+    const currentResult =
       await supabaseClient
         .from("profiles")
         .select(`
           id,
+          full_name,
           gender,
+          age,
+          city,
+          state,
+          community,
+          surname,
+          kul,
+          profile_photo,
+          photo_url,
           is_active
         `)
         .eq(
@@ -382,30 +258,24 @@ async function loadMatches() {
         .maybeSingle();
 
 
-    if (myProfileResult.error) {
+    if (currentResult.error) {
 
       console.error(
-        "MY PROFILE ERROR:",
-        myProfileResult.error
+        "CURRENT PROFILE ERROR:",
+        currentResult.error
       );
 
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:35px;
+          padding:30px;
           color:#b42318;
         ">
-
-          <h3>
-            Unable to load your profile.
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              myProfileResult.error.message
-            )}
-          </p>
-
+          Unable to load your profile.
+          <br>
+          ${escapeHtml(
+            currentResult.error.message
+          )}
         </div>
       `;
 
@@ -413,26 +283,24 @@ async function loadMatches() {
     }
 
 
-    if (!myProfileResult.data) {
+    const currentProfile =
+      currentResult.data;
+
+
+    if (!currentProfile) {
 
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:35px;
+          padding:30px;
         ">
 
-          <div style="
-            font-size:50px;
-          ">
-            👤
-          </div>
-
           <h3>
-            Your profile was not found.
+            Complete your profile first
           </h3>
 
           <p>
-            Please complete your profile first.
+            We need your gender to find suitable matches.
           </p>
 
         </div>
@@ -442,37 +310,39 @@ async function loadMatches() {
     }
 
 
-    const myGender =
-      String(
-        myProfileResult.data.gender || ""
-      )
-        .toLowerCase()
-        .trim();
+    if (!currentProfile.gender) {
 
+      container.innerHTML = `
+        <div style="
+          text-align:center;
+          padding:30px;
+        ">
 
-    // ========================================
-    // DETERMINE OPPOSITE GENDER
-    // ========================================
+          <h3>
+            Gender information is missing
+          </h3>
 
-    let oppositeGender = null;
+          <p>
+            Please update your profile with your gender.
+          </p>
 
+        </div>
+      `;
 
-    if (
-      myGender === "male"
-    ) {
-
-      oppositeGender = "female";
-
+      return;
     }
 
 
-    if (
-      myGender === "female"
-    ) {
+    // ========================================
+    // OPPOSITE GENDER
+    // ========================================
 
-      oppositeGender = "male";
-
-    }
+    const oppositeGender =
+      currentProfile.gender === "male"
+        ? "female"
+        : currentProfile.gender === "female"
+          ? "male"
+          : null;
 
 
     if (!oppositeGender) {
@@ -480,23 +350,11 @@ async function loadMatches() {
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:35px;
+          padding:30px;
         ">
-
-          <div style="
-            font-size:45px;
-          ">
-            ⚠️
-          </div>
-
           <h3>
-            Gender information is incomplete.
+            Matches are not available yet.
           </h3>
-
-          <p>
-            Please update your profile gender.
-          </p>
-
         </div>
       `;
 
@@ -504,19 +362,8 @@ async function loadMatches() {
     }
 
 
-    console.log(
-      "My gender:",
-      myGender
-    );
-
-    console.log(
-      "Looking for:",
-      oppositeGender
-    );
-
-
     // ========================================
-    // FIND OPPOSITE-GENDER ACTIVE PROFILES
+    // GET MATCHING PROFILES
     // ========================================
 
     const matchesResult =
@@ -538,12 +385,12 @@ async function loadMatches() {
           created_at
         `)
         .eq(
-          "is_active",
-          true
-        )
-        .eq(
           "gender",
           oppositeGender
+        )
+        .eq(
+          "is_active",
+          true
         )
         .neq(
           "id",
@@ -552,7 +399,7 @@ async function loadMatches() {
         .order(
           "created_at",
           {
-            ascending: false
+            ascending:false
           }
         );
 
@@ -560,19 +407,19 @@ async function loadMatches() {
     if (matchesResult.error) {
 
       console.error(
-        "MATCHES ERROR:",
+        "MATCHES LOAD ERROR:",
         matchesResult.error
       );
 
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:35px;
+          padding:30px;
           color:#b42318;
         ">
 
           <h3>
-            Unable to load matches.
+            Unable to find matches
           </h3>
 
           <p>
@@ -592,35 +439,34 @@ async function loadMatches() {
       matchesResult.data || [];
 
 
-    // ========================================
-    // NO MATCHES
-    // ========================================
-
-    if (
-      matches.length === 0
-    ) {
+    if (matches.length === 0) {
 
       container.innerHTML = `
         <div style="
           text-align:center;
-          padding:40px;
-          background:#faf7f8;
-          border-radius:14px;
+          padding:40px 20px;
+          background:#f8f1f3;
+          border-radius:15px;
         ">
 
           <div style="
-            font-size:55px;
+            font-size:45px;
+            margin-bottom:12px;
           ">
             💕
           </div>
 
           <h3>
-            No matches found yet.
+            No matches available yet
           </h3>
 
           <p>
-            Suitable profiles will appear here
-            when available.
+            New ${
+              oppositeGender === "female"
+                ? "women"
+                : "men"
+            }
+            profiles will appear here when they join SamajSaathi.
           </p>
 
         </div>
@@ -631,272 +477,58 @@ async function loadMatches() {
 
 
     // ========================================
-    // MATCH GRID
+    // MATCH COUNT
     // ========================================
 
     let html = `
 
       <div style="
-        display:grid;
-        grid-template-columns:
-          repeat(auto-fit,minmax(250px,1fr));
-        gap:20px;
-        width:100%;
+        margin-bottom:18px;
+        padding:15px;
+        background:#f8f1f3;
+        border-radius:12px;
       ">
 
+        <strong>
+          ${matches.length}
+          ${
+            matches.length === 1
+              ? "match"
+              : "matches"
+          }
+        </strong>
+
+        <span style="
+          color:#777;
+          margin-left:5px;
+        ">
+          found for you
+        </span>
+
+      </div>
+
+
+      <div style="
+        display:grid;
+        grid-template-columns:
+        repeat(auto-fit,minmax(220px,1fr));
+        gap:18px;
+      ">
     `;
 
 
-    // ========================================
-    // BUILD MATCH CARDS
-    // ========================================
+    html += matches
+      .map(
+        function (profile) {
 
-    for (
-      const profile of matches
-    ) {
-
-      const location =
-        [
-          profile.city,
-          profile.state
-        ]
-          .filter(Boolean)
-          .join(", ");
-
-
-      let photoHtml = `
-
-        <div style="
-          width:100%;
-          height:240px;
-          background:#f3e9ec;
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          position:relative;
-        ">
-
-          <span style="
-            font-size:70px;
-          ">
-            👤
-          </span>
-
-        </div>
-
-      `;
-
-
-      // ======================================
-      // PRIVATE PHOTO SIGNED URL
-      // ======================================
-
-      if (
-        profile.profile_photo
-      ) {
-
-        try {
-
-          const photoResult =
-            await supabaseClient
-              .storage
-              .from("profile-photos")
-              .createSignedUrl(
-                profile.profile_photo,
-                3600
-              );
-
-
-          const signedUrl =
-            photoResult.data?.signedUrl;
-
-
-          if (signedUrl) {
-
-            photoHtml = `
-
-              <div style="
-                width:100%;
-                height:240px;
-                overflow:hidden;
-                background:#f3e9ec;
-              ">
-
-                <img
-                  src="${escapeHtml(
-                    signedUrl
-                  )}"
-                  alt="${escapeHtml(
-                    profile.full_name ||
-                    "Profile"
-                  )}"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                  "
-                >
-
-              </div>
-
-            `;
-
-          }
-
-        } catch (
-          photoError
-        ) {
-
-          console.error(
-            "MATCH PHOTO ERROR:",
-            photoError
+          return createProfileCard(
+            profile,
+            true
           );
 
         }
-
-      }
-
-
-      html += `
-
-        <article style="
-          background:#fff;
-          border:1px solid #eadde1;
-          border-radius:18px;
-          overflow:hidden;
-          box-shadow:
-            0 6px 18px
-            rgba(80,30,45,.08);
-        ">
-
-          ${photoHtml}
-
-          <div style="
-            padding:20px;
-          ">
-
-            <h3 style="
-              margin:0 0 8px;
-              color:#4b1020;
-            ">
-
-              ${escapeHtml(
-                profile.full_name ||
-                "Member"
-              )}
-
-              ${
-                profile.age
-                  ? ", " +
-                    escapeHtml(
-                      profile.age
-                    )
-                  : ""
-              }
-
-            </h3>
-
-
-            <div style="
-              color:#666;
-              font-size:14px;
-              margin-bottom:10px;
-            ">
-
-              📍
-              ${escapeHtml(
-                location ||
-                "Location not specified"
-              )}
-
-            </div>
-
-
-            ${
-              profile.community
-                ? `
-                  <div style="
-                    font-size:13px;
-                    margin-bottom:6px;
-                  ">
-
-                    <strong>
-                      Community:
-                    </strong>
-
-                    ${escapeHtml(
-                      profile.community
-                    )}
-
-                  </div>
-                `
-                : ""
-            }
-
-
-            ${
-              profile.surname
-                ? `
-                  <div style="
-                    font-size:13px;
-                    margin-bottom:6px;
-                  ">
-
-                    <strong>
-                      Surname:
-                    </strong>
-
-                    ${escapeHtml(
-                      profile.surname
-                    )}
-
-                  </div>
-                `
-                : ""
-            }
-
-
-            ${
-              profile.kul
-                ? `
-                  <div style="
-                    font-size:13px;
-                    margin-bottom:6px;
-                  ">
-
-                    <strong>
-                      Kul:
-                    </strong>
-
-                    ${escapeHtml(
-                      profile.kul
-                    )}
-
-                  </div>
-                `
-                : ""
-            }
-
-
-            <div style="
-              margin-top:15px;
-              padding-top:12px;
-              border-top:1px solid #eee;
-              color:#6f1025;
-              font-size:12px;
-            ">
-
-              ✓ Active SamajSaathi Member
-
-            </div>
-
-          </div>
-
-        </article>
-
-      `;
-
-    }
+      )
+      .join("");
 
 
     html += `
@@ -908,33 +540,530 @@ async function loadMatches() {
       html;
 
 
-    console.log(
-      "MATCHES FOUND:",
-      matches.length
-    );
-
-
   } catch (error) {
 
     console.error(
-      "FIND MATCHES ERROR:",
+      "MATCHES ERROR:",
       error
     );
 
     container.innerHTML = `
       <div style="
         text-align:center;
-        padding:35px;
+        padding:30px;
         color:#b42318;
       ">
-
         Something went wrong while finding matches.
-
       </div>
     `;
+  }
+}
 
+
+// ============================================
+// CREATE PROFILE CARD
+// ============================================
+
+function createProfileCard(
+  profile,
+  showActions
+) {
+
+  const location =
+    [
+      profile.city,
+      profile.state
+    ]
+      .filter(Boolean)
+      .join(", ");
+
+
+  let photoHtml = `
+
+    <div style="
+      height:220px;
+      background:#f1e9ec;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+    ">
+
+      <span style="
+        font-size:70px;
+      ">
+        👤
+      </span>
+
+      <span style="
+        position:absolute;
+        top:12px;
+        right:12px;
+        background:#6f1025;
+        color:#fff;
+        padding:5px 9px;
+        border-radius:20px;
+        font-size:11px;
+      ">
+        ✓ Active
+      </span>
+
+    </div>
+
+  `;
+
+
+  if (
+    profile.profile_photo
+  ) {
+
+    const publicResult =
+      supabaseClient
+        .storage
+        .from("profile-photos")
+        .getPublicUrl(
+          profile.profile_photo
+        );
+
+
+    const photoUrl =
+      publicResult.data?.publicUrl;
+
+
+    if (photoUrl) {
+
+      photoHtml = `
+
+        <div style="
+          height:220px;
+          background:#f1e9ec;
+          position:relative;
+          overflow:hidden;
+        ">
+
+          <img
+            src="${escapeHtml(photoUrl)}"
+            alt="${escapeHtml(
+              profile.full_name ||
+              "Profile"
+            )}"
+            style="
+              width:100%;
+              height:100%;
+              object-fit:cover;
+            "
+          >
+
+          <span style="
+            position:absolute;
+            top:12px;
+            right:12px;
+            background:#6f1025;
+            color:#fff;
+            padding:5px 9px;
+            border-radius:20px;
+            font-size:11px;
+          ">
+            ✓ Active
+          </span>
+
+        </div>
+
+      `;
+    }
   }
 
+
+  return `
+
+    <article style="
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 5px 18px rgba(0,0,0,.06);
+    ">
+
+      ${photoHtml}
+
+
+      <div style="
+        padding:18px;
+      ">
+
+        <h3 style="
+          margin:0 0 6px;
+          font-size:20px;
+        ">
+
+          ${escapeHtml(
+            profile.full_name ||
+            "Member"
+          )}
+
+          ${
+            profile.age
+              ? ", " +
+                escapeHtml(
+                  profile.age
+                )
+              : ""
+          }
+
+        </h3>
+
+
+        <div style="
+          color:#666;
+          font-size:14px;
+          margin-bottom:8px;
+        ">
+
+          📍
+          ${escapeHtml(
+            location ||
+            "Location not specified"
+          )}
+
+        </div>
+
+
+        <div style="
+          color:#555;
+          font-size:13px;
+          line-height:1.7;
+        ">
+
+          ${
+            profile.community
+              ? `
+                <div>
+                  <strong>Community:</strong>
+                  ${escapeHtml(
+                    profile.community
+                  )}
+                </div>
+              `
+              : ""
+          }
+
+
+          ${
+            profile.surname
+              ? `
+                <div>
+                  <strong>Surname:</strong>
+                  ${escapeHtml(
+                    profile.surname
+                  )}
+                </div>
+              `
+              : ""
+          }
+
+
+          ${
+            profile.kul
+              ? `
+                <div>
+                  <strong>Kul:</strong>
+                  ${escapeHtml(
+                    profile.kul
+                  )}
+                </div>
+              `
+              : ""
+          }
+
+        </div>
+
+
+        ${
+          showActions
+            ? `
+              <div style="
+                display:flex;
+                gap:10px;
+                margin-top:16px;
+              ">
+
+                <button
+                  type="button"
+                  class="btn primary"
+                  style="
+                    flex:1;
+                  "
+                  onclick="viewProfile(
+                    '${escapeHtml(profile.id)}'
+                  )"
+                >
+                  👁️ View Profile
+                </button>
+
+              </div>
+            `
+            : ""
+        }
+
+      </div>
+
+    </article>
+
+  `;
+}
+
+
+// ============================================
+// VIEW PROFILE
+// ============================================
+
+async function viewProfile(
+  profileId
+) {
+
+  try {
+
+    const result =
+      await supabaseClient
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          gender,
+          age,
+          city,
+          state,
+          community,
+          surname,
+          kul,
+          profile_photo,
+          photo_url,
+          is_active
+        `)
+        .eq(
+          "id",
+          profileId
+        )
+        .maybeSingle();
+
+
+    if (result.error) {
+
+      alert(
+        "Unable to open profile: " +
+        result.error.message
+      );
+
+      return;
+    }
+
+
+    if (!result.data) {
+
+      alert(
+        "Profile not found."
+      );
+
+      return;
+    }
+
+
+    const profile =
+      result.data;
+
+
+    let photoHtml = `
+
+      <div style="
+        width:150px;
+        height:150px;
+        margin:0 auto 20px;
+        border-radius:50%;
+        background:#f1e9ec;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-size:60px;
+      ">
+        👤
+      </div>
+
+    `;
+
+
+    if (
+      profile.profile_photo
+    ) {
+
+      const publicResult =
+        supabaseClient
+          .storage
+          .from("profile-photos")
+          .getPublicUrl(
+            profile.profile_photo
+          );
+
+
+      const photoUrl =
+        publicResult.data?.publicUrl;
+
+
+      if (photoUrl) {
+
+        photoHtml = `
+
+          <div style="
+            width:150px;
+            height:150px;
+            margin:0 auto 20px;
+            border-radius:50%;
+            overflow:hidden;
+          ">
+
+            <img
+              src="${escapeHtml(photoUrl)}"
+              style="
+                width:100%;
+                height:100%;
+                object-fit:cover;
+              "
+            >
+
+          </div>
+
+        `;
+      }
+    }
+
+
+    const modal =
+      document.getElementById(
+        "modal"
+      );
+
+    const content =
+      document.getElementById(
+        "modalContent"
+      );
+
+
+    if (!modal || !content) return;
+
+
+    content.innerHTML = `
+
+      <div style="
+        text-align:center;
+      ">
+
+        ${photoHtml}
+
+
+        <span class="eyebrow">
+          SAMAJSAATHI MEMBER
+        </span>
+
+
+        <h2 style="
+          margin-top:8px;
+        ">
+
+          ${escapeHtml(
+            profile.full_name ||
+            "Member"
+          )}
+
+          ${
+            profile.age
+              ? ", " +
+                escapeHtml(
+                  profile.age
+                )
+              : ""
+          }
+
+        </h2>
+
+
+        <p>
+          📍
+          ${escapeHtml(
+            [
+              profile.city,
+              profile.state
+            ]
+              .filter(Boolean)
+              .join(", ") ||
+              "Location not specified"
+          )}
+        </p>
+
+
+        <div style="
+          text-align:left;
+          margin-top:20px;
+        ">
+
+          ${dashboardItem(
+            "Gender",
+            profile.gender
+          )}
+
+          ${dashboardItem(
+            "Community",
+            profile.community
+          )}
+
+          ${dashboardItem(
+            "Surname",
+            profile.surname
+          )}
+
+          ${dashboardItem(
+            "Kul / Clan",
+            profile.kul
+          )}
+
+        </div>
+
+
+        <div class="modal-actions"
+          style="
+            margin-top:20px;
+          "
+        >
+
+          <button
+            class="btn primary"
+            type="button"
+            onclick="closeModal()"
+          >
+            Close
+          </button>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    modal.classList.add(
+      "show"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "VIEW PROFILE ERROR:",
+      error
+    );
+
+    alert(
+      "Something went wrong."
+    );
+  }
 }
 
 
@@ -950,11 +1079,10 @@ function scrollToId(id) {
   if (element) {
 
     element.scrollIntoView({
-      behavior: "smooth"
+      behavior:"smooth"
     });
 
   }
-
 }
 
 
@@ -971,7 +1099,6 @@ function generateUserId() {
     );
 
   return "SS" + number;
-
 }
 
 
@@ -987,12 +1114,18 @@ function generateUsername(
   const first =
     String(firstName)
       .toLowerCase()
-      .replace(/[^a-z]/g, "");
+      .replace(
+        /[^a-z]/g,
+        ""
+      );
 
   const last =
     String(lastName)
       .toLowerCase()
-      .replace(/[^a-z]/g, "");
+      .replace(
+        /[^a-z]/g,
+        ""
+      );
 
   const random =
     Math.floor(
@@ -1006,7 +1139,6 @@ function generateUsername(
     last +
     random
   );
-
 }
 
 
@@ -1034,11 +1166,9 @@ function generatePassword() {
           chars.length
         )
       );
-
   }
 
   return password;
-
 }
 
 
@@ -1049,7 +1179,9 @@ function generatePassword() {
 function openModal(type) {
 
   const modal =
-    document.getElementById("modal");
+    document.getElementById(
+      "modal"
+    );
 
   const content =
     document.getElementById(
@@ -1063,13 +1195,8 @@ function openModal(type) {
     );
 
     return;
-
   }
 
-
-  // ========================================
-  // LOGIN
-  // ========================================
 
   if (type === "login") {
 
@@ -1091,9 +1218,7 @@ function openModal(type) {
 
         <div class="field full">
 
-          <label>
-            Email
-          </label>
+          <label>Email</label>
 
           <input
             id="loginEmail"
@@ -1104,11 +1229,10 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field full">
 
-          <label>
-            Password
-          </label>
+          <label>Password</label>
 
           <input
             id="loginPassword"
@@ -1121,7 +1245,9 @@ function openModal(type) {
 
       </div>
 
+
       <div id="loginMessage"></div>
+
 
       <div class="modal-actions">
 
@@ -1134,6 +1260,7 @@ function openModal(type) {
         </button>
 
       </div>
+
 
       <p style="
         margin-top:18px;
@@ -1157,14 +1284,7 @@ function openModal(type) {
 
     `;
 
-  }
-
-
-  // ========================================
-  // REGISTER
-  // ========================================
-
-  else {
+  } else {
 
     content.innerHTML = `
 
@@ -1179,6 +1299,7 @@ function openModal(type) {
       <p>
         Tell us a little about yourself.
       </p>
+
 
       <div class="form-grid">
 
@@ -1195,6 +1316,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -1207,6 +1329,7 @@ function openModal(type) {
           >
 
         </div>
+
 
         <div class="field full">
 
@@ -1223,6 +1346,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -1235,6 +1359,7 @@ function openModal(type) {
           >
 
         </div>
+
 
         <div class="field">
 
@@ -1260,6 +1385,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -1279,6 +1405,7 @@ function openModal(type) {
           </select>
 
         </div>
+
 
         <div class="field">
 
@@ -1308,6 +1435,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -1332,6 +1460,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field full">
 
           <label>
@@ -1347,7 +1476,9 @@ function openModal(type) {
 
       </div>
 
+
       <div id="registerMessage"></div>
+
 
       <div class="modal-actions">
 
@@ -1362,11 +1493,12 @@ function openModal(type) {
       </div>
 
     `;
-
   }
 
-  modal.classList.add("show");
 
+  modal.classList.add(
+    "show"
+  );
 }
 
 
@@ -1383,10 +1515,11 @@ function closeModal() {
 
   if (modal) {
 
-    modal.classList.remove("show");
+    modal.classList.remove(
+      "show"
+    );
 
   }
-
 }
 
 
@@ -1463,7 +1596,6 @@ async function registerUser() {
     );
 
     return;
-
   }
 
 
@@ -1497,33 +1629,18 @@ async function registerUser() {
     const result =
       await supabaseClient.auth.signUp({
 
-        email:
-          email,
+        email:email,
 
-        password:
-          password,
+        password:password,
 
-        options: {
-
-          data: {
-
-            first_name:
-              firstName,
-
-            last_name:
-              lastName,
-
-            full_name:
-              fullName,
-
-            username:
-              username,
-
-            display_user_id:
-              displayUserId
-
+        options:{
+          data:{
+            first_name:firstName,
+            last_name:lastName,
+            full_name:fullName,
+            username:username,
+            display_user_id:displayUserId
           }
-
         }
 
       });
@@ -1545,7 +1662,6 @@ async function registerUser() {
       );
 
       return;
-
     }
 
 
@@ -1558,7 +1674,6 @@ async function registerUser() {
       );
 
       return;
-
     }
 
 
@@ -1575,35 +1690,25 @@ async function registerUser() {
 
     const profileData = {
 
-      id:
-        data.user.id,
+      id:data.user.id,
 
-      full_name:
-        fullName,
+      full_name:fullName,
 
-      gender:
-        gender,
+      gender:gender,
 
-      date_of_birth:
-        dob,
+      date_of_birth:dob,
 
-      age:
-        calculateAge(dob),
+      age:calculateAge(dob),
 
-      city:
-        city,
+      city:city,
 
-      community:
-        community,
+      community:community,
 
-      surname:
-        surname,
+      surname:surname,
 
-      kul:
-        kul,
+      kul:kul,
 
-      is_active:
-        true
+      is_active:true
 
     };
 
@@ -1616,7 +1721,7 @@ async function registerUser() {
           .upsert(
             profileData,
             {
-              onConflict: "id"
+              onConflict:"id"
             }
           );
 
@@ -1636,53 +1741,43 @@ async function registerUser() {
         );
 
         return;
-
       }
 
 
       showRegistrationSuccess({
 
-        userId:
-          displayUserId,
+        userId:displayUserId,
 
-        username:
-          username,
+        username:username,
 
-        firstName:
-          firstName,
+        firstName:firstName,
 
-        password:
-          password
+        password:password
 
       });
 
 
       await loadProfiles();
 
-    }
 
-
-    else {
+    } else {
 
       localStorage.setItem(
         "samajSaathiPendingProfile",
-        JSON.stringify(profileData)
+        JSON.stringify(
+          profileData
+        )
       );
 
 
       contentAfterSignup(
-
         firstName,
-
         displayUserId,
-
         username,
-
         password
-
       );
-
     }
+
 
   } catch (err) {
 
@@ -1697,9 +1792,7 @@ async function registerUser() {
       err.message,
       "error"
     );
-
   }
-
 }
 
 
@@ -1707,7 +1800,9 @@ async function registerUser() {
 // CALCULATE AGE
 // ============================================
 
-function calculateAge(dateString) {
+function calculateAge(
+  dateString
+) {
 
   if (!dateString) return null;
 
@@ -1725,6 +1820,7 @@ function calculateAge(dateString) {
     today.getMonth() -
     birthDate.getMonth();
 
+
   if (
     month < 0 ||
     (
@@ -1738,8 +1834,8 @@ function calculateAge(dateString) {
 
   }
 
-  return age;
 
+  return age;
 }
 
 
@@ -1760,6 +1856,7 @@ function contentAfterSignup(
     );
 
   if (!content) return;
+
 
   content.innerHTML = `
 
@@ -1786,6 +1883,7 @@ function contentAfterSignup(
         Please confirm your email address,
         then login to continue.
       </p>
+
 
       <div style="
         margin:20px 0;
@@ -1846,6 +1944,7 @@ function contentAfterSignup(
 
       </div>
 
+
       <div style="
         padding:12px;
         border-radius:10px;
@@ -1859,6 +1958,7 @@ function contentAfterSignup(
         Username and Password.
 
       </div>
+
 
       <div class="modal-actions">
 
@@ -1875,7 +1975,6 @@ function contentAfterSignup(
     </div>
 
   `;
-
 }
 
 
@@ -1893,6 +1992,7 @@ function showRegistrationSuccess(
     );
 
   if (!content) return;
+
 
   content.innerHTML = `
 
@@ -1920,6 +2020,7 @@ function showRegistrationSuccess(
         Your matrimonial profile has been created successfully.
       </p>
 
+
       <div style="
         margin:20px 0;
         padding:18px;
@@ -1944,6 +2045,7 @@ function showRegistrationSuccess(
 
         </div>
 
+
         <div style="margin-bottom:12px;">
 
           <small>
@@ -1958,6 +2060,7 @@ function showRegistrationSuccess(
           </strong>
 
         </div>
+
 
         <div>
 
@@ -1976,6 +2079,7 @@ function showRegistrationSuccess(
         </div>
 
       </div>
+
 
       <div style="
         padding:12px;
@@ -1996,6 +2100,7 @@ function showRegistrationSuccess(
 
       </div>
 
+
       <div class="modal-actions">
 
         <button
@@ -2011,7 +2116,6 @@ function showRegistrationSuccess(
     </div>
 
   `;
-
 }
 
 
@@ -2046,7 +2150,6 @@ async function loginUser() {
     );
 
     return;
-
   }
 
 
@@ -2063,11 +2166,9 @@ async function loginUser() {
       await supabaseClient.auth
         .signInWithPassword({
 
-          email:
-            email,
+          email:email,
 
-          password:
-            password
+          password:password
 
         });
 
@@ -2081,7 +2182,6 @@ async function loginUser() {
       );
 
       return;
-
     }
 
 
@@ -2094,7 +2194,6 @@ async function loginUser() {
       );
 
       return;
-
     }
 
 
@@ -2116,9 +2215,7 @@ async function loginUser() {
       err.message,
       "error"
     );
-
   }
-
 }
 
 
@@ -2138,6 +2235,7 @@ async function savePendingProfile() {
 
   let profileData;
 
+
   try {
 
     profileData =
@@ -2155,7 +2253,6 @@ async function savePendingProfile() {
     );
 
     return;
-
   }
 
 
@@ -2163,8 +2260,10 @@ async function savePendingProfile() {
     await supabaseClient.auth
       .getSession();
 
+
   const session =
     sessionResult.data?.session;
+
 
   if (!session) return;
 
@@ -2179,7 +2278,7 @@ async function savePendingProfile() {
       .upsert(
         profileData,
         {
-          onConflict: "id"
+          onConflict:"id"
         }
       );
 
@@ -2192,7 +2291,6 @@ async function savePendingProfile() {
     );
 
     return;
-
   }
 
 
@@ -2202,7 +2300,6 @@ async function savePendingProfile() {
 
 
   await loadProfiles();
-
 }
 
 
@@ -2216,6 +2313,7 @@ async function openDashboard() {
     await supabaseClient.auth
       .getSession();
 
+
   const session =
     sessionResult.data?.session;
 
@@ -2225,7 +2323,6 @@ async function openDashboard() {
     openModal("login");
 
     return;
-
   }
 
 
@@ -2240,7 +2337,10 @@ async function openDashboard() {
     await supabaseClient
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq(
+        "id",
+        userId
+      )
       .maybeSingle();
 
 
@@ -2257,7 +2357,6 @@ async function openDashboard() {
     );
 
     return;
-
   }
 
 
@@ -2268,7 +2367,6 @@ async function openDashboard() {
     );
 
     return;
-
   }
 
 
@@ -2293,7 +2391,9 @@ async function openDashboard() {
 
 
   const dashboard =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   dashboard.id =
@@ -2309,6 +2409,9 @@ async function openDashboard() {
       background:#fff;
       overflow:auto;
     ">
+
+
+      <!-- HEADER -->
 
       <div style="
         background:#6f1025;
@@ -2331,10 +2434,11 @@ async function openDashboard() {
           </div>
 
           <small>
-            My Profile
+            My Profile & Matches
           </small>
 
         </div>
+
 
         <button
           type="button"
@@ -2355,7 +2459,7 @@ async function openDashboard() {
 
 
       <div style="
-        max-width:1000px;
+        max-width:1100px;
         margin:40px auto;
         padding:20px;
       ">
@@ -2450,7 +2554,9 @@ async function openDashboard() {
           ">
 
             Hello,
-            ${escapeHtml(profile.full_name)}!
+            ${escapeHtml(
+              profile.full_name
+            )}!
 
           </h1>
 
@@ -2535,8 +2641,8 @@ async function openDashboard() {
             Update your profile information below.
           </p>
 
-          <div class="form-grid">
 
+          <div class="form-grid">
 
             <div class="field full">
 
@@ -2787,48 +2893,76 @@ async function openDashboard() {
         </div>
 
 
-        <!-- ==================================
-             FIND YOUR MATCHES
-             ================================== -->
+        <!-- ================================= -->
+        <!-- FIND YOUR MATCHES -->
+        <!-- ================================= -->
 
         <div style="
           margin-top:30px;
           padding:25px;
           border-radius:18px;
-          border:1px solid #eadde1;
+          border:1px solid #eee;
           background:#fff;
         ">
 
-          <span class="eyebrow">
-            MATCHES
-          </span>
-
-          <h2 style="
-            margin:8px 0;
-            color:#4b1020;
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            flex-wrap:wrap;
+            margin-bottom:8px;
           ">
-            💕 Find Your Matches
-          </h2>
+
+            <div>
+
+              <span class="eyebrow">
+                DISCOVER
+              </span>
+
+              <h2 style="
+                margin:5px 0;
+              ">
+                Find Your Matches ❤️
+              </h2>
+
+            </div>
+
+
+            <button
+              type="button"
+              class="btn primary"
+              onclick="loadMatches()"
+            >
+              🔄 Refresh Matches
+            </button>
+
+          </div>
+
 
           <p style="
             color:#666;
             margin-bottom:20px;
           ">
-            Profiles matching your gender are shown below.
+
+            ${
+              profile.gender === "male"
+                ? "Showing active women profiles for you."
+                : profile.gender === "female"
+                  ? "Showing active men profiles for you."
+                  : "Complete your gender information to find matches."
+            }
+
           </p>
 
-          <div
-            id="matchesGrid"
-            style="
-              width:100%;
-            "
-          >
+
+          <div id="matchesContainer">
 
             <div style="
               text-align:center;
-              padding:35px;
+              padding:30px;
             ">
-              Finding your matches...
+              Loading your matches...
             </div>
 
           </div>
@@ -2848,19 +2982,13 @@ async function openDashboard() {
   );
 
 
-  // ========================================
-  // LOAD MY PHOTO
-  // ========================================
-
   await loadProfilePhoto(
     profile.profile_photo
   );
 
 
-  // ========================================
-  // LOAD MATCHES
-  // ========================================
-
+  // IMPORTANT:
+  // Load matches automatically
   await loadMatches();
 
 }
@@ -2898,7 +3026,6 @@ async function loadProfilePhoto(
     );
 
     return;
-
   }
 
 
@@ -2926,7 +3053,6 @@ async function loadProfilePhoto(
     >
 
   `;
-
 }
 
 
@@ -2960,7 +3086,6 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
 
@@ -2980,7 +3105,6 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
 
@@ -3004,7 +3128,6 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
 
@@ -3026,7 +3149,6 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
 
@@ -3054,23 +3176,15 @@ async function uploadProfilePhoto() {
   );
 
 
-  // ========================================
-  // REMOVE OLD FILES
-  // ========================================
-
   const oldFiles = [
 
-    userId +
-    "/profile.jpg",
+    userId + "/profile.jpg",
 
-    userId +
-    "/profile.jpeg",
+    userId + "/profile.jpeg",
 
-    userId +
-    "/profile.png",
+    userId + "/profile.png",
 
-    userId +
-    "/profile.webp"
+    userId + "/profile.webp"
 
   ];
 
@@ -3088,13 +3202,8 @@ async function uploadProfilePhoto() {
       "OLD PHOTO REMOVE WARNING:",
       removeResult.error
     );
-
   }
 
-
-  // ========================================
-  // UPLOAD
-  // ========================================
 
   const uploadResult =
     await supabaseClient
@@ -3104,8 +3213,8 @@ async function uploadProfilePhoto() {
         filePath,
         file,
         {
-          upsert: true,
-          contentType: file.type
+          upsert:true,
+          contentType:file.type
         }
       );
 
@@ -3125,13 +3234,8 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
-
-  // ========================================
-  // SAVE PHOTO PATH
-  // ========================================
 
   const profileResult =
     await supabaseClient
@@ -3163,7 +3267,6 @@ async function uploadProfilePhoto() {
     );
 
     return;
-
   }
 
 
@@ -3184,12 +3287,7 @@ async function uploadProfilePhoto() {
 
   await loadProfiles();
 
-
-  // Refresh matches so the new photo
-  // appears there as well.
-
   await loadMatches();
-
 }
 
 
@@ -3223,7 +3321,6 @@ async function updateProfile() {
     );
 
     return;
-
   }
 
 
@@ -3282,7 +3379,6 @@ async function updateProfile() {
     );
 
     return;
-
   }
 
 
@@ -3298,11 +3394,9 @@ async function updateProfile() {
       .from("profiles")
       .update({
 
-        full_name:
-          fullName,
+        full_name:fullName,
 
-        gender:
-          gender,
+        gender:gender,
 
         date_of_birth:
           dob || null,
@@ -3310,17 +3404,13 @@ async function updateProfile() {
         age:
           calculateAge(dob),
 
-        community:
-          community,
+        community:community,
 
-        surname:
-          surname,
+        surname:surname,
 
-        kul:
-          kul,
+        kul:kul,
 
-        city:
-          city
+        city:city
 
       })
       .eq(
@@ -3344,7 +3434,6 @@ async function updateProfile() {
     );
 
     return;
-
   }
 
 
@@ -3366,7 +3455,6 @@ async function updateProfile() {
     },
     700
   );
-
 }
 
 
@@ -3386,6 +3474,7 @@ function dashboardItem(
       border:1px solid #eee;
       border-radius:14px;
       padding:18px;
+      margin-bottom:10px;
     ">
 
       <small style="
@@ -3409,7 +3498,6 @@ function dashboardItem(
     </div>
 
   `;
-
 }
 
 
@@ -3449,15 +3537,14 @@ async function logoutUser() {
 
   window.scrollTo({
 
-    top: 0,
+    top:0,
 
-    behavior: "smooth"
+    behavior:"smooth"
 
   });
 
 
   await loadProfiles();
-
 }
 
 
@@ -3503,7 +3590,6 @@ function showMessage(
     </div>
 
   `;
-
 }
 
 
@@ -3511,7 +3597,9 @@ function showMessage(
 // ESCAPE HTML
 // ============================================
 
-function escapeHtml(value) {
+function escapeHtml(
+  value
+) {
 
   return String(
     value ?? ""
@@ -3557,7 +3645,7 @@ function setupModalEvents() {
 
   modal.addEventListener(
     "click",
-    function (event) {
+    function(event) {
 
       if (
         event.target === modal
@@ -3569,7 +3657,6 @@ function setupModalEvents() {
 
     }
   );
-
 }
 
 
@@ -3579,7 +3666,7 @@ function setupModalEvents() {
 
 document.addEventListener(
   "keydown",
-  function (event) {
+  function(event) {
 
     if (
       event.key === "Escape"
@@ -3599,7 +3686,7 @@ document.addEventListener(
 
 document.addEventListener(
   "DOMContentLoaded",
-  async function () {
+  async function() {
 
     console.log(
       "SamajSaathi app loading..."
@@ -3624,7 +3711,7 @@ document.addEventListener(
 // SESSION CHECK
 // ============================================
 
-(async function () {
+(async function() {
 
   try {
 
@@ -3654,3 +3741,4 @@ document.addEventListener(
   }
 
 })();
+```
