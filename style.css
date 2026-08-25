@@ -1241,3 +1241,17 @@ footer p{
 
 }
 ```
+/* ============================================
+   FIX: HIDE DUMMY AVATAR WHEN REAL PHOTO EXISTS
+   ============================================ */
+
+.profile-img:has(img)::before {
+  content: none !important;
+  display: none !important;
+  background: none !important;
+  box-shadow: none !important;
+}
+
+.profile-img:has(img)::after {
+  pointer-events: none;
+}
