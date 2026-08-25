@@ -2997,3 +2997,23 @@ document.addEventListener(
   }
 
 })();
+// ============================================
+// MAKE FUNCTIONS AVAILABLE TO HTML BUTTONS
+// ============================================
+
+window.openModal = openModal;
+window.closeModal = closeModal;
+
+window.loginUser = loginUser;
+window.registerUser = registerUser;
+
+window.openDashboard = openDashboard;
+window.logoutUser = logoutUser;
+
+window.uploadProfilePhoto = uploadProfilePhoto;
+window.updateProfile = updateProfile;
+
+window.loadProfiles = loadProfiles;
+window.scrollToId = scrollToId;
+
+console.log("SamajSaathi: Global buttons connected successfully.");
