@@ -1,6 +1,7 @@
 // ============================================
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
+// COMPLETE UPDATED APP.JS
 // ============================================
 
 
@@ -22,7 +23,168 @@ const supabaseClient =
 
 
 // ============================================
-// LOAD REAL PROFILES FROM SUPABASE
+// PHOTO DISPLAY FIX
+// Prevent dummy avatar from appearing over
+// real uploaded profile photos
+// ============================================
+
+(function addPhotoDisplayFix() {
+
+  if (document.getElementById("samajSaathiPhotoFix")) {
+    return;
+  }
+
+  const style =
+    document.createElement("style");
+
+  style.id =
+    "samajSaathiPhotoFix";
+
+  style.innerHTML = `
+
+    .profile-img.has-real-photo::before,
+    .profile-img.has-real-photo::after {
+      display:none !important;
+      content:none !important;
+    }
+
+    .profile-img.has-real-photo {
+      background:#eee !important;
+    }
+
+    .profile-img.has-real-photo img {
+      display:block !important;
+      visibility:visible !important;
+      opacity:1 !important;
+    }
+
+    .samaj-match-card {
+      position:relative;
+      overflow:hidden;
+    }
+
+    .samaj-match-photo {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .samaj-match-actions {
+      display:flex;
+      gap:10px;
+      margin-top:15px;
+      flex-wrap:wrap;
+    }
+
+    .samaj-match-actions button {
+      cursor:pointer;
+    }
+
+    .samaj-view-profile-btn {
+      border:1px solid #6f1025;
+      background:#fff;
+      color:#6f1025;
+      padding:9px 14px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .samaj-interest-btn {
+      border:0;
+      background:#6f1025;
+      color:#fff;
+      padding:9px 14px;
+      border-radius:8px;
+      font-weight:600;
+      cursor:pointer;
+    }
+
+    .samaj-match-info {
+      padding:18px;
+    }
+
+    .samaj-match-info h3 {
+      margin:0 0 6px;
+      font-size:18px;
+    }
+
+    .samaj-match-info small {
+      display:block;
+      margin:5px 0;
+    }
+
+    .samaj-no-matches {
+      grid-column:1/-1;
+      text-align:center;
+      padding:40px 20px;
+      border-radius:14px;
+      background:#f8f1f3;
+    }
+
+  `;
+
+  document.head.appendChild(style);
+
+})();
+
+
+// ============================================
+// ESCAPE HTML
+// ============================================
+
+function escapeHtml(value) {
+
+  return String(
+    value ?? ""
+  )
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+
+}
+
+
+// ============================================
+// GET PROFILE PHOTO URL
+// ============================================
+
+function getProfilePhotoUrl(photoPath) {
+
+  if (!photoPath) {
+    return null;
+  }
+
+  try {
+
+    const result =
+      supabaseClient
+        .storage
+        .from("profile-photos")
+        .getPublicUrl(photoPath);
+
+    return result.data?.publicUrl || null;
+
+  } catch (error) {
+
+    console.error(
+      "PUBLIC PHOTO URL ERROR:",
+      error
+    );
+
+    return null;
+
+  }
+
+}
+
+
+// ============================================
+// LOAD PUBLIC PROFILE PREVIEW
+// MAIN PAGE
 // ============================================
 
 async function loadProfiles() {
@@ -30,9 +192,12 @@ async function loadProfiles() {
   const grid =
     document.getElementById("profiles");
 
-  if (!grid) return;
+  if (!grid) {
+    return;
+  }
 
   grid.innerHTML = `
+
     <div style="
       grid-column:1/-1;
       text-align:center;
@@ -41,6 +206,7 @@ async function loadProfiles() {
     ">
       Loading profiles...
     </div>
+
   `;
 
   try {
@@ -65,17 +231,19 @@ async function loadProfiles() {
         `)
         .eq("is_active", true)
         .order("created_at", {
-          ascending: false
-        });
+          ascending:false
+        })
+        .limit(6);
 
     if (result.error) {
 
       console.error(
-        "PROFILES LOAD ERROR:",
+        "PUBLIC PROFILES LOAD ERROR:",
         result.error
       );
 
       grid.innerHTML = `
+
         <div style="
           grid-column:1/-1;
           text-align:center;
@@ -92,17 +260,20 @@ async function loadProfiles() {
           </p>
 
         </div>
+
       `;
 
       return;
+
     }
 
-    const realProfiles =
+    const profiles =
       result.data || [];
 
-    if (realProfiles.length === 0) {
+    if (!profiles.length) {
 
       grid.innerHTML = `
+
         <div style="
           grid-column:1/-1;
           text-align:center;
@@ -118,162 +289,36 @@ async function loadProfiles() {
           </p>
 
         </div>
+
       `;
 
       return;
+
     }
 
     grid.innerHTML =
-      realProfiles.map(function (p) {
+      profiles.map(
+        function(p) {
 
-        const location =
-          [p.city, p.state]
-            .filter(Boolean)
-            .join(", ");
-
-        let photoHtml = `
-
-          <div class="profile-img">
-
-            <span style="
-              font-size:55px;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-              height:100%;
-            ">
-              👤
-            </span>
-
-            <span class="profile-tag">
-              ✓ Verified
-            </span>
-
-          </div>
-
-        `;
-
-
-        // ====================================
-        // PROFILE PHOTO
-        // ====================================
-
-        if (p.profile_photo) {
-
-          const publicResult =
-            supabaseClient
-              .storage
-              .from("profile-photos")
-              .getPublicUrl(
-                p.profile_photo
-              );
-
-          const photoUrl =
-            publicResult.data?.publicUrl;
-
-          if (photoUrl) {
-
-            photoHtml = `
-
-              <div class="profile-img">
-
-                <img
-                  src="${escapeHtml(photoUrl)}"
-                  alt="${escapeHtml(
-                    p.full_name || "Profile"
-                  )}"
-                  style="
-                    width:100%;
-                    height:100%;
-                    object-fit:cover;
-                  "
-                >
-
-                <span class="profile-tag">
-                  ✓ Verified
-                </span>
-
-              </div>
-
-            `;
-
-          }
+          return createPublicProfileCard(p);
 
         }
-
-        return `
-
-          <article class="profile">
-
-            ${photoHtml}
-
-            <div class="profile-body">
-
-              <b>
-                ${escapeHtml(
-                  p.full_name || "Member"
-                )}
-                ${
-                  p.age
-                    ? ", " + escapeHtml(p.age)
-                    : ""
-                }
-              </b>
-
-              <small>
-                ${escapeHtml(
-                  location ||
-                  "Location not specified"
-                )}
-              </small>
-
-              <small>
-
-                ${escapeHtml(
-                  p.community || ""
-                )}
-
-                ${
-                  p.surname
-                    ? " · " +
-                      escapeHtml(p.surname)
-                    : ""
-                }
-
-                ${
-                  p.kul
-                    ? " · " +
-                      escapeHtml(p.kul)
-                    : ""
-                }
-
-              </small>
-
-              <small class="match">
-                SamajSaathi Member
-              </small>
-
-            </div>
-
-          </article>
-
-        `;
-
-      }).join("");
+      ).join("");
 
     console.log(
-      "Real profiles loaded:",
-      realProfiles.length
+      "Public profiles loaded:",
+      profiles.length
     );
 
   } catch (error) {
 
     console.error(
-      "PROFILES ERROR:",
+      "PUBLIC PROFILES ERROR:",
       error
     );
 
     grid.innerHTML = `
+
       <div style="
         grid-column:1/-1;
         text-align:center;
@@ -284,9 +329,1223 @@ async function loadProfiles() {
         Something went wrong while loading profiles.
 
       </div>
+
     `;
 
   }
+
+}
+
+
+// ============================================
+// CREATE PUBLIC PROFILE CARD
+// ============================================
+
+function createPublicProfileCard(p) {
+
+  const location =
+    [p.city, p.state]
+      .filter(Boolean)
+      .join(", ");
+
+  const photoPath =
+    p.profile_photo ||
+    p.photo_url ||
+    null;
+
+  const photoUrl =
+    getProfilePhotoUrl(photoPath);
+
+  let photoHtml = `
+
+    <div class="profile-img">
+
+      <span style="
+        font-size:55px;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        height:100%;
+      ">
+        👤
+      </span>
+
+      <span class="profile-tag">
+        ✓ Verified
+      </span>
+
+    </div>
+
+  `;
+
+  if (photoUrl) {
+
+    photoHtml = `
+
+      <div class="profile-img has-real-photo">
+
+        <img
+          src="${escapeHtml(photoUrl)}"
+          alt="${escapeHtml(
+            p.full_name || "Profile"
+          )}"
+          loading="lazy"
+          style="
+            width:100%;
+            height:100%;
+            object-fit:cover;
+            display:block;
+          "
+          onerror="this.style.display='none';"
+        >
+
+        <span class="profile-tag">
+          ✓ Verified
+        </span>
+
+      </div>
+
+    `;
+
+  }
+
+  return `
+
+    <article class="profile">
+
+      ${photoHtml}
+
+      <div class="profile-body">
+
+        <b>
+          ${escapeHtml(
+            p.full_name || "Member"
+          )}
+
+          ${
+            p.age
+              ? ", " + escapeHtml(p.age)
+              : ""
+          }
+
+        </b>
+
+        <small>
+          ${escapeHtml(
+            location ||
+            "Location not specified"
+          )}
+        </small>
+
+        <small>
+
+          ${escapeHtml(
+            p.community || ""
+          )}
+
+          ${
+            p.surname
+              ? " · " +
+                escapeHtml(p.surname)
+              : ""
+          }
+
+          ${
+            p.kul
+              ? " · " +
+                escapeHtml(p.kul)
+              : ""
+          }
+
+        </small>
+
+        <small class="match">
+          SamajSaathi Member
+        </small>
+
+      </div>
+
+    </article>
+
+  `;
+
+}
+
+
+// ============================================
+// FIND YOUR MATCHES
+// DATABASE CONNECTED
+// ============================================
+
+async function loadMatches() {
+
+  const grid =
+    document.getElementById(
+      "matchesGrid"
+    );
+
+  if (!grid) {
+    return;
+  }
+
+  grid.innerHTML = `
+
+    <div style="
+      grid-column:1/-1;
+      text-align:center;
+      padding:40px;
+      color:#6f1025;
+    ">
+
+      Finding suitable profiles...
+
+    </div>
+
+  `;
+
+  try {
+
+    const sessionResult =
+      await supabaseClient
+        .auth
+        .getSession();
+
+    const session =
+      sessionResult.data?.session;
+
+    if (!session) {
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <h3>
+            Please login first
+          </h3>
+
+          <p>
+            Login to see profiles matching your preferences.
+          </p>
+
+          <button
+            type="button"
+            class="btn primary"
+            onclick="openModal('login')"
+          >
+            Login
+          </button>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+    const currentUserId =
+      session.user.id;
+
+
+    // ========================================
+    // GET CURRENT USER PROFILE
+    // ========================================
+
+    const currentResult =
+      await supabaseClient
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          gender,
+          age,
+          city,
+          state,
+          community,
+          surname,
+          kul,
+          profile_photo,
+          photo_url,
+          is_active
+        `)
+        .eq(
+          "id",
+          currentUserId
+        )
+        .maybeSingle();
+
+
+    if (currentResult.error) {
+
+      console.error(
+        "CURRENT PROFILE ERROR:",
+        currentResult.error
+      );
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <h3>
+            Unable to load your profile
+          </h3>
+
+          <p>
+            ${escapeHtml(
+              currentResult.error.message
+            )}
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    const currentProfile =
+      currentResult.data;
+
+
+    if (!currentProfile) {
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <h3>
+            Complete your profile first
+          </h3>
+
+          <p>
+            Your profile must be created before we can find matches.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    const gender =
+      String(
+        currentProfile.gender || ""
+      )
+      .trim()
+      .toLowerCase();
+
+
+    if (
+      gender !== "male" &&
+      gender !== "female"
+    ) {
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <h3>
+            Gender information required
+          </h3>
+
+          <p>
+            Please update your gender in your profile.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    // ========================================
+    // OPPOSITE GENDER
+    // ========================================
+
+    const oppositeGender =
+      gender === "male"
+        ? "female"
+        : "male";
+
+
+    // ========================================
+    // GET MATCHES
+    // ========================================
+
+    const matchesResult =
+      await supabaseClient
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          gender,
+          date_of_birth,
+          age,
+          city,
+          state,
+          community,
+          surname,
+          kul,
+          bio,
+          education,
+          occupation,
+          height,
+          marital_status,
+          profile_photo,
+          photo_url,
+          is_active,
+          created_at
+        `)
+        .eq(
+          "is_active",
+          true
+        )
+        .eq(
+          "gender",
+          oppositeGender
+        )
+        .neq(
+          "id",
+          currentUserId
+        )
+        .order(
+          "created_at",
+          {
+            ascending:false
+          }
+        );
+
+
+    if (matchesResult.error) {
+
+      console.error(
+        "MATCHES LOAD ERROR:",
+        matchesResult.error
+      );
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <h3>
+            Unable to load matches
+          </h3>
+
+          <p>
+            ${escapeHtml(
+              matchesResult.error.message
+            )}
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    const matches =
+      matchesResult.data || [];
+
+
+    if (!matches.length) {
+
+      grid.innerHTML = `
+
+        <div class="samaj-no-matches">
+
+          <div style="
+            font-size:45px;
+            margin-bottom:10px;
+          ">
+            💕
+          </div>
+
+          <h3>
+            No matches available yet
+          </h3>
+
+          <p>
+            New ${oppositeGender === "female" ? "women" : "men"}
+            profiles will appear here when they join SamajSaathi.
+          </p>
+
+        </div>
+
+      `;
+
+      return;
+
+    }
+
+
+    // ========================================
+    // RENDER MATCHES
+    // ========================================
+
+    grid.innerHTML =
+      matches.map(
+        function(profile) {
+
+          return createMatchCard(
+            profile
+          );
+
+        }
+      ).join("");
+
+
+    console.log(
+      "Find Your Matches:",
+      matches.length
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "FIND MATCHES ERROR:",
+      error
+    );
+
+    grid.innerHTML = `
+
+      <div class="samaj-no-matches">
+
+        <h3>
+          Something went wrong
+        </h3>
+
+        <p>
+          Please refresh the page and try again.
+        </p>
+
+      </div>
+
+    `;
+
+  }
+
+}
+
+
+// ============================================
+// CREATE MATCH CARD
+// ============================================
+
+function createMatchCard(profile) {
+
+  const location =
+    [profile.city, profile.state]
+      .filter(Boolean)
+      .join(", ");
+
+
+  const photoPath =
+    profile.profile_photo ||
+    profile.photo_url ||
+    null;
+
+
+  const photoUrl =
+    getProfilePhotoUrl(photoPath);
+
+
+  let photoHtml = `
+
+    <div
+      style="
+        height:280px;
+        background:#c08b8b;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+      "
+    >
+
+      <span style="
+        font-size:75px;
+      ">
+        👤
+      </span>
+
+    </div>
+
+  `;
+
+
+  if (photoUrl) {
+
+    photoHtml = `
+
+      <div
+        style="
+          height:280px;
+          background:#eee;
+          overflow:hidden;
+        "
+      >
+
+        <img
+          class="samaj-match-photo"
+          src="${escapeHtml(photoUrl)}"
+          alt="${escapeHtml(
+            profile.full_name || "Profile"
+          )}"
+          loading="lazy"
+          onerror="
+            this.style.display='none';
+            this.parentElement.innerHTML='<div style=&quot;height:100%;display:flex;align-items:center;justify-content:center;font-size:75px;background:#c08b8b;&quot;>👤</div>';
+          "
+        >
+
+      </div>
+
+    `;
+
+  }
+
+
+  return `
+
+    <article
+      class="profile samaj-match-card"
+      style="
+        background:#fff;
+        border:1px solid #ead9dd;
+        border-radius:16px;
+      "
+    >
+
+      <div style="
+        position:relative;
+      ">
+
+        ${photoHtml}
+
+        <span
+          class="profile-tag"
+          style="
+            position:absolute;
+            top:12px;
+            left:12px;
+            z-index:2;
+          "
+        >
+          ✓ Verified
+        </span>
+
+      </div>
+
+
+      <div class="samaj-match-info">
+
+        <h3>
+
+          ${escapeHtml(
+            profile.full_name ||
+            "Member"
+          )}
+
+          ${
+            profile.age
+              ? ", " +
+                escapeHtml(profile.age)
+              : ""
+          }
+
+        </h3>
+
+
+        <small>
+
+          📍
+          ${escapeHtml(
+            location ||
+            "Location not specified"
+          )}
+
+        </small>
+
+
+        <small>
+
+          ${escapeHtml(
+            profile.community ||
+            "Community not specified"
+          )}
+
+          ${
+            profile.surname
+              ? " · " +
+                escapeHtml(
+                  profile.surname
+                )
+              : ""
+          }
+
+        </small>
+
+
+        <small>
+
+          ${
+            profile.kul
+              ? "Kul: " +
+                escapeHtml(
+                  profile.kul
+                )
+              : ""
+          }
+
+        </small>
+
+
+        <div class="samaj-match-actions">
+
+          <button
+            type="button"
+            class="samaj-view-profile-btn"
+            onclick="viewProfile(
+              '${escapeHtml(profile.id)}'
+            )"
+          >
+            View Profile
+          </button>
+
+
+          <button
+            type="button"
+            class="samaj-interest-btn"
+            onclick="sendInterest(
+              '${escapeHtml(profile.id)}'
+            )"
+          >
+            ❤️ Send Interest
+          </button>
+
+        </div>
+
+      </div>
+
+    </article>
+
+  `;
+
+}
+
+
+// ============================================
+// VIEW PROFILE
+// ============================================
+
+async function viewProfile(profileId) {
+
+  if (!profileId) {
+    return;
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("profiles")
+      .select(`
+        id,
+        full_name,
+        gender,
+        date_of_birth,
+        age,
+        city,
+        state,
+        community,
+        surname,
+        kul,
+        bio,
+        education,
+        occupation,
+        height,
+        marital_status,
+        profile_photo,
+        photo_url
+      `)
+      .eq(
+        "id",
+        profileId
+      )
+      .maybeSingle();
+
+
+  if (result.error) {
+
+    alert(
+      "Profile could not be loaded: " +
+      result.error.message
+    );
+
+    return;
+
+  }
+
+
+  if (!result.data) {
+
+    alert(
+      "Profile not found."
+    );
+
+    return;
+
+  }
+
+
+  const profile =
+    result.data;
+
+
+  let modal =
+    document.getElementById(
+      "samajProfileViewer"
+    );
+
+
+  if (modal) {
+    modal.remove();
+  }
+
+
+  const photoPath =
+    profile.profile_photo ||
+    profile.photo_url ||
+    null;
+
+
+  const photoUrl =
+    getProfilePhotoUrl(
+      photoPath
+    );
+
+
+  let photoHtml = `
+
+    <div style="
+      width:150px;
+      height:150px;
+      border-radius:50%;
+      background:#c08b8b;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      margin:0 auto 20px;
+      font-size:55px;
+    ">
+      👤
+    </div>
+
+  `;
+
+
+  if (photoUrl) {
+
+    photoHtml = `
+
+      <img
+        src="${escapeHtml(photoUrl)}"
+        alt="${escapeHtml(
+          profile.full_name || "Profile"
+        )}"
+        style="
+          width:150px;
+          height:150px;
+          border-radius:50%;
+          object-fit:cover;
+          display:block;
+          margin:0 auto 20px;
+        "
+      >
+
+    `;
+
+  }
+
+
+  modal =
+    document.createElement("div");
+
+
+  modal.id =
+    "samajProfileViewer";
+
+
+  modal.style.cssText = `
+    position:fixed;
+    inset:0;
+    z-index:10001;
+    background:rgba(0,0,0,.55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  `;
+
+
+  modal.innerHTML = `
+
+    <div style="
+      width:min(600px,100%);
+      max-height:90vh;
+      overflow:auto;
+      background:#fff;
+      border-radius:20px;
+      padding:30px;
+      position:relative;
+    ">
+
+      <button
+        type="button"
+        onclick="
+          document
+            .getElementById('samajProfileViewer')
+            ?.remove()
+        "
+        style="
+          position:absolute;
+          top:15px;
+          right:15px;
+          border:0;
+          background:#f5eeee;
+          width:36px;
+          height:36px;
+          border-radius:50%;
+          cursor:pointer;
+          font-size:20px;
+        "
+      >
+        ×
+      </button>
+
+
+      ${photoHtml}
+
+
+      <div style="
+        text-align:center;
+      ">
+
+        <span class="eyebrow">
+          SAMAJSAATHI MEMBER
+        </span>
+
+        <h2 style="
+          margin:8px 0;
+        ">
+          ${escapeHtml(
+            profile.full_name ||
+            "Member"
+          )}
+
+          ${
+            profile.age
+              ? ", " +
+                escapeHtml(
+                  profile.age
+                )
+              : ""
+          }
+
+        </h2>
+
+      </div>
+
+
+      <div style="
+        display:grid;
+        grid-template-columns:
+        repeat(auto-fit,minmax(180px,1fr));
+        gap:12px;
+        margin-top:25px;
+      ">
+
+        ${profileViewerItem(
+          "Gender",
+          profile.gender
+        )}
+
+        ${profileViewerItem(
+          "City",
+          [profile.city, profile.state]
+            .filter(Boolean)
+            .join(", ")
+        )}
+
+        ${profileViewerItem(
+          "Community",
+          profile.community
+        )}
+
+        ${profileViewerItem(
+          "Surname",
+          profile.surname
+        )}
+
+        ${profileViewerItem(
+          "Kul / Clan",
+          profile.kul
+        )}
+
+        ${profileViewerItem(
+          "Education",
+          profile.education
+        )}
+
+        ${profileViewerItem(
+          "Occupation",
+          profile.occupation
+        )}
+
+        ${profileViewerItem(
+          "Height",
+          profile.height
+        )}
+
+        ${profileViewerItem(
+          "Marital Status",
+          profile.marital_status
+        )}
+
+      </div>
+
+
+      ${
+        profile.bio
+          ? `
+
+            <div style="
+              margin-top:20px;
+              padding:18px;
+              background:#f8f1f3;
+              border-radius:14px;
+            ">
+
+              <strong>
+                About
+              </strong>
+
+              <p>
+                ${escapeHtml(
+                  profile.bio
+                )}
+              </p>
+
+            </div>
+
+          `
+          : ""
+      }
+
+
+      <div style="
+        margin-top:20px;
+        text-align:center;
+      ">
+
+        <button
+          type="button"
+          class="samaj-interest-btn"
+          onclick="
+            sendInterest('${escapeHtml(profile.id)}')
+          "
+        >
+          ❤️ Send Interest
+        </button>
+
+      </div>
+
+    </div>
+
+  `;
+
+
+  document.body.appendChild(
+    modal
+  );
+
+
+  modal.addEventListener(
+    "click",
+    function(event) {
+
+      if (
+        event.target === modal
+      ) {
+
+        modal.remove();
+
+      }
+
+    }
+  );
+
+}
+
+
+// ============================================
+// PROFILE VIEW ITEM
+// ============================================
+
+function profileViewerItem(
+  label,
+  value
+) {
+
+  return `
+
+    <div style="
+      background:#fff;
+      border:1px solid #eee;
+      border-radius:12px;
+      padding:14px;
+    ">
+
+      <small style="
+        display:block;
+        color:#777;
+        margin-bottom:5px;
+      ">
+        ${escapeHtml(label)}
+      </small>
+
+      <strong>
+        ${escapeHtml(
+          value || "Not specified"
+        )}
+      </strong>
+
+    </div>
+
+  `;
+
+}
+
+
+// ============================================
+// SEND INTEREST
+// STEP 3 READY
+// ============================================
+
+async function sendInterest(profileId) {
+
+  if (!profileId) {
+    return;
+  }
+
+
+  const sessionResult =
+    await supabaseClient
+      .auth
+      .getSession();
+
+
+  const session =
+    sessionResult.data?.session;
+
+
+  if (!session) {
+
+    openModal("login");
+
+    return;
+
+  }
+
+
+  if (
+    profileId ===
+    session.user.id
+  ) {
+
+    alert(
+      "You cannot send interest to your own profile."
+    );
+
+    return;
+
+  }
+
+
+  /*
+   * Interest table will be connected
+   * in the next step.
+   *
+   * For now we keep the button working
+   * without breaking the application.
+   */
+
+  alert(
+    "❤️ Interest feature is ready for the next step."
+  );
+
+}
+
+
+// ============================================
+// OPEN FIND MATCHES
+// ============================================
+
+async function openFindMatches() {
+
+  const sessionResult =
+    await supabaseClient
+      .auth
+      .getSession();
+
+
+  const session =
+    sessionResult.data?.session;
+
+
+  if (!session) {
+
+    openModal("login");
+
+    return;
+
+  }
+
+
+  await openDashboard();
+
+
+  setTimeout(
+    function() {
+
+      const matches =
+        document.getElementById(
+          "matchesGrid"
+        );
+
+
+      if (matches) {
+
+        matches.scrollIntoView({
+          behavior:"smooth",
+          block:"start"
+        });
+
+      }
+
+    },
+    700
+  );
 
 }
 
@@ -303,7 +1562,7 @@ function scrollToId(id) {
   if (element) {
 
     element.scrollIntoView({
-      behavior: "smooth"
+      behavior:"smooth"
     });
 
   }
@@ -402,7 +1661,9 @@ function generatePassword() {
 function openModal(type) {
 
   const modal =
-    document.getElementById("modal");
+    document.getElementById(
+      "modal"
+    );
 
   const content =
     document.getElementById(
@@ -457,6 +1718,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field full">
 
           <label>
@@ -474,7 +1736,9 @@ function openModal(type) {
 
       </div>
 
+
       <div id="loginMessage"></div>
+
 
       <div class="modal-actions">
 
@@ -487,6 +1751,7 @@ function openModal(type) {
         </button>
 
       </div>
+
 
       <p style="
         margin-top:18px;
@@ -533,6 +1798,7 @@ function openModal(type) {
         Tell us a little about yourself.
       </p>
 
+
       <div class="form-grid">
 
         <div class="field">
@@ -548,6 +1814,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -560,6 +1827,7 @@ function openModal(type) {
           >
 
         </div>
+
 
         <div class="field full">
 
@@ -576,6 +1844,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -588,6 +1857,7 @@ function openModal(type) {
           >
 
         </div>
+
 
         <div class="field">
 
@@ -613,6 +1883,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -632,6 +1903,7 @@ function openModal(type) {
           </select>
 
         </div>
+
 
         <div class="field">
 
@@ -661,6 +1933,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field">
 
           <label>
@@ -685,6 +1958,7 @@ function openModal(type) {
 
         </div>
 
+
         <div class="field full">
 
           <label>
@@ -700,7 +1974,9 @@ function openModal(type) {
 
       </div>
 
+
       <div id="registerMessage"></div>
+
 
       <div class="modal-actions">
 
@@ -718,6 +1994,7 @@ function openModal(type) {
 
   }
 
+
   modal.classList.add("show");
 
 }
@@ -730,11 +2007,15 @@ function openModal(type) {
 function closeModal() {
 
   const modal =
-    document.getElementById("modal");
+    document.getElementById(
+      "modal"
+    );
 
   if (modal) {
 
-    modal.classList.remove("show");
+    modal.classList.remove(
+      "show"
+    );
 
   }
 
@@ -828,13 +2109,16 @@ async function registerUser() {
   const password =
     generatePassword();
 
+
   const fullName =
     firstName +
     " " +
     lastName;
 
+
   const displayUserId =
     generateUserId();
+
 
   const username =
     generateUsername(
@@ -845,41 +2129,39 @@ async function registerUser() {
 
   try {
 
-    // ======================================
-    // CREATE SUPABASE AUTH ACCOUNT
-    // ======================================
-
     const result =
-      await supabaseClient.auth.signUp({
+      await supabaseClient
+        .auth
+        .signUp({
 
-        email: email,
+          email:email,
 
-        password: password,
+          password:password,
 
-        options: {
+          options:{
 
-          data: {
+            data:{
 
-            first_name:
-              firstName,
+              first_name:
+                firstName,
 
-            last_name:
-              lastName,
+              last_name:
+                lastName,
 
-            full_name:
-              fullName,
+              full_name:
+                fullName,
 
-            username:
-              username,
+              username:
+                username,
 
-            display_user_id:
-              displayUserId
+              display_user_id:
+                displayUserId
+
+            }
 
           }
 
-        }
-
-      });
+        });
 
 
     const data =
@@ -915,10 +2197,6 @@ async function registerUser() {
     }
 
 
-    // ======================================
-    // SAVE LOCAL LOGIN DETAILS
-    // ======================================
-
     localStorage.setItem(
       "samajSaathiUserId",
       displayUserId
@@ -929,10 +2207,6 @@ async function registerUser() {
       username
     );
 
-
-    // ======================================
-    // PROFILE DATA
-    // ======================================
 
     const profileData = {
 
@@ -969,11 +2243,6 @@ async function registerUser() {
     };
 
 
-    // ======================================
-    // IMPORTANT
-    // SAVE PROFILE WHEN SESSION EXISTS
-    // ======================================
-
     if (data.session) {
 
       const profileResult =
@@ -982,7 +2251,7 @@ async function registerUser() {
           .upsert(
             profileData,
             {
-              onConflict: "id"
+              onConflict:"id"
             }
           );
 
@@ -1028,28 +2297,13 @@ async function registerUser() {
     }
 
 
-    // ======================================
-    // EMAIL CONFIRMATION REQUIRED
-    // ======================================
-
     else {
-
-      /*
-       * IMPORTANT:
-       *
-       * If Supabase Email Confirmation
-       * is enabled, there is no session yet.
-       *
-       * We store the profile data temporarily
-       * in localStorage.
-       *
-       * After email confirmation and login,
-       * loginUser() will save the profile.
-       */
 
       localStorage.setItem(
         "samajSaathiPendingProfile",
-        JSON.stringify(profileData)
+        JSON.stringify(
+          profileData
+        )
       );
 
 
@@ -1090,23 +2344,32 @@ async function registerUser() {
 // CALCULATE AGE
 // ============================================
 
-function calculateAge(dateString) {
+function calculateAge(
+  dateString
+) {
 
-  if (!dateString) return null;
+  if (!dateString) {
+    return null;
+  }
+
 
   const birthDate =
     new Date(dateString);
 
+
   const today =
     new Date();
+
 
   let age =
     today.getFullYear() -
     birthDate.getFullYear();
 
+
   const month =
     today.getMonth() -
     birthDate.getMonth();
+
 
   if (
     month < 0 ||
@@ -1120,6 +2383,7 @@ function calculateAge(dateString) {
     age--;
 
   }
+
 
   return age;
 
@@ -1142,7 +2406,10 @@ function contentAfterSignup(
       "modalContent"
     );
 
-  if (!content) return;
+  if (!content) {
+    return;
+  }
+
 
   content.innerHTML = `
 
@@ -1170,6 +2437,7 @@ function contentAfterSignup(
         then login to continue.
       </p>
 
+
       <div style="
         margin:20px 0;
         padding:18px;
@@ -1193,7 +2461,9 @@ function contentAfterSignup(
 
         </div>
 
+
         <br>
+
 
         <div>
 
@@ -1210,7 +2480,9 @@ function contentAfterSignup(
 
         </div>
 
+
         <br>
+
 
         <div>
 
@@ -1229,6 +2501,7 @@ function contentAfterSignup(
 
       </div>
 
+
       <div style="
         padding:12px;
         border-radius:10px;
@@ -1242,6 +2515,7 @@ function contentAfterSignup(
         Username and Password.
 
       </div>
+
 
       <div class="modal-actions">
 
@@ -1275,7 +2549,10 @@ function showRegistrationSuccess(
       "modalContent"
     );
 
-  if (!content) return;
+  if (!content) {
+    return;
+  }
+
 
   content.innerHTML = `
 
@@ -1303,6 +2580,7 @@ function showRegistrationSuccess(
         Your matrimonial profile has been created successfully.
       </p>
 
+
       <div style="
         margin:20px 0;
         padding:18px;
@@ -1327,6 +2605,7 @@ function showRegistrationSuccess(
 
         </div>
 
+
         <div style="margin-bottom:12px;">
 
           <small>
@@ -1341,6 +2620,7 @@ function showRegistrationSuccess(
           </strong>
 
         </div>
+
 
         <div>
 
@@ -1360,6 +2640,7 @@ function showRegistrationSuccess(
 
       </div>
 
+
       <div style="
         padding:12px;
         border-radius:10px;
@@ -1378,6 +2659,7 @@ function showRegistrationSuccess(
         Login uses your email and password.
 
       </div>
+
 
       <div class="modal-actions">
 
@@ -1409,10 +2691,12 @@ async function loginUser() {
       "loginEmail"
     )?.value.trim();
 
+
   const password =
     document.getElementById(
       "loginPassword"
     )?.value;
+
 
   const message =
     document.getElementById(
@@ -1443,7 +2727,8 @@ async function loginUser() {
   try {
 
     const result =
-      await supabaseClient.auth
+      await supabaseClient
+        .auth
         .signInWithPassword({
 
           email:
@@ -1481,10 +2766,6 @@ async function loginUser() {
     }
 
 
-    // ======================================
-    // SAVE PENDING PROFILE AFTER LOGIN
-    // ======================================
-
     await savePendingProfile();
 
 
@@ -1521,15 +2802,21 @@ async function savePendingProfile() {
       "samajSaathiPendingProfile"
     );
 
-  if (!pending) return;
+
+  if (!pending) {
+    return;
+  }
 
 
   let profileData;
 
+
   try {
 
     profileData =
-      JSON.parse(pending);
+      JSON.parse(
+        pending
+      );
 
   } catch (error) {
 
@@ -1551,10 +2838,14 @@ async function savePendingProfile() {
     await supabaseClient.auth
       .getSession();
 
+
   const session =
     sessionResult.data?.session;
 
-  if (!session) return;
+
+  if (!session) {
+    return;
+  }
 
 
   profileData.id =
@@ -1567,7 +2858,7 @@ async function savePendingProfile() {
       .upsert(
         profileData,
         {
-          onConflict: "id"
+          onConflict:"id"
         }
       );
 
@@ -1604,6 +2895,7 @@ async function openDashboard() {
     await supabaseClient.auth
       .getSession();
 
+
   const session =
     sessionResult.data?.session;
 
@@ -1617,7 +2909,6 @@ async function openDashboard() {
   }
 
 
-  // Make sure pending profile is saved
   await savePendingProfile();
 
 
@@ -1629,7 +2920,10 @@ async function openDashboard() {
     await supabaseClient
       .from("profiles")
       .select("*")
-      .eq("id", userId)
+      .eq(
+        "id",
+        userId
+      )
       .maybeSingle();
 
 
@@ -1682,7 +2976,9 @@ async function openDashboard() {
 
 
   const dashboard =
-    document.createElement("div");
+    document.createElement(
+      "div"
+    );
 
 
   dashboard.id =
@@ -1698,6 +2994,9 @@ async function openDashboard() {
       background:#fff;
       overflow:auto;
     ">
+
+
+      <!-- HEADER -->
 
       <div style="
         background:#6f1025;
@@ -1725,6 +3024,7 @@ async function openDashboard() {
 
         </div>
 
+
         <button
           type="button"
           onclick="logoutUser()"
@@ -1744,13 +3044,13 @@ async function openDashboard() {
 
 
       <div style="
-        max-width:1000px;
+        max-width:1100px;
         margin:40px auto;
         padding:20px;
       ">
 
 
-        <!-- PHOTO -->
+        <!-- PROFILE PHOTO -->
 
         <div style="
           background:#f8f1f3;
@@ -1837,10 +3137,10 @@ async function openDashboard() {
           <h1 style="
             margin:8px 0;
           ">
-
             Hello,
-            ${escapeHtml(profile.full_name)}!
-
+            ${escapeHtml(
+              profile.full_name
+            )}!
           </h1>
 
           <p>
@@ -1923,6 +3223,7 @@ async function openDashboard() {
           <p>
             Update your profile information below.
           </p>
+
 
           <div class="form-grid">
 
@@ -2176,22 +3477,73 @@ async function openDashboard() {
         </div>
 
 
-        <!-- MATCHES -->
+        <!-- =====================================
+             FIND YOUR MATCHES
+             ===================================== -->
 
-        <div style="
-          margin-top:30px;
-          padding:20px;
-          border-radius:14px;
-          border:1px solid #eee;
-        ">
+        <div
+          id="matchesSection"
+          style="
+            margin-top:30px;
+            padding:25px;
+            border-radius:18px;
+            border:1px solid #eee;
+            background:#fff;
+          "
+        >
 
-          <h2>
-            Find Your Matches
-          </h2>
+          <div style="
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            flex-wrap:wrap;
+            margin-bottom:20px;
+          ">
 
-          <p>
-            Your profile is connected to the SamajSaathi database.
-          </p>
+            <div>
+
+              <span class="eyebrow">
+                DISCOVER
+              </span>
+
+              <h2 style="
+                margin:7px 0;
+              ">
+                Find Your Matches
+              </h2>
+
+              <p style="
+                margin:0;
+                color:#666;
+              ">
+                Profiles selected from the SamajSaathi community.
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div
+            id="matchesGrid"
+            style="
+              display:grid;
+              grid-template-columns:
+              repeat(auto-fit,minmax(240px,1fr));
+              gap:18px;
+            "
+          >
+
+            <div style="
+              grid-column:1/-1;
+              text-align:center;
+              padding:30px;
+            ">
+              Finding suitable profiles...
+            </div>
+
+          </div>
 
         </div>
 
@@ -2212,6 +3564,15 @@ async function openDashboard() {
     profile.profile_photo
   );
 
+
+  // ========================================
+  // IMPORTANT:
+  // LOAD OPPOSITE GENDER MATCHES
+  // AFTER DASHBOARD EXISTS
+  // ========================================
+
+  await loadMatches();
+
 }
 
 
@@ -2223,7 +3584,9 @@ async function loadProfilePhoto(
   photoPath
 ) {
 
-  if (!photoPath) return;
+  if (!photoPath) {
+    return;
+  }
 
 
   const result =
@@ -2257,7 +3620,9 @@ async function loadProfilePhoto(
     );
 
 
-  if (!preview) return;
+  if (!preview) {
+    return;
+  }
 
 
   preview.innerHTML = `
@@ -2271,6 +3636,7 @@ async function loadProfilePhoto(
         width:100%;
         height:100%;
         object-fit:cover;
+        display:block;
       "
     >
 
@@ -2289,6 +3655,7 @@ async function uploadProfilePhoto() {
     document.getElementById(
       "profilePhotoInput"
     );
+
 
   const message =
     document.getElementById(
@@ -2403,10 +3770,6 @@ async function uploadProfilePhoto() {
   );
 
 
-  // ========================================
-  // REMOVE OLD FILES
-  // ========================================
-
   const oldFiles = [
 
     userId +
@@ -2428,7 +3791,9 @@ async function uploadProfilePhoto() {
     await supabaseClient
       .storage
       .from("profile-photos")
-      .remove(oldFiles);
+      .remove(
+        oldFiles
+      );
 
 
   if (removeResult.error) {
@@ -2441,10 +3806,6 @@ async function uploadProfilePhoto() {
   }
 
 
-  // ========================================
-  // UPLOAD
-  // ========================================
-
   const uploadResult =
     await supabaseClient
       .storage
@@ -2453,8 +3814,8 @@ async function uploadProfilePhoto() {
         filePath,
         file,
         {
-          upsert: true,
-          contentType: file.type
+          upsert:true,
+          contentType:file.type
         }
       );
 
@@ -2477,10 +3838,6 @@ async function uploadProfilePhoto() {
 
   }
 
-
-  // ========================================
-  // SAVE PHOTO PATH
-  // ========================================
 
   const profileResult =
     await supabaseClient
@@ -2532,6 +3889,9 @@ async function uploadProfilePhoto() {
 
 
   await loadProfiles();
+
+
+  await loadMatches();
 
 }
 
@@ -2702,7 +4062,7 @@ async function updateProfile() {
 
 
   setTimeout(
-    function () {
+    function() {
 
       openDashboard();
 
@@ -2744,7 +4104,8 @@ function dashboardItem(
       <strong>
 
         ${escapeHtml(
-          value || "Not specified"
+          value ||
+          "Not specified"
         )}
 
       </strong>
@@ -2780,6 +4141,19 @@ async function logoutUser() {
   }
 
 
+  const profileViewer =
+    document.getElementById(
+      "samajProfileViewer"
+    );
+
+
+  if (profileViewer) {
+
+    profileViewer.remove();
+
+  }
+
+
   localStorage.removeItem(
     "samajSaathiUserId"
   );
@@ -2792,9 +4166,9 @@ async function logoutUser() {
 
   window.scrollTo({
 
-    top: 0,
+    top:0,
 
-    behavior: "smooth"
+    behavior:"smooth"
 
   });
 
@@ -2814,7 +4188,9 @@ function showMessage(
   type
 ) {
 
-  if (!element) return;
+  if (!element) {
+    return;
+  }
 
 
   const isError =
@@ -2851,39 +4227,6 @@ function showMessage(
 
 
 // ============================================
-// ESCAPE HTML
-// ============================================
-
-function escapeHtml(value) {
-
-  return String(
-    value ?? ""
-  )
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-// ============================================
 // MODAL EVENTS
 // ============================================
 
@@ -2895,12 +4238,14 @@ function setupModalEvents() {
     );
 
 
-  if (!modal) return;
+  if (!modal) {
+    return;
+  }
 
 
   modal.addEventListener(
     "click",
-    function (event) {
+    function(event) {
 
       if (
         event.target === modal
@@ -2922,13 +4267,22 @@ function setupModalEvents() {
 
 document.addEventListener(
   "keydown",
-  function (event) {
+  function(event) {
 
     if (
       event.key === "Escape"
     ) {
 
       closeModal();
+
+      const viewer =
+        document.getElementById(
+          "samajProfileViewer"
+        );
+
+      if (viewer) {
+        viewer.remove();
+      }
 
     }
 
@@ -2942,7 +4296,7 @@ document.addEventListener(
 
 document.addEventListener(
   "DOMContentLoaded",
-  async function () {
+  async function() {
 
     console.log(
       "SamajSaathi app loading..."
@@ -2967,7 +4321,7 @@ document.addEventListener(
 // SESSION CHECK
 // ============================================
 
-(async function () {
+(async function() {
 
   try {
 
@@ -2997,23 +4351,3 @@ document.addEventListener(
   }
 
 })();
-// ============================================
-// MAKE FUNCTIONS AVAILABLE TO HTML BUTTONS
-// ============================================
-
-window.openModal = openModal;
-window.closeModal = closeModal;
-
-window.loginUser = loginUser;
-window.registerUser = registerUser;
-
-window.openDashboard = openDashboard;
-window.logoutUser = logoutUser;
-
-window.uploadProfilePhoto = uploadProfilePhoto;
-window.updateProfile = updateProfile;
-
-window.loadProfiles = loadProfiles;
-window.scrollToId = scrollToId;
-
-console.log("SamajSaathi: Global buttons connected successfully.");
