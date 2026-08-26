@@ -1,7 +1,7 @@
 // ============================================
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
-// COMPLETE UPDATED APP.JS
+// STAGE 1 - MEMBER DASHBOARD
 // ============================================
 
 
@@ -24,13 +24,15 @@ const supabaseClient =
 
 // ============================================
 // PHOTO DISPLAY FIX
-// Prevent dummy avatar from appearing over
-// real uploaded profile photos
 // ============================================
 
 (function addPhotoDisplayFix() {
 
-  if (document.getElementById("samajSaathiPhotoFix")) {
+  if (
+    document.getElementById(
+      "samajSaathiPhotoFix"
+    )
+  ) {
     return;
   }
 
@@ -123,6 +125,303 @@ const supabaseClient =
       background:#f8f1f3;
     }
 
+    /* ========================================
+       MEMBER DASHBOARD
+       ======================================== */
+
+    .samaj-dashboard {
+      min-height:100vh;
+      background:#faf7f8;
+    }
+
+    .samaj-dashboard-header {
+      background:#6f1025;
+      color:#fff;
+      padding:16px 24px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:20px;
+      position:sticky;
+      top:0;
+      z-index:100;
+      box-shadow:0 3px 15px rgba(0,0,0,.12);
+    }
+
+    .samaj-dashboard-brand {
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .samaj-dashboard-brand-logo {
+      width:42px;
+      height:42px;
+      border-radius:50%;
+      background:#fff;
+      color:#6f1025;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:800;
+      font-size:18px;
+    }
+
+    .samaj-dashboard-brand-name {
+      font-size:21px;
+      font-weight:700;
+    }
+
+    .samaj-dashboard-brand-sub {
+      font-size:12px;
+      opacity:.8;
+    }
+
+    .samaj-dashboard-header-actions {
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .samaj-header-btn {
+      border:1px solid rgba(255,255,255,.45);
+      background:rgba(255,255,255,.08);
+      color:#fff;
+      padding:9px 15px;
+      border-radius:9px;
+      cursor:pointer;
+      font-weight:600;
+    }
+
+    .samaj-header-btn:hover {
+      background:rgba(255,255,255,.18);
+    }
+
+    .samaj-dashboard-layout {
+      max-width:1200px;
+      margin:0 auto;
+      padding:25px 20px 60px;
+    }
+
+    .samaj-dashboard-menu {
+      display:grid;
+      grid-template-columns:
+        repeat(4,minmax(0,1fr));
+      gap:14px;
+      margin-bottom:25px;
+    }
+
+    .samaj-dashboard-menu-btn {
+      border:1px solid #ead9dd;
+      background:#fff;
+      border-radius:15px;
+      padding:18px 15px;
+      text-align:left;
+      cursor:pointer;
+      transition:.2s;
+      color:#321820;
+    }
+
+    .samaj-dashboard-menu-btn:hover {
+      transform:translateY(-2px);
+      box-shadow:0 8px 22px rgba(111,16,37,.10);
+      border-color:#cdaab4;
+    }
+
+    .samaj-dashboard-menu-btn.active {
+      background:#6f1025;
+      color:#fff;
+      border-color:#6f1025;
+    }
+
+    .samaj-menu-icon {
+      font-size:25px;
+      display:block;
+      margin-bottom:8px;
+    }
+
+    .samaj-menu-title {
+      font-size:15px;
+      font-weight:700;
+      display:block;
+    }
+
+    .samaj-menu-description {
+      font-size:12px;
+      opacity:.7;
+      display:block;
+      margin-top:4px;
+    }
+
+    .samaj-dashboard-welcome {
+      background:linear-gradient(
+        135deg,
+        #6f1025,
+        #8b3048
+      );
+      color:#fff;
+      border-radius:20px;
+      padding:28px;
+      margin-bottom:25px;
+    }
+
+    .samaj-dashboard-welcome h1 {
+      margin:7px 0;
+      font-size:30px;
+    }
+
+    .samaj-dashboard-welcome p {
+      margin:5px 0 0;
+      opacity:.9;
+    }
+
+    .samaj-dashboard-section {
+      background:#fff;
+      border:1px solid #eadfe2;
+      border-radius:18px;
+      padding:25px;
+      margin-bottom:25px;
+    }
+
+    .samaj-dashboard-section-header {
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:15px;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+    }
+
+    .samaj-dashboard-section-header h2 {
+      margin:5px 0;
+    }
+
+    .samaj-section-hidden {
+      display:none !important;
+    }
+
+    .samaj-profile-summary {
+      display:grid;
+      grid-template-columns:
+        180px 1fr;
+      gap:25px;
+      align-items:start;
+    }
+
+    .samaj-profile-summary-photo {
+      width:180px;
+      height:180px;
+      border-radius:18px;
+      overflow:hidden;
+      background:#f0e6e8;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-size:60px;
+    }
+
+    .samaj-profile-summary-photo img {
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .samaj-profile-details-grid {
+      display:grid;
+      grid-template-columns:
+        repeat(2,minmax(0,1fr));
+      gap:12px;
+    }
+
+    .samaj-profile-detail {
+      border:1px solid #eee;
+      border-radius:12px;
+      padding:14px;
+      background:#fff;
+    }
+
+    .samaj-profile-detail small {
+      display:block;
+      color:#777;
+      margin-bottom:5px;
+    }
+
+    .samaj-profile-detail strong {
+      color:#301821;
+    }
+
+    .samaj-coming-soon {
+      text-align:center;
+      padding:50px 20px;
+      background:#faf6f7;
+      border-radius:15px;
+    }
+
+    .samaj-coming-soon-icon {
+      font-size:50px;
+      margin-bottom:10px;
+    }
+
+    @media(max-width:800px) {
+
+      .samaj-dashboard-menu {
+        grid-template-columns:
+          repeat(2,minmax(0,1fr));
+      }
+
+      .samaj-profile-summary {
+        grid-template-columns:1fr;
+      }
+
+      .samaj-profile-summary-photo {
+        margin:auto;
+      }
+
+    }
+
+    @media(max-width:520px) {
+
+      .samaj-dashboard-header {
+        padding:13px 15px;
+      }
+
+      .samaj-dashboard-brand-name {
+        font-size:18px;
+      }
+
+      .samaj-dashboard-brand-sub {
+        display:none;
+      }
+
+      .samaj-dashboard-menu {
+        grid-template-columns:1fr 1fr;
+        gap:10px;
+      }
+
+      .samaj-dashboard-menu-btn {
+        padding:14px 11px;
+      }
+
+      .samaj-profile-details-grid {
+        grid-template-columns:1fr;
+      }
+
+      .samaj-dashboard-welcome {
+        padding:22px;
+      }
+
+      .samaj-dashboard-welcome h1 {
+        font-size:25px;
+      }
+
+      .samaj-dashboard-section {
+        padding:18px;
+      }
+
+    }
+
   `;
 
   document.head.appendChild(style);
@@ -136,20 +435,18 @@ const supabaseClient =
 
 function escapeHtml(value) {
 
-  return String(
-    value ?? ""
-  )
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+  return String(value ?? "")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 
 }
 
 
 // ============================================
-// GET PROFILE PHOTO URL
+// GET PUBLIC PHOTO URL
 // ============================================
 
 function getProfilePhotoUrl(photoPath) {
@@ -168,7 +465,7 @@ function getProfilePhotoUrl(photoPath) {
 
     return result.data?.publicUrl || null;
 
-  } catch (error) {
+  } catch(error) {
 
     console.error(
       "PUBLIC PHOTO URL ERROR:",
@@ -183,8 +480,7 @@ function getProfilePhotoUrl(photoPath) {
 
 
 // ============================================
-// LOAD PUBLIC PROFILE PREVIEW
-// MAIN PAGE
+// LOAD PUBLIC PROFILES
 // ============================================
 
 async function loadProfiles() {
@@ -197,7 +493,6 @@ async function loadProfiles() {
   }
 
   grid.innerHTML = `
-
     <div style="
       grid-column:1/-1;
       text-align:center;
@@ -206,7 +501,6 @@ async function loadProfiles() {
     ">
       Loading profiles...
     </div>
-
   `;
 
   try {
@@ -229,8 +523,8 @@ async function loadProfiles() {
           is_active,
           created_at
         `)
-        .eq("is_active", true)
-        .order("created_at", {
+        .eq("is_active",true)
+        .order("created_at",{
           ascending:false
         })
         .limit(6);
@@ -243,24 +537,17 @@ async function loadProfiles() {
       );
 
       grid.innerHTML = `
-
         <div style="
           grid-column:1/-1;
           text-align:center;
           padding:40px;
           color:#b42318;
         ">
-
-          <h3>
-            Unable to load profiles
-          </h3>
-
+          <h3>Unable to load profiles</h3>
           <p>
             ${escapeHtml(result.error.message)}
           </p>
-
         </div>
-
       `;
 
       return;
@@ -273,23 +560,16 @@ async function loadProfiles() {
     if (!profiles.length) {
 
       grid.innerHTML = `
-
         <div style="
           grid-column:1/-1;
           text-align:center;
           padding:40px;
         ">
-
-          <h3>
-            No profiles available yet.
-          </h3>
-
+          <h3>No profiles available yet.</h3>
           <p>
             New members will appear here after registration.
           </p>
-
         </div>
-
       `;
 
       return;
@@ -297,20 +577,13 @@ async function loadProfiles() {
     }
 
     grid.innerHTML =
-      profiles.map(
-        function(p) {
-
+      profiles
+        .map(function(p) {
           return createPublicProfileCard(p);
+        })
+        .join("");
 
-        }
-      ).join("");
-
-    console.log(
-      "Public profiles loaded:",
-      profiles.length
-    );
-
-  } catch (error) {
+  } catch(error) {
 
     console.error(
       "PUBLIC PROFILES ERROR:",
@@ -318,18 +591,13 @@ async function loadProfiles() {
     );
 
     grid.innerHTML = `
-
       <div style="
         grid-column:1/-1;
         text-align:center;
         padding:40px;
-        color:#b42318;
       ">
-
         Something went wrong while loading profiles.
-
       </div>
-
     `;
 
   }
@@ -338,13 +606,13 @@ async function loadProfiles() {
 
 
 // ============================================
-// CREATE PUBLIC PROFILE CARD
+// PUBLIC PROFILE CARD
 // ============================================
 
 function createPublicProfileCard(p) {
 
   const location =
-    [p.city, p.state]
+    [p.city,p.state]
       .filter(Boolean)
       .join(", ");
 
@@ -357,9 +625,7 @@ function createPublicProfileCard(p) {
     getProfilePhotoUrl(photoPath);
 
   let photoHtml = `
-
     <div class="profile-img">
-
       <span style="
         font-size:55px;
         display:flex;
@@ -373,15 +639,12 @@ function createPublicProfileCard(p) {
       <span class="profile-tag">
         ✓ Verified
       </span>
-
     </div>
-
   `;
 
   if (photoUrl) {
 
     photoHtml = `
-
       <div class="profile-img has-real-photo">
 
         <img
@@ -404,13 +667,11 @@ function createPublicProfileCard(p) {
         </span>
 
       </div>
-
     `;
 
   }
 
   return `
-
     <article class="profile">
 
       ${photoHtml}
@@ -421,13 +682,11 @@ function createPublicProfileCard(p) {
           ${escapeHtml(
             p.full_name || "Member"
           )}
-
           ${
             p.age
               ? ", " + escapeHtml(p.age)
               : ""
           }
-
         </b>
 
         <small>
@@ -438,25 +697,21 @@ function createPublicProfileCard(p) {
         </small>
 
         <small>
-
           ${escapeHtml(
             p.community || ""
           )}
-
           ${
             p.surname
               ? " · " +
                 escapeHtml(p.surname)
               : ""
           }
-
           ${
             p.kul
               ? " · " +
                 escapeHtml(p.kul)
               : ""
           }
-
         </small>
 
         <small class="match">
@@ -466,7 +721,6 @@ function createPublicProfileCard(p) {
       </div>
 
     </article>
-
   `;
 
 }
@@ -474,7 +728,6 @@ function createPublicProfileCard(p) {
 
 // ============================================
 // FIND YOUR MATCHES
-// DATABASE CONNECTED
 // ============================================
 
 async function loadMatches() {
@@ -489,18 +742,14 @@ async function loadMatches() {
   }
 
   grid.innerHTML = `
-
     <div style="
       grid-column:1/-1;
       text-align:center;
       padding:40px;
       color:#6f1025;
     ">
-
       Finding suitable profiles...
-
     </div>
-
   `;
 
   try {
@@ -516,12 +765,9 @@ async function loadMatches() {
     if (!session) {
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
 
-          <h3>
-            Please login first
-          </h3>
+          <h3>Please login first</h3>
 
           <p>
             Login to see profiles matching your preferences.
@@ -536,7 +782,6 @@ async function loadMatches() {
           </button>
 
         </div>
-
       `;
 
       return;
@@ -547,9 +792,7 @@ async function loadMatches() {
       session.user.id;
 
 
-    // ========================================
-    // GET CURRENT USER PROFILE
-    // ========================================
+    // CURRENT USER
 
     const currentResult =
       await supabaseClient
@@ -568,10 +811,7 @@ async function loadMatches() {
           photo_url,
           is_active
         `)
-        .eq(
-          "id",
-          currentUserId
-        )
+        .eq("id",currentUserId)
         .maybeSingle();
 
 
@@ -583,21 +823,14 @@ async function loadMatches() {
       );
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
-
-          <h3>
-            Unable to load your profile
-          </h3>
-
+          <h3>Unable to load your profile</h3>
           <p>
             ${escapeHtml(
               currentResult.error.message
             )}
           </p>
-
         </div>
-
       `;
 
       return;
@@ -612,19 +845,15 @@ async function loadMatches() {
     if (!currentProfile) {
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
 
-          <h3>
-            Complete your profile first
-          </h3>
+          <h3>Complete your profile first</h3>
 
           <p>
             Your profile must be created before we can find matches.
           </p>
 
         </div>
-
       `;
 
       return;
@@ -646,19 +875,15 @@ async function loadMatches() {
     ) {
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
 
-          <h3>
-            Gender information required
-          </h3>
+          <h3>Gender information required</h3>
 
           <p>
             Please update your gender in your profile.
           </p>
 
         </div>
-
       `;
 
       return;
@@ -666,19 +891,11 @@ async function loadMatches() {
     }
 
 
-    // ========================================
-    // OPPOSITE GENDER
-    // ========================================
-
     const oppositeGender =
       gender === "male"
         ? "female"
         : "male";
 
-
-    // ========================================
-    // GET MATCHES
-    // ========================================
 
     const matchesResult =
       await supabaseClient
@@ -704,24 +921,12 @@ async function loadMatches() {
           is_active,
           created_at
         `)
-        .eq(
-          "is_active",
-          true
-        )
-        .eq(
-          "gender",
-          oppositeGender
-        )
-        .neq(
-          "id",
-          currentUserId
-        )
-        .order(
-          "created_at",
-          {
-            ascending:false
-          }
-        );
+        .eq("is_active",true)
+        .eq("gender",oppositeGender)
+        .neq("id",currentUserId)
+        .order("created_at",{
+          ascending:false
+        });
 
 
     if (matchesResult.error) {
@@ -732,12 +937,9 @@ async function loadMatches() {
       );
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
 
-          <h3>
-            Unable to load matches
-          </h3>
+          <h3>Unable to load matches</h3>
 
           <p>
             ${escapeHtml(
@@ -746,7 +948,6 @@ async function loadMatches() {
           </p>
 
         </div>
-
       `;
 
       return;
@@ -761,7 +962,6 @@ async function loadMatches() {
     if (!matches.length) {
 
       grid.innerHTML = `
-
         <div class="samaj-no-matches">
 
           <div style="
@@ -771,17 +971,18 @@ async function loadMatches() {
             💕
           </div>
 
-          <h3>
-            No matches available yet
-          </h3>
+          <h3>No matches available yet</h3>
 
           <p>
-            New ${oppositeGender === "female" ? "women" : "men"}
+            New ${
+              oppositeGender === "female"
+                ? "women"
+                : "men"
+            }
             profiles will appear here when they join SamajSaathi.
           </p>
 
         </div>
-
       `;
 
       return;
@@ -789,29 +990,14 @@ async function loadMatches() {
     }
 
 
-    // ========================================
-    // RENDER MATCHES
-    // ========================================
-
     grid.innerHTML =
-      matches.map(
-        function(profile) {
+      matches
+        .map(function(profile) {
+          return createMatchCard(profile);
+        })
+        .join("");
 
-          return createMatchCard(
-            profile
-          );
-
-        }
-      ).join("");
-
-
-    console.log(
-      "Find Your Matches:",
-      matches.length
-    );
-
-
-  } catch (error) {
+  } catch(error) {
 
     console.error(
       "FIND MATCHES ERROR:",
@@ -819,19 +1005,15 @@ async function loadMatches() {
     );
 
     grid.innerHTML = `
-
       <div class="samaj-no-matches">
 
-        <h3>
-          Something went wrong
-        </h3>
+        <h3>Something went wrong</h3>
 
         <p>
           Please refresh the page and try again.
         </p>
 
       </div>
-
     `;
 
   }
@@ -840,61 +1022,46 @@ async function loadMatches() {
 
 
 // ============================================
-// CREATE MATCH CARD
+// MATCH CARD
 // ============================================
 
 function createMatchCard(profile) {
 
   const location =
-    [profile.city, profile.state]
+    [profile.city,profile.state]
       .filter(Boolean)
       .join(", ");
-
 
   const photoPath =
     profile.profile_photo ||
     profile.photo_url ||
     null;
 
-
   const photoUrl =
     getProfilePhotoUrl(photoPath);
 
-
   let photoHtml = `
-
-    <div
-      style="
-        height:280px;
-        background:#c08b8b;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-      "
-    >
-
-      <span style="
-        font-size:75px;
-      ">
+    <div style="
+      height:280px;
+      background:#c08b8b;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    ">
+      <span style="font-size:75px;">
         👤
       </span>
-
     </div>
-
   `;
-
 
   if (photoUrl) {
 
     photoHtml = `
-
-      <div
-        style="
-          height:280px;
-          background:#eee;
-          overflow:hidden;
-        "
-      >
+      <div style="
+        height:280px;
+        background:#eee;
+        overflow:hidden;
+      ">
 
         <img
           class="samaj-match-photo"
@@ -905,19 +1072,15 @@ function createMatchCard(profile) {
           loading="lazy"
           onerror="
             this.style.display='none';
-            this.parentElement.innerHTML='<div style=&quot;height:100%;display:flex;align-items:center;justify-content:center;font-size:75px;background:#c08b8b;&quot;>👤</div>';
           "
         >
 
       </div>
-
     `;
 
   }
 
-
   return `
-
     <article
       class="profile samaj-match-card"
       style="
@@ -951,63 +1114,49 @@ function createMatchCard(profile) {
       <div class="samaj-match-info">
 
         <h3>
-
           ${escapeHtml(
             profile.full_name ||
             "Member"
           )}
-
           ${
             profile.age
               ? ", " +
                 escapeHtml(profile.age)
               : ""
           }
-
         </h3>
 
 
         <small>
-
           📍
           ${escapeHtml(
             location ||
             "Location not specified"
           )}
-
         </small>
 
 
         <small>
-
           ${escapeHtml(
             profile.community ||
             "Community not specified"
           )}
-
           ${
             profile.surname
               ? " · " +
-                escapeHtml(
-                  profile.surname
-                )
+                escapeHtml(profile.surname)
               : ""
           }
-
         </small>
 
 
         <small>
-
           ${
             profile.kul
               ? "Kul: " +
-                escapeHtml(
-                  profile.kul
-                )
+                escapeHtml(profile.kul)
               : ""
           }
-
         </small>
 
 
@@ -1016,9 +1165,9 @@ function createMatchCard(profile) {
           <button
             type="button"
             class="samaj-view-profile-btn"
-            onclick="viewProfile(
-              '${escapeHtml(profile.id)}'
-            )"
+            onclick="viewProfile('${escapeHtml(
+              profile.id
+            )}')"
           >
             View Profile
           </button>
@@ -1027,9 +1176,9 @@ function createMatchCard(profile) {
           <button
             type="button"
             class="samaj-interest-btn"
-            onclick="sendInterest(
-              '${escapeHtml(profile.id)}'
-            )"
+            onclick="sendInterest('${escapeHtml(
+              profile.id
+            )}')"
           >
             ❤️ Send Interest
           </button>
@@ -1039,7 +1188,6 @@ function createMatchCard(profile) {
       </div>
 
     </article>
-
   `;
 
 }
@@ -1054,7 +1202,6 @@ async function viewProfile(profileId) {
   if (!profileId) {
     return;
   }
-
 
   const result =
     await supabaseClient
@@ -1078,12 +1225,8 @@ async function viewProfile(profileId) {
         profile_photo,
         photo_url
       `)
-      .eq(
-        "id",
-        profileId
-      )
+      .eq("id",profileId)
       .maybeSingle();
-
 
   if (result.error) {
 
@@ -1096,47 +1239,35 @@ async function viewProfile(profileId) {
 
   }
 
-
   if (!result.data) {
 
-    alert(
-      "Profile not found."
-    );
+    alert("Profile not found.");
 
     return;
 
   }
 
-
   const profile =
     result.data;
-
 
   let modal =
     document.getElementById(
       "samajProfileViewer"
     );
 
-
   if (modal) {
     modal.remove();
   }
-
 
   const photoPath =
     profile.profile_photo ||
     profile.photo_url ||
     null;
 
-
   const photoUrl =
-    getProfilePhotoUrl(
-      photoPath
-    );
-
+    getProfilePhotoUrl(photoPath);
 
   let photoHtml = `
-
     <div style="
       width:150px;
       height:150px;
@@ -1150,14 +1281,11 @@ async function viewProfile(profileId) {
     ">
       👤
     </div>
-
   `;
-
 
   if (photoUrl) {
 
     photoHtml = `
-
       <img
         src="${escapeHtml(photoUrl)}"
         alt="${escapeHtml(
@@ -1172,19 +1300,15 @@ async function viewProfile(profileId) {
           margin:0 auto 20px;
         "
       >
-
     `;
 
   }
 
-
   modal =
     document.createElement("div");
 
-
   modal.id =
     "samajProfileViewer";
-
 
   modal.style.cssText = `
     position:fixed;
@@ -1197,9 +1321,7 @@ async function viewProfile(profileId) {
     padding:20px;
   `;
 
-
   modal.innerHTML = `
-
     <div style="
       width:min(600px,100%);
       max-height:90vh;
@@ -1233,9 +1355,7 @@ async function viewProfile(profileId) {
         ×
       </button>
 
-
       ${photoHtml}
-
 
       <div style="
         text-align:center;
@@ -1252,20 +1372,15 @@ async function viewProfile(profileId) {
             profile.full_name ||
             "Member"
           )}
-
           ${
             profile.age
               ? ", " +
-                escapeHtml(
-                  profile.age
-                )
+                escapeHtml(profile.age)
               : ""
           }
-
         </h2>
 
       </div>
-
 
       <div style="
         display:grid;
@@ -1282,7 +1397,7 @@ async function viewProfile(profileId) {
 
         ${profileViewerItem(
           "City",
-          [profile.city, profile.state]
+          [profile.city,profile.state]
             .filter(Boolean)
             .join(", ")
         )}
@@ -1324,11 +1439,9 @@ async function viewProfile(profileId) {
 
       </div>
 
-
       ${
         profile.bio
           ? `
-
             <div style="
               margin-top:20px;
               padding:18px;
@@ -1336,22 +1449,16 @@ async function viewProfile(profileId) {
               border-radius:14px;
             ">
 
-              <strong>
-                About
-              </strong>
+              <strong>About</strong>
 
               <p>
-                ${escapeHtml(
-                  profile.bio
-                )}
+                ${escapeHtml(profile.bio)}
               </p>
 
             </div>
-
           `
           : ""
       }
-
 
       <div style="
         margin-top:20px;
@@ -1362,7 +1469,9 @@ async function viewProfile(profileId) {
           type="button"
           class="samaj-interest-btn"
           onclick="
-            sendInterest('${escapeHtml(profile.id)}')
+            sendInterest('${escapeHtml(
+              profile.id
+            )}')
           "
         >
           ❤️ Send Interest
@@ -1371,25 +1480,16 @@ async function viewProfile(profileId) {
       </div>
 
     </div>
-
   `;
 
-
-  document.body.appendChild(
-    modal
-  );
-
+  document.body.appendChild(modal);
 
   modal.addEventListener(
     "click",
     function(event) {
 
-      if (
-        event.target === modal
-      ) {
-
+      if (event.target === modal) {
         modal.remove();
-
       }
 
     }
@@ -1408,7 +1508,6 @@ function profileViewerItem(
 ) {
 
   return `
-
     <div style="
       background:#fff;
       border:1px solid #eee;
@@ -1431,7 +1530,6 @@ function profileViewerItem(
       </strong>
 
     </div>
-
   `;
 
 }
@@ -1439,7 +1537,7 @@ function profileViewerItem(
 
 // ============================================
 // SEND INTEREST
-// STEP 3 READY
+// STAGE 3 PLACEHOLDER
 // ============================================
 
 async function sendInterest(profileId) {
@@ -1448,16 +1546,13 @@ async function sendInterest(profileId) {
     return;
   }
 
-
   const sessionResult =
     await supabaseClient
       .auth
       .getSession();
 
-
   const session =
     sessionResult.data?.session;
-
 
   if (!session) {
 
@@ -1466,7 +1561,6 @@ async function sendInterest(profileId) {
     return;
 
   }
-
 
   if (
     profileId ===
@@ -1481,17 +1575,8 @@ async function sendInterest(profileId) {
 
   }
 
-
-  /*
-   * Interest table will be connected
-   * in the next step.
-   *
-   * For now we keep the button working
-   * without breaking the application.
-   */
-
   alert(
-    "❤️ Interest feature is ready for the next step."
+    "❤️ Interest system will be connected in the next stage."
   );
 
 }
@@ -1508,10 +1593,8 @@ async function openFindMatches() {
       .auth
       .getSession();
 
-
   const session =
     sessionResult.data?.session;
-
 
   if (!session) {
 
@@ -1521,37 +1604,121 @@ async function openFindMatches() {
 
   }
 
-
   await openDashboard();
-
 
   setTimeout(
     function() {
 
-      const matches =
-        document.getElementById(
-          "matchesGrid"
-        );
-
-
-      if (matches) {
-
-        matches.scrollIntoView({
-          behavior:"smooth",
-          block:"start"
-        });
-
-      }
+      showDashboardSection(
+        "matches"
+      );
 
     },
-    700
+    300
   );
 
 }
 
 
 // ============================================
-// SCROLL
+// DASHBOARD NAVIGATION
+// ============================================
+
+function showDashboardSection(
+  section
+) {
+
+  const sections = [
+    "profile",
+    "edit",
+    "matches",
+    "interests",
+    "received",
+    "notifications",
+    "account"
+  ];
+
+  sections.forEach(
+    function(name) {
+
+      const element =
+        document.getElementById(
+          "dashboardSection-" + name
+        );
+
+      if (element) {
+
+        if (name === section) {
+          element.classList.remove(
+            "samaj-section-hidden"
+          );
+        } else {
+          element.classList.add(
+            "samaj-section-hidden"
+          );
+        }
+
+      }
+
+    }
+  );
+
+
+  const buttons =
+    document.querySelectorAll(
+      ".samaj-dashboard-menu-btn"
+    );
+
+  buttons.forEach(
+    function(button) {
+
+      if (
+        button.dataset.section ===
+        section
+      ) {
+
+        button.classList.add(
+          "active"
+        );
+
+      } else {
+
+        button.classList.remove(
+          "active"
+        );
+
+      }
+
+    }
+  );
+
+
+  const target =
+    document.getElementById(
+      "dashboardSection-" + section
+    );
+
+  if (target) {
+
+    setTimeout(
+      function() {
+
+        target.scrollIntoView({
+          behavior:"smooth",
+          block:"start"
+        });
+
+      },
+      50
+    );
+
+  }
+
+}
+
+
+// ============================================
+// SCROLL TO ID
 // ============================================
 
 function scrollToId(id) {
@@ -1599,12 +1766,12 @@ function generateUsername(
   const first =
     String(firstName)
       .toLowerCase()
-      .replace(/[^a-z]/g, "");
+      .replace(/[^a-z]/g,"");
 
   const last =
     String(lastName)
       .toLowerCase()
-      .replace(/[^a-z]/g, "");
+      .replace(/[^a-z]/g,"");
 
   const random =
     Math.floor(
@@ -1661,9 +1828,7 @@ function generatePassword() {
 function openModal(type) {
 
   const modal =
-    document.getElementById(
-      "modal"
-    );
+    document.getElementById("modal");
 
   const content =
     document.getElementById(
@@ -1705,9 +1870,7 @@ function openModal(type) {
 
         <div class="field full">
 
-          <label>
-            Email
-          </label>
+          <label>Email</label>
 
           <input
             id="loginEmail"
@@ -1718,12 +1881,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
-          <label>
-            Password
-          </label>
+          <label>Password</label>
 
           <input
             id="loginPassword"
@@ -1736,9 +1896,7 @@ function openModal(type) {
 
       </div>
 
-
       <div id="loginMessage"></div>
-
 
       <div class="modal-actions">
 
@@ -1751,7 +1909,6 @@ function openModal(type) {
         </button>
 
       </div>
-
 
       <p style="
         margin-top:18px;
@@ -1777,7 +1934,6 @@ function openModal(type) {
 
   }
 
-
   // ========================================
   // REGISTER
   // ========================================
@@ -1798,14 +1954,11 @@ function openModal(type) {
         Tell us a little about yourself.
       </p>
 
-
       <div class="form-grid">
 
         <div class="field">
 
-          <label>
-            First Name *
-          </label>
+          <label>First Name *</label>
 
           <input
             id="firstName"
@@ -1814,12 +1967,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Last Name *
-          </label>
+          <label>Last Name *</label>
 
           <input
             id="lastName"
@@ -1828,12 +1978,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
-          <label>
-            Email *
-          </label>
+          <label>Email *</label>
 
           <input
             id="email"
@@ -1844,12 +1991,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Date of Birth *
-          </label>
+          <label>Date of Birth *</label>
 
           <input
             id="dob"
@@ -1858,12 +2002,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Gender *
-          </label>
+          <label>Gender *</label>
 
           <select id="gender">
 
@@ -1883,12 +2024,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Community / Jati
-          </label>
+          <label>Community / Jati</label>
 
           <select id="community">
 
@@ -1904,12 +2042,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Surname
-          </label>
+          <label>Surname</label>
 
           <select id="surname">
 
@@ -1933,12 +2068,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
-          <label>
-            Kul / Clan
-          </label>
+          <label>Kul / Clan</label>
 
           <select id="kul">
 
@@ -1958,12 +2090,9 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
-          <label>
-            Current City *
-          </label>
+          <label>Current City *</label>
 
           <input
             id="city"
@@ -1974,9 +2103,7 @@ function openModal(type) {
 
       </div>
 
-
       <div id="registerMessage"></div>
-
 
       <div class="modal-actions">
 
@@ -1994,7 +2121,6 @@ function openModal(type) {
 
   }
 
-
   modal.classList.add("show");
 
 }
@@ -2007,15 +2133,11 @@ function openModal(type) {
 function closeModal() {
 
   const modal =
-    document.getElementById(
-      "modal"
-    );
+    document.getElementById("modal");
 
   if (modal) {
 
-    modal.classList.remove(
-      "show"
-    );
+    modal.classList.remove("show");
 
   }
 
@@ -2109,16 +2231,11 @@ async function registerUser() {
   const password =
     generatePassword();
 
-
   const fullName =
-    firstName +
-    " " +
-    lastName;
-
+    firstName + " " + lastName;
 
   const displayUserId =
     generateUserId();
-
 
   const username =
     generateUsername(
@@ -2139,26 +2256,13 @@ async function registerUser() {
           password:password,
 
           options:{
-
             data:{
-
-              first_name:
-                firstName,
-
-              last_name:
-                lastName,
-
-              full_name:
-                fullName,
-
-              username:
-                username,
-
-              display_user_id:
-                displayUserId
-
+              first_name:firstName,
+              last_name:lastName,
+              full_name:fullName,
+              username:username,
+              display_user_id:displayUserId
             }
-
           }
 
         });
@@ -2210,35 +2314,25 @@ async function registerUser() {
 
     const profileData = {
 
-      id:
-        data.user.id,
+      id:data.user.id,
 
-      full_name:
-        fullName,
+      full_name:fullName,
 
-      gender:
-        gender,
+      gender:gender,
 
-      date_of_birth:
-        dob,
+      date_of_birth:dob,
 
-      age:
-        calculateAge(dob),
+      age:calculateAge(dob),
 
-      city:
-        city,
+      city:city,
 
-      community:
-        community,
+      community:community,
 
-      surname:
-        surname,
+      surname:surname,
 
-      kul:
-        kul,
+      kul:kul,
 
-      is_active:
-        true
+      is_active:true
 
     };
 
@@ -2277,17 +2371,13 @@ async function registerUser() {
 
       showRegistrationSuccess({
 
-        userId:
-          displayUserId,
+        userId:displayUserId,
 
-        username:
-          username,
+        username:username,
 
-        firstName:
-          firstName,
+        firstName:firstName,
 
-        password:
-          password
+        password:password
 
       });
 
@@ -2296,32 +2386,24 @@ async function registerUser() {
 
     }
 
-
     else {
 
       localStorage.setItem(
         "samajSaathiPendingProfile",
-        JSON.stringify(
-          profileData
-        )
+        JSON.stringify(profileData)
       );
 
 
       contentAfterSignup(
-
         firstName,
-
         displayUserId,
-
         username,
-
         password
-
       );
 
     }
 
-  } catch (err) {
+  } catch(err) {
 
     console.error(
       "REGISTER ERROR:",
@@ -2352,24 +2434,19 @@ function calculateAge(
     return null;
   }
 
-
   const birthDate =
     new Date(dateString);
 
-
   const today =
     new Date();
-
 
   let age =
     today.getFullYear() -
     birthDate.getFullYear();
 
-
   const month =
     today.getMonth() -
     birthDate.getMonth();
-
 
   if (
     month < 0 ||
@@ -2384,14 +2461,13 @@ function calculateAge(
 
   }
 
-
   return age;
 
 }
 
 
 // ============================================
-// EMAIL CONFIRMATION MESSAGE
+// AFTER SIGNUP
 // ============================================
 
 function contentAfterSignup(
@@ -2410,16 +2486,11 @@ function contentAfterSignup(
     return;
   }
 
-
   content.innerHTML = `
 
-    <div style="
-      text-align:center;
-    ">
+    <div style="text-align:center;">
 
-      <div style="
-        font-size:48px;
-      ">
+      <div style="font-size:48px;">
         ✓
       </div>
 
@@ -2437,7 +2508,6 @@ function contentAfterSignup(
         then login to continue.
       </p>
 
-
       <div style="
         margin:20px 0;
         padding:18px;
@@ -2447,60 +2517,40 @@ function contentAfterSignup(
       ">
 
         <div>
-
-          <small>
-            User ID
-          </small>
-
+          <small>User ID</small>
           <strong style="
             display:block;
             margin-top:4px;
           ">
             ${escapeHtml(userId)}
           </strong>
-
         </div>
-
 
         <br>
 
-
         <div>
-
-          <small>
-            Username
-          </small>
-
+          <small>Username</small>
           <strong style="
             display:block;
             margin-top:4px;
           ">
             ${escapeHtml(username)}
           </strong>
-
         </div>
-
 
         <br>
 
-
         <div>
-
-          <small>
-            Temporary Password
-          </small>
-
+          <small>Temporary Password</small>
           <strong style="
             display:block;
             margin-top:4px;
           ">
             ${escapeHtml(password)}
           </strong>
-
         </div>
 
       </div>
-
 
       <div style="
         padding:12px;
@@ -2510,12 +2560,8 @@ function contentAfterSignup(
         font-size:13px;
         margin-bottom:18px;
       ">
-
-        Please save your User ID,
-        Username and Password.
-
+        Please save your login details.
       </div>
-
 
       <div class="modal-actions">
 
@@ -2553,12 +2599,9 @@ function showRegistrationSuccess(
     return;
   }
 
-
   content.innerHTML = `
 
-    <div style="
-      text-align:center;
-    ">
+    <div style="text-align:center;">
 
       <div style="
         font-size:48px;
@@ -2580,7 +2623,6 @@ function showRegistrationSuccess(
         Your matrimonial profile has been created successfully.
       </p>
 
-
       <div style="
         margin:20px 0;
         padding:18px;
@@ -2591,9 +2633,7 @@ function showRegistrationSuccess(
 
         <div style="margin-bottom:12px;">
 
-          <small>
-            User ID
-          </small>
+          <small>User ID</small>
 
           <strong style="
             display:block;
@@ -2605,12 +2645,9 @@ function showRegistrationSuccess(
 
         </div>
 
-
         <div style="margin-bottom:12px;">
 
-          <small>
-            Username
-          </small>
+          <small>Username</small>
 
           <strong style="
             display:block;
@@ -2621,12 +2658,9 @@ function showRegistrationSuccess(
 
         </div>
 
-
         <div>
 
-          <small>
-            Temporary Password
-          </small>
+          <small>Temporary Password</small>
 
           <strong style="
             display:block;
@@ -2639,7 +2673,6 @@ function showRegistrationSuccess(
         </div>
 
       </div>
-
 
       <div style="
         padding:12px;
@@ -2660,7 +2693,6 @@ function showRegistrationSuccess(
 
       </div>
 
-
       <div class="modal-actions">
 
         <button
@@ -2668,7 +2700,7 @@ function showRegistrationSuccess(
           type="button"
           onclick="openDashboard()"
         >
-          Go to My Profile →
+          Go to My Dashboard →
         </button>
 
       </div>
@@ -2691,12 +2723,10 @@ async function loginUser() {
       "loginEmail"
     )?.value.trim();
 
-
   const password =
     document.getElementById(
       "loginPassword"
     )?.value;
-
 
   const message =
     document.getElementById(
@@ -2731,11 +2761,9 @@ async function loginUser() {
         .auth
         .signInWithPassword({
 
-          email:
-            email,
+          email:email,
 
-          password:
-            password
+          password:password
 
         });
 
@@ -2768,11 +2796,10 @@ async function loginUser() {
 
     await savePendingProfile();
 
-
     await openDashboard();
 
 
-  } catch (err) {
+  } catch(err) {
 
     console.error(
       "LOGIN ERROR:",
@@ -2802,28 +2829,18 @@ async function savePendingProfile() {
       "samajSaathiPendingProfile"
     );
 
-
   if (!pending) {
     return;
   }
 
-
   let profileData;
-
 
   try {
 
     profileData =
-      JSON.parse(
-        pending
-      );
+      JSON.parse(pending);
 
-  } catch (error) {
-
-    console.error(
-      "PENDING PROFILE JSON ERROR:",
-      error
-    );
+  } catch(error) {
 
     localStorage.removeItem(
       "samajSaathiPendingProfile"
@@ -2835,13 +2852,12 @@ async function savePendingProfile() {
 
 
   const sessionResult =
-    await supabaseClient.auth
+    await supabaseClient
+      .auth
       .getSession();
-
 
   const session =
     sessionResult.data?.session;
-
 
   if (!session) {
     return;
@@ -2892,9 +2908,9 @@ async function savePendingProfile() {
 async function openDashboard() {
 
   const sessionResult =
-    await supabaseClient.auth
+    await supabaseClient
+      .auth
       .getSession();
-
 
   const session =
     sessionResult.data?.session;
@@ -2920,10 +2936,7 @@ async function openDashboard() {
     await supabaseClient
       .from("profiles")
       .select("*")
-      .eq(
-        "id",
-        userId
-      )
+      .eq("id",userId)
       .maybeSingle();
 
 
@@ -2967,127 +2980,458 @@ async function openDashboard() {
       "samajSaathiDashboard"
     );
 
-
   if (oldDashboard) {
-
     oldDashboard.remove();
-
   }
 
 
   const dashboard =
-    document.createElement(
-      "div"
-    );
-
+    document.createElement("div");
 
   dashboard.id =
     "samajSaathiDashboard";
 
+  dashboard.className =
+    "samaj-dashboard";
+
 
   dashboard.innerHTML = `
 
-    <div style="
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      background:#fff;
-      overflow:auto;
-    ">
+    <!-- ==================================
+         DASHBOARD HEADER
+         ================================== -->
 
+    <header class="samaj-dashboard-header">
 
-      <!-- HEADER -->
+      <div class="samaj-dashboard-brand">
 
-      <div style="
-        background:#6f1025;
-        color:#fff;
-        padding:20px;
-        display:flex;
-        justify-content:space-between;
-        align-items:center;
-        gap:15px;
-        flex-wrap:wrap;
-      ">
+        <div class="
+          samaj-dashboard-brand-logo
+        ">
+          SS
+        </div>
 
         <div>
 
-          <div style="
-            font-size:24px;
-            font-weight:700;
+          <div class="
+            samaj-dashboard-brand-name
           ">
             SamajSaathi
           </div>
 
-          <small>
-            My Profile
-          </small>
+          <div class="
+            samaj-dashboard-brand-sub
+          ">
+            Member Dashboard
+          </div>
 
         </div>
 
+      </div>
+
+
+      <div class="
+        samaj-dashboard-header-actions
+      ">
 
         <button
           type="button"
-          onclick="logoutUser()"
-          style="
-            border:1px solid rgba(255,255,255,.5);
-            background:transparent;
-            color:#fff;
-            padding:10px 18px;
-            border-radius:8px;
-            cursor:pointer;
+          class="samaj-header-btn"
+          onclick="
+            showDashboardSection('profile')
           "
+        >
+          👤 My Profile
+        </button>
+
+        <button
+          type="button"
+          class="samaj-header-btn"
+          onclick="logoutUser()"
         >
           Logout
         </button>
 
       </div>
 
-
-      <div style="
-        max-width:1100px;
-        margin:40px auto;
-        padding:20px;
-      ">
+    </header>
 
 
-        <!-- PROFILE PHOTO -->
+    <!-- ==================================
+         MAIN DASHBOARD
+         ================================== -->
 
-        <div style="
-          background:#f8f1f3;
-          border-radius:18px;
-          padding:25px;
-          margin-bottom:25px;
-          text-align:center;
-        ">
+    <main class="samaj-dashboard-layout">
 
-          <span class="eyebrow">
-            PROFILE PHOTO
+
+      <!-- ==================================
+           DASHBOARD MENU
+           ================================== -->
+
+      <nav class="samaj-dashboard-menu">
+
+
+        <button
+          type="button"
+          class="
+            samaj-dashboard-menu-btn
+            active
+          "
+          data-section="profile"
+          onclick="
+            showDashboardSection('profile')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            👤
           </span>
 
+          <span class="samaj-menu-title">
+            My Profile
+          </span>
 
-          <div
-            id="profilePhotoPreview"
-            style="
-              margin:20px auto;
-              width:150px;
-              height:150px;
-              border-radius:50%;
-              overflow:hidden;
-              background:#eee;
-              display:flex;
-              align-items:center;
-              justify-content:center;
-            "
-          >
+          <span class="samaj-menu-description">
+            View your profile
+          </span>
 
-            <span style="
-              font-size:55px;
-              color:#aaa;
-            ">
-              👤
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="edit"
+          onclick="
+            showDashboardSection('edit')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            ✏️
+          </span>
+
+          <span class="samaj-menu-title">
+            Edit Profile
+          </span>
+
+          <span class="samaj-menu-description">
+            Update your details
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="matches"
+          onclick="
+            showDashboardSection('matches');
+            loadMatches();
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            💕
+          </span>
+
+          <span class="samaj-menu-title">
+            Find Your Matches
+          </span>
+
+          <span class="samaj-menu-description">
+            Discover profiles
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="interests"
+          onclick="
+            showDashboardSection('interests')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            ❤️
+          </span>
+
+          <span class="samaj-menu-title">
+            My Interests
+          </span>
+
+          <span class="samaj-menu-description">
+            Interests you sent
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="received"
+          onclick="
+            showDashboardSection('received')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            📩
+          </span>
+
+          <span class="samaj-menu-title">
+            Received Interests
+          </span>
+
+          <span class="samaj-menu-description">
+            See who likes you
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="notifications"
+          onclick="
+            showDashboardSection('notifications')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            🔔
+          </span>
+
+          <span class="samaj-menu-title">
+            Notifications
+          </span>
+
+          <span class="samaj-menu-description">
+            Your updates
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          data-section="account"
+          onclick="
+            showDashboardSection('account')
+          "
+        >
+
+          <span class="samaj-menu-icon">
+            ⚙️
+          </span>
+
+          <span class="samaj-menu-title">
+            Account
+          </span>
+
+          <span class="samaj-menu-description">
+            Account settings
+          </span>
+
+        </button>
+
+
+        <button
+          type="button"
+          class="samaj-dashboard-menu-btn"
+          onclick="logoutUser()"
+        >
+
+          <span class="samaj-menu-icon">
+            🚪
+          </span>
+
+          <span class="samaj-menu-title">
+            Logout
+          </span>
+
+          <span class="samaj-menu-description">
+            Sign out safely
+          </span>
+
+        </button>
+
+
+      </nav>
+
+
+      <!-- ==================================
+           WELCOME
+           ================================== -->
+
+      <section class="samaj-dashboard-welcome">
+
+        <span class="eyebrow">
+          MEMBER DASHBOARD
+        </span>
+
+        <h1>
+          Hello,
+          ${escapeHtml(
+            profile.full_name
+          )}!
+        </h1>
+
+        <p>
+          Welcome to your SamajSaathi matrimonial dashboard.
+        </p>
+
+      </section>
+
+
+      <!-- ==================================
+           MY PROFILE
+           ================================== -->
+
+      <section
+        id="dashboardSection-profile"
+        class="samaj-dashboard-section"
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              MY PROFILE
             </span>
 
+            <h2>
+              Your Profile
+            </h2>
+
           </div>
+
+
+          <button
+            type="button"
+            class="btn primary"
+            onclick="
+              showDashboardSection('edit')
+            "
+          >
+            ✏️ Edit Profile
+          </button>
+
+        </div>
+
+
+        <div class="
+          samaj-profile-summary
+        ">
+
+
+          <!-- PHOTO -->
+
+          <div>
+
+            <div
+              id="dashboardProfilePhoto"
+              class="
+                samaj-profile-summary-photo
+              "
+            >
+              👤
+            </div>
+
+          </div>
+
+
+          <!-- DETAILS -->
+
+          <div class="
+            samaj-profile-details-grid
+          ">
+
+            ${dashboardItem(
+              "Name",
+              profile.full_name
+            )}
+
+            ${dashboardItem(
+              "Gender",
+              profile.gender
+            )}
+
+            ${dashboardItem(
+              "Date of Birth",
+              profile.date_of_birth
+            )}
+
+            ${dashboardItem(
+              "Age",
+              profile.age
+            )}
+
+            ${dashboardItem(
+              "City",
+              profile.city
+            )}
+
+            ${dashboardItem(
+              "Community",
+              profile.community
+            )}
+
+            ${dashboardItem(
+              "Surname",
+              profile.surname
+            )}
+
+            ${dashboardItem(
+              "Kul / Clan",
+              profile.kul
+            )}
+
+            ${dashboardItem(
+              "Marital Status",
+              profile.marital_status
+            )}
+
+            ${dashboardItem(
+              "Occupation",
+              profile.occupation
+            )}
+
+          </div>
+
+        </div>
+
+
+        <!-- PHOTO UPLOAD -->
+
+        <div style="
+          margin-top:25px;
+          padding:20px;
+          background:#f8f1f3;
+          border-radius:15px;
+        ">
+
+          <strong>
+            📷 Profile Photo
+          </strong>
+
+          <p style="
+            margin:6px 0 15px;
+            color:#666;
+            font-size:14px;
+          ">
+            Add a clear photo to help other members recognize you.
+          </p>
 
 
           <input
@@ -3096,7 +3440,7 @@ async function openDashboard() {
             accept="image/jpeg,image/png,image/webp"
             style="
               display:block;
-              margin:15px auto;
+              margin-bottom:12px;
               max-width:100%;
             "
           >
@@ -3113,444 +3457,620 @@ async function openDashboard() {
 
           <div
             id="photoMessage"
-            style="
-              margin-top:10px;
-            "
+            style="margin-top:10px;"
           ></div>
 
         </div>
 
+      </section>
 
-        <!-- WELCOME -->
 
-        <div style="
-          background:#f8f1f3;
-          border-radius:18px;
-          padding:25px;
-          margin-bottom:25px;
+      <!-- ==================================
+           EDIT PROFILE
+           ================================== -->
+
+      <section
+        id="dashboardSection-edit"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
         ">
 
-          <span class="eyebrow">
-            WELCOME
-          </span>
-
-          <h1 style="
-            margin:8px 0;
-          ">
-            Hello,
-            ${escapeHtml(
-              profile.full_name
-            )}!
-          </h1>
-
-          <p>
-            Your SamajSaathi profile is ready.
-          </p>
-
-        </div>
-
-
-        <!-- PROFILE INFORMATION -->
-
-        <div style="
-          display:grid;
-          grid-template-columns:
-          repeat(auto-fit,minmax(220px,1fr));
-          gap:15px;
-        ">
-
-          ${dashboardItem(
-            "Name",
-            profile.full_name
-          )}
-
-          ${dashboardItem(
-            "Gender",
-            profile.gender
-          )}
-
-          ${dashboardItem(
-            "Date of Birth",
-            profile.date_of_birth
-          )}
-
-          ${dashboardItem(
-            "Age",
-            profile.age
-          )}
-
-          ${dashboardItem(
-            "City",
-            profile.city
-          )}
-
-          ${dashboardItem(
-            "Community",
-            profile.community
-          )}
-
-          ${dashboardItem(
-            "Surname",
-            profile.surname
-          )}
-
-          ${dashboardItem(
-            "Kul / Clan",
-            profile.kul
-          )}
-
-          ${dashboardItem(
-            "Marital Status",
-            profile.marital_status
-          )}
-
-        </div>
-
-
-        <!-- UPDATE PROFILE -->
-
-        <div style="
-          margin-top:30px;
-          padding:25px;
-          border-radius:14px;
-          border:1px solid #eee;
-        ">
-
-          <h2>
-            ✏️ Update Profile
-          </h2>
-
-          <p>
-            Update your profile information below.
-          </p>
-
-
-          <div class="form-grid">
-
-
-            <div class="field full">
-
-              <label>
-                Full Name
-              </label>
-
-              <input
-                id="editFullName"
-                value="${escapeHtml(
-                  profile.full_name || ""
-                )}"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Gender
-              </label>
-
-              <select id="editGender">
-
-                <option
-                  value="female"
-                  ${
-                    profile.gender === "female"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Woman
-                </option>
-
-                <option
-                  value="male"
-                  ${
-                    profile.gender === "male"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Man
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Date of Birth
-              </label>
-
-              <input
-                id="editDob"
-                type="date"
-                value="${escapeHtml(
-                  profile.date_of_birth || ""
-                )}"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Community / Jati
-              </label>
-
-              <select id="editCommunity">
-
-                <option
-                  value="Dom"
-                  ${
-                    profile.community === "Dom"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Dom
-                </option>
-
-                <option
-                  value="Other SC Community"
-                  ${
-                    profile.community ===
-                    "Other SC Community"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other SC Community
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Surname
-              </label>
-
-              <select id="editSurname">
-
-                <option
-                  value="Rauth"
-                  ${
-                    profile.surname === "Rauth"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Rauth
-                </option>
-
-                <option
-                  value="Basfor"
-                  ${
-                    profile.surname === "Basfor"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Basfor
-                </option>
-
-                <option
-                  value="Bansfor"
-                  ${
-                    profile.surname === "Bansfor"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Bansfor
-                </option>
-
-                <option
-                  value="Other"
-                  ${
-                    profile.surname === "Other"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Kul / Clan
-              </label>
-
-              <select id="editKul">
-
-                <option
-                  value="Piari Baiswar"
-                  ${
-                    profile.kul ===
-                    "Piari Baiswar"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Piari Baiswar
-                </option>
-
-                <option
-                  value="Other"
-                  ${
-                    profile.kul === "Other"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other
-                </option>
-
-                <option
-                  value="Not Known"
-                  ${
-                    profile.kul === "Not Known"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Not Known
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Current City
-              </label>
-
-              <input
-                id="editCity"
-                value="${escapeHtml(
-                  profile.city || ""
-                )}"
-              >
-
-            </div>
+          <div>
+
+            <span class="eyebrow">
+              PROFILE SETTINGS
+            </span>
+
+            <h2>
+              ✏️ Edit Profile
+            </h2>
 
           </div>
 
-
-          <div
-            id="updateProfileMessage"
-            style="
-              margin-top:15px;
-            "
-          ></div>
+        </div>
 
 
-          <div class="modal-actions">
+        <div class="form-grid">
 
-            <button
-              class="btn primary"
-              type="button"
-              onclick="updateProfile()"
+
+          <div class="field full">
+
+            <label>
+              Full Name
+            </label>
+
+            <input
+              id="editFullName"
+              value="${escapeHtml(
+                profile.full_name || ""
+              )}"
             >
-              💾 Save Profile Changes
-            </button>
 
           </div>
 
+
+          <div class="field">
+
+            <label>
+              Gender
+            </label>
+
+            <select id="editGender">
+
+              <option
+                value="female"
+                ${
+                  profile.gender === "female"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Woman
+              </option>
+
+              <option
+                value="male"
+                ${
+                  profile.gender === "male"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Man
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Date of Birth
+            </label>
+
+            <input
+              id="editDob"
+              type="date"
+              value="${escapeHtml(
+                profile.date_of_birth || ""
+              )}"
+            >
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Community / Jati
+            </label>
+
+            <select id="editCommunity">
+
+              <option
+                value="Dom"
+                ${
+                  profile.community === "Dom"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Dom
+              </option>
+
+              <option
+                value="Other SC Community"
+                ${
+                  profile.community ===
+                  "Other SC Community"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Other SC Community
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Surname
+            </label>
+
+            <select id="editSurname">
+
+              <option
+                value="Rauth"
+                ${
+                  profile.surname === "Rauth"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Rauth
+              </option>
+
+              <option
+                value="Basfor"
+                ${
+                  profile.surname === "Basfor"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Basfor
+              </option>
+
+              <option
+                value="Bansfor"
+                ${
+                  profile.surname === "Bansfor"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Bansfor
+              </option>
+
+              <option
+                value="Other"
+                ${
+                  profile.surname === "Other"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Other
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field">
+
+            <label>
+              Kul / Clan
+            </label>
+
+            <select id="editKul">
+
+              <option
+                value="Piari Baiswar"
+                ${
+                  profile.kul ===
+                  "Piari Baiswar"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Piari Baiswar
+              </option>
+
+              <option
+                value="Other"
+                ${
+                  profile.kul === "Other"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Other
+              </option>
+
+              <option
+                value="Not Known"
+                ${
+                  profile.kul === "Not Known"
+                    ? "selected"
+                    : ""
+                }
+              >
+                Not Known
+              </option>
+
+            </select>
+
+          </div>
+
+
+          <div class="field full">
+
+            <label>
+              Current City
+            </label>
+
+            <input
+              id="editCity"
+              value="${escapeHtml(
+                profile.city || ""
+              )}"
+            >
+
+          </div>
+
+
         </div>
 
-
-        <!-- =====================================
-             FIND YOUR MATCHES
-             ===================================== -->
 
         <div
-          id="matchesSection"
+          id="updateProfileMessage"
+          style="margin-top:15px;"
+        ></div>
+
+
+        <div class="modal-actions">
+
+          <button
+            class="btn primary"
+            type="button"
+            onclick="updateProfile()"
+          >
+            💾 Save Profile Changes
+          </button>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================
+           FIND MATCHES
+           ================================== -->
+
+      <section
+        id="dashboardSection-matches"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              DISCOVER
+            </span>
+
+            <h2>
+              💕 Find Your Matches
+            </h2>
+
+            <p style="
+              margin:0;
+              color:#666;
+            ">
+              Discover suitable members from the SamajSaathi community.
+            </p>
+
+          </div>
+
+        </div>
+
+
+        <div
+          id="matchesGrid"
           style="
-            margin-top:30px;
-            padding:25px;
-            border-radius:18px;
-            border:1px solid #eee;
-            background:#fff;
+            display:grid;
+            grid-template-columns:
+            repeat(auto-fit,minmax(240px,1fr));
+            gap:18px;
           "
         >
 
           <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-            margin-bottom:20px;
+            grid-column:1/-1;
+            text-align:center;
+            padding:30px;
           ">
-
-            <div>
-
-              <span class="eyebrow">
-                DISCOVER
-              </span>
-
-              <h2 style="
-                margin:7px 0;
-              ">
-                Find Your Matches
-              </h2>
-
-              <p style="
-                margin:0;
-                color:#666;
-              ">
-                Profiles selected from the SamajSaathi community.
-              </p>
-
-            </div>
-
+            Click Find Your Matches to load profiles.
           </div>
 
+        </div>
 
-          <div
-            id="matchesGrid"
-            style="
-              display:grid;
-              grid-template-columns:
-              repeat(auto-fit,minmax(240px,1fr));
-              gap:18px;
-            "
-          >
+      </section>
 
-            <div style="
-              grid-column:1/-1;
-              text-align:center;
-              padding:30px;
-            ">
-              Finding suitable profiles...
-            </div>
+
+      <!-- ==================================
+           MY INTERESTS
+           ================================== -->
+
+      <section
+        id="dashboardSection-interests"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              CONNECTIONS
+            </span>
+
+            <h2>
+              ❤️ My Interests
+            </h2>
 
           </div>
 
         </div>
 
 
-      </div>
+        <div class="samaj-coming-soon">
 
-    </div>
+          <div class="
+            samaj-coming-soon-icon
+          ">
+            ❤️
+          </div>
+
+          <h3>
+            Interests
+          </h3>
+
+          <p>
+            Profiles you have shown interest in will appear here.
+          </p>
+
+          <small>
+            Interest system will be connected in Stage 3.
+          </small>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================
+           RECEIVED INTERESTS
+           ================================== -->
+
+      <section
+        id="dashboardSection-received"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              CONNECTIONS
+            </span>
+
+            <h2>
+              📩 Received Interests
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="samaj-coming-soon">
+
+          <div class="
+            samaj-coming-soon-icon
+          ">
+            📩
+          </div>
+
+          <h3>
+            Received Interests
+          </h3>
+
+          <p>
+            When another member sends you an interest,
+            it will appear here.
+          </p>
+
+          <small>
+            Interest system will be connected in Stage 3.
+          </small>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================
+           NOTIFICATIONS
+           ================================== -->
+
+      <section
+        id="dashboardSection-notifications"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              UPDATES
+            </span>
+
+            <h2>
+              🔔 Notifications
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="samaj-coming-soon">
+
+          <div class="
+            samaj-coming-soon-icon
+          ">
+            🔔
+          </div>
+
+          <h3>
+            No new notifications
+          </h3>
+
+          <p>
+            Your important SamajSaathi updates will appear here.
+          </p>
+
+        </div>
+
+      </section>
+
+
+      <!-- ==================================
+           ACCOUNT
+           ================================== -->
+
+      <section
+        id="dashboardSection-account"
+        class="
+          samaj-dashboard-section
+          samaj-section-hidden
+        "
+      >
+
+        <div class="
+          samaj-dashboard-section-header
+        ">
+
+          <div>
+
+            <span class="eyebrow">
+              ACCOUNT
+            </span>
+
+            <h2>
+              ⚙️ Account
+            </h2>
+
+          </div>
+
+        </div>
+
+
+        <div class="samaj-profile-details-grid">
+
+          ${dashboardItem(
+            "Email",
+            session.user.email
+          )}
+
+          ${dashboardItem(
+            "User ID",
+            localStorage.getItem(
+              "samajSaathiUserId"
+            )
+          )}
+
+          ${dashboardItem(
+            "Username",
+            localStorage.getItem(
+              "samajSaathiUsername"
+            )
+          )}
+
+          ${dashboardItem(
+            "Account Status",
+            "Active"
+          )}
+
+        </div>
+
+
+        <div style="
+          margin-top:20px;
+          padding:18px;
+          background:#fff8e6;
+          border-radius:12px;
+          color:#7a4d00;
+        ">
+
+          <strong>
+            🔐 Account Security
+          </strong>
+
+          <p style="margin-bottom:0;">
+            Never share your password with anyone.
+          </p>
+
+        </div>
+
+
+        <div style="
+          margin-top:20px;
+        ">
+
+          <button
+            type="button"
+            class="btn primary"
+            onclick="logoutUser()"
+          >
+            🚪 Logout
+
+          </button>
+
+        </div>
+
+      </section>
+
+
+    </main>
 
   `;
 
@@ -3560,18 +4080,23 @@ async function openDashboard() {
   );
 
 
+  // LOAD PHOTO
+
   await loadProfilePhoto(
     profile.profile_photo
   );
 
 
-  // ========================================
-  // IMPORTANT:
-  // LOAD OPPOSITE GENDER MATCHES
-  // AFTER DASHBOARD EXISTS
-  // ========================================
+  // LOAD MATCHES IN BACKGROUND
 
   await loadMatches();
+
+
+  // DEFAULT SECTION
+
+  showDashboardSection(
+    "profile"
+  );
 
 }
 
@@ -3616,7 +4141,7 @@ async function loadProfilePhoto(
 
   const preview =
     document.getElementById(
-      "profilePhotoPreview"
+      "dashboardProfilePhoto"
     );
 
 
@@ -3632,12 +4157,6 @@ async function loadProfilePhoto(
         result.data.signedUrl
       )}"
       alt="Profile Photo"
-      style="
-        width:100%;
-        height:100%;
-        object-fit:cover;
-        display:block;
-      "
     >
 
   `;
@@ -3655,7 +4174,6 @@ async function uploadProfilePhoto() {
     document.getElementById(
       "profilePhotoInput"
     );
-
 
   const message =
     document.getElementById(
@@ -3725,9 +4243,9 @@ async function uploadProfilePhoto() {
 
 
   const sessionResult =
-    await supabaseClient.auth
+    await supabaseClient
+      .auth
       .getSession();
-
 
   const session =
     sessionResult.data?.session;
@@ -3772,17 +4290,10 @@ async function uploadProfilePhoto() {
 
   const oldFiles = [
 
-    userId +
-    "/profile.jpg",
-
-    userId +
-    "/profile.jpeg",
-
-    userId +
-    "/profile.png",
-
-    userId +
-    "/profile.webp"
+    userId + "/profile.jpg",
+    userId + "/profile.jpeg",
+    userId + "/profile.png",
+    userId + "/profile.webp"
 
   ];
 
@@ -3791,9 +4302,7 @@ async function uploadProfilePhoto() {
     await supabaseClient
       .storage
       .from("profile-photos")
-      .remove(
-        oldFiles
-      );
+      .remove(oldFiles);
 
 
   if (removeResult.error) {
@@ -3843,15 +4352,9 @@ async function uploadProfilePhoto() {
     await supabaseClient
       .from("profiles")
       .update({
-
-        profile_photo:
-          filePath
-
+        profile_photo:filePath
       })
-      .eq(
-        "id",
-        userId
-      );
+      .eq("id",userId);
 
 
   if (profileResult.error) {
@@ -3890,7 +4393,6 @@ async function uploadProfilePhoto() {
 
   await loadProfiles();
 
-
   await loadMatches();
 
 }
@@ -3909,9 +4411,9 @@ async function updateProfile() {
 
 
   const sessionResult =
-    await supabaseClient.auth
+    await supabaseClient
+      .auth
       .getSession();
-
 
   const session =
     sessionResult.data?.session;
@@ -3939,36 +4441,30 @@ async function updateProfile() {
       "editFullName"
     )?.value.trim();
 
-
   const gender =
     document.getElementById(
       "editGender"
     )?.value;
-
 
   const dob =
     document.getElementById(
       "editDob"
     )?.value;
 
-
   const community =
     document.getElementById(
       "editCommunity"
     )?.value;
-
 
   const surname =
     document.getElementById(
       "editSurname"
     )?.value;
 
-
   const kul =
     document.getElementById(
       "editKul"
     )?.value;
-
 
   const city =
     document.getElementById(
@@ -4001,11 +4497,9 @@ async function updateProfile() {
       .from("profiles")
       .update({
 
-        full_name:
-          fullName,
+        full_name:fullName,
 
-        gender:
-          gender,
+        gender:gender,
 
         date_of_birth:
           dob || null,
@@ -4013,23 +4507,16 @@ async function updateProfile() {
         age:
           calculateAge(dob),
 
-        community:
-          community,
+        community:community,
 
-        surname:
-          surname,
+        surname:surname,
 
-        kul:
-          kul,
+        kul:kul,
 
-        city:
-          city
+        city:city
 
       })
-      .eq(
-        "id",
-        userId
-      );
+      .eq("id",userId);
 
 
   if (result.error) {
@@ -4062,9 +4549,9 @@ async function updateProfile() {
 
 
   setTimeout(
-    function() {
+    async function() {
 
-      openDashboard();
+      await openDashboard();
 
     },
     700
@@ -4084,30 +4571,19 @@ function dashboardItem(
 
   return `
 
-    <div style="
-      background:#fff;
-      border:1px solid #eee;
-      border-radius:14px;
-      padding:18px;
+    <div class="
+      samaj-profile-detail
     ">
 
-      <small style="
-        display:block;
-        color:#777;
-        margin-bottom:7px;
-      ">
-
+      <small>
         ${escapeHtml(label)}
-
       </small>
 
       <strong>
-
         ${escapeHtml(
           value ||
           "Not specified"
         )}
-
       </strong>
 
     </div>
@@ -4123,9 +4599,20 @@ function dashboardItem(
 
 async function logoutUser() {
 
-  await supabaseClient
-    .auth
-    .signOut();
+  try {
+
+    await supabaseClient
+      .auth
+      .signOut();
+
+  } catch(error) {
+
+    console.error(
+      "LOGOUT ERROR:",
+      error
+    );
+
+  }
 
 
   const dashboard =
@@ -4133,11 +4620,8 @@ async function logoutUser() {
       "samajSaathiDashboard"
     );
 
-
   if (dashboard) {
-
     dashboard.remove();
-
   }
 
 
@@ -4146,11 +4630,8 @@ async function logoutUser() {
       "samajProfileViewer"
     );
 
-
   if (profileViewer) {
-
     profileViewer.remove();
-
   }
 
 
@@ -4158,18 +4639,14 @@ async function logoutUser() {
     "samajSaathiUserId"
   );
 
-
   localStorage.removeItem(
     "samajSaathiUsername"
   );
 
 
   window.scrollTo({
-
     top:0,
-
     behavior:"smooth"
-
   });
 
 
@@ -4203,18 +4680,16 @@ function showMessage(
       margin-top:15px;
       padding:12px;
       border-radius:10px;
-      background:
-        ${
-          isError
-            ? "#fff3f3"
-            : "#f8f1f3"
-        };
-      color:
-        ${
-          isError
-            ? "#b42318"
-            : "#6f1025"
-        };
+      background:${
+        isError
+          ? "#fff3f3"
+          : "#f8f1f3"
+      };
+      color:${
+        isError
+          ? "#b42318"
+          : "#6f1025"
+      };
     ">
 
       ${escapeHtml(text)}
@@ -4236,7 +4711,6 @@ function setupModalEvents() {
     document.getElementById(
       "modal"
     );
-
 
   if (!modal) {
     return;
@@ -4341,7 +4815,7 @@ document.addEventListener(
 
     }
 
-  } catch (error) {
+  } catch(error) {
 
     console.error(
       "SESSION CHECK ERROR:",
