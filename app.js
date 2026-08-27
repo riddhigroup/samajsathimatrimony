@@ -2,7 +2,8 @@
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
 // COMPLETE APP.JS
-// FIND YOUR MATCHES - UPDATED
+// SESSION PERSISTENCE + BACK BUTTON FIX
+// FIND YOUR MATCHES
 // ============================================================
 
 
@@ -19,8 +20,25 @@ const SUPABASE_PUBLISHABLE_KEY =
 const supabaseClient =
   window.supabase.createClient(
     SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
+    SUPABASE_PUBLISHABLE_KEY,
+    {
+      auth: {
+        persistSession: true,
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
+        storage: window.localStorage
+      }
+    }
   );
+
+
+// ============================================================
+// GLOBAL STATE
+// ============================================================
+
+let samajDashboardOpening = false;
+let samajLoggingOut = false;
+let samajInitialised = false;
 
 
 // ============================================================
@@ -49,6 +67,10 @@ function calculateAge(dateString) {
 
   const birthDate =
     new Date(dateString);
+
+  if (Number.isNaN(birthDate.getTime())) {
+    return null;
+  }
 
   const today =
     new Date();
@@ -101,12 +123,12 @@ function generateUsername(
 ) {
 
   const first =
-    String(firstName)
+    String(firstName || "")
       .toLowerCase()
       .replace(/[^a-z]/g, "");
 
   const last =
-    String(lastName)
+    String(lastName || "")
       .toLowerCase()
       .replace(/[^a-z]/g, "");
 
@@ -277,7 +299,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field full">
 
           <label>
@@ -369,7 +390,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -382,7 +402,6 @@ function openModal(type) {
           >
 
         </div>
-
 
         <div class="field full">
 
@@ -399,7 +418,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -412,7 +430,6 @@ function openModal(type) {
           >
 
         </div>
-
 
         <div class="field">
 
@@ -438,7 +455,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -458,7 +474,6 @@ function openModal(type) {
           </select>
 
         </div>
-
 
         <div class="field">
 
@@ -488,7 +503,6 @@ function openModal(type) {
 
         </div>
 
-
         <div class="field">
 
           <label>
@@ -512,7 +526,6 @@ function openModal(type) {
           </select>
 
         </div>
-
 
         <div class="field full">
 
@@ -663,9 +676,11 @@ async function registerUser() {
     const result =
       await supabaseClient.auth.signUp({
 
-        email: email,
+        email:
+          email,
 
-        password: password,
+        password:
+          password,
 
         options: {
 
@@ -920,7 +935,6 @@ function showRegistrationSuccess(user) {
 
         </div>
 
-
         <div style="margin-bottom:12px;">
 
           <small>
@@ -935,7 +949,6 @@ function showRegistrationSuccess(user) {
           </strong>
 
         </div>
-
 
         <div>
 
@@ -955,7 +968,6 @@ function showRegistrationSuccess(user) {
 
       </div>
 
-
       <div style="
         padding:12px;
         border-radius:10px;
@@ -974,7 +986,6 @@ function showRegistrationSuccess(user) {
         Login uses your email and password.
 
       </div>
-
 
       <div class="modal-actions">
 
@@ -1037,7 +1048,6 @@ function contentAfterSignup(
         then login to continue.
       </p>
 
-
       <div style="
         margin:20px 0;
         padding:18px;
@@ -1097,7 +1107,6 @@ function contentAfterSignup(
 
       </div>
 
-
       <div style="
         padding:12px;
         border-radius:10px;
@@ -1110,7 +1119,6 @@ function contentAfterSignup(
         Please save your login details.
 
       </div>
-
 
       <div class="modal-actions">
 
@@ -1207,6 +1215,10 @@ async function loginUser() {
       return;
     }
 
+
+    // IMPORTANT:
+    // Supabase automatically persists this session
+    // because persistSession=true is enabled above.
 
     await savePendingProfile();
 
@@ -1376,6 +1388,7 @@ async function loadProfiles() {
           text-align:center;
           padding:40px;
         ">
+
           <h3>
             Unable to load profiles
           </h3>
@@ -1385,6 +1398,7 @@ async function loadProfiles() {
               result.error.message
             )}
           </p>
+
         </div>
       `;
 
@@ -1505,6 +1519,11 @@ function createPublicProfileCard(profile) {
             object-fit:cover;
             display:block;
           "
+          onerror="
+            this.style.display='none';
+            this.parentElement.classList.remove('has-real-photo');
+            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>👤</span><span class=&quot;profile-tag&quot;>✓ Verified</span>';
+          "
         >
 
         <span class="profile-tag">
@@ -1540,14 +1559,12 @@ function createPublicProfileCard(profile) {
 
         </b>
 
-
         <small>
           ${escapeHtml(
             location ||
             "Location not specified"
           )}
         </small>
-
 
         <small>
 
@@ -1574,7 +1591,6 @@ function createPublicProfileCard(profile) {
           }
 
         </small>
-
 
         <small class="match">
           SamajSaathi Member
@@ -1634,10 +1650,6 @@ async function loadMatches() {
 
   try {
 
-    // ========================================================
-    // SESSION
-    // ========================================================
-
     const sessionResult =
       await supabaseClient.auth
         .getSession();
@@ -1680,10 +1692,6 @@ async function loadMatches() {
     const currentUserId =
       session.user.id;
 
-
-    // ========================================================
-    // GET CURRENT USER
-    // ========================================================
 
     const currentResult =
       await supabaseClient
@@ -1774,10 +1782,6 @@ async function loadMatches() {
     }
 
 
-    // ========================================================
-    // NORMALIZE GENDER
-    // ========================================================
-
     const gender =
       String(
         currentProfile.gender || ""
@@ -1821,10 +1825,6 @@ async function loadMatches() {
     }
 
 
-    // ========================================================
-    // OPPOSITE GENDER
-    // ========================================================
-
     const oppositeGender =
       gender === "male"
         ? "female"
@@ -1840,10 +1840,6 @@ async function loadMatches() {
       }
     );
 
-
-    // ========================================================
-    // GET MATCHES
-    // ========================================================
 
     const matchesResult =
       await supabaseClient
@@ -1942,10 +1938,6 @@ async function loadMatches() {
     );
 
 
-    // ========================================================
-    // NO MATCHES
-    // ========================================================
-
     if (!matches.length) {
 
       grid.innerHTML = `
@@ -1993,10 +1985,6 @@ async function loadMatches() {
       return;
     }
 
-
-    // ========================================================
-    // SHOW MATCHES
-    // ========================================================
 
     grid.innerHTML =
       matches
@@ -2162,7 +2150,6 @@ function createMatchCard(profile) {
 
       </div>
 
-
       <div
         class="samaj-match-info"
         style="
@@ -2190,7 +2177,6 @@ function createMatchCard(profile) {
 
         </h3>
 
-
         <small style="
           display:block;
           margin-bottom:7px;
@@ -2204,7 +2190,6 @@ function createMatchCard(profile) {
           )}
 
         </small>
-
 
         <small style="
           display:block;
@@ -2227,7 +2212,6 @@ function createMatchCard(profile) {
 
         </small>
 
-
         <small style="
           display:block;
           margin-bottom:15px;
@@ -2243,7 +2227,6 @@ function createMatchCard(profile) {
           }
 
         </small>
-
 
         <div
           class="samaj-match-actions"
@@ -2263,7 +2246,6 @@ function createMatchCard(profile) {
           >
             View Profile
           </button>
-
 
           <button
             type="button"
@@ -2475,9 +2457,7 @@ async function viewProfile(profileId) {
         ×
       </button>
 
-
       ${photoHtml}
-
 
       <div style="
         text-align:center;
@@ -2486,7 +2466,6 @@ async function viewProfile(profileId) {
         <span class="eyebrow">
           SAMAJSAATHI MEMBER
         </span>
-
 
         <h2 style="
           margin:8px 0;
@@ -2509,7 +2488,6 @@ async function viewProfile(profileId) {
         </h2>
 
       </div>
-
 
       <div style="
         display:grid;
@@ -2576,7 +2554,6 @@ async function viewProfile(profileId) {
 
       </div>
 
-
       ${
         profile.bio
           ? `
@@ -2603,7 +2580,6 @@ async function viewProfile(profileId) {
           `
           : ""
       }
-
 
       <div style="
         margin-top:25px;
@@ -2693,7 +2669,6 @@ function profileViewerItem(
 
 // ============================================================
 // SEND INTEREST
-// STAGE 3
 // ============================================================
 
 async function sendInterest(
@@ -2771,8 +2746,6 @@ async function openFindMatches() {
       showDashboardSection(
         "matches"
       );
-
-      loadMatches();
 
     },
     300
@@ -2869,11 +2842,6 @@ function showDashboardSection(
   );
 
 
-  // ========================================================
-  // IMPORTANT:
-  // LOAD MATCHES EVERY TIME MATCHES IS OPENED
-  // ========================================================
-
   if (
     section === "matches"
   ) {
@@ -2922,1242 +2890,1206 @@ function showDashboardSection(
 
 async function openDashboard() {
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-
-    openModal("login");
-
+  if (samajDashboardOpening) {
     return;
   }
 
 
-  await savePendingProfile();
+  samajDashboardOpening = true;
 
 
-  const userId =
-    session.user.id;
+  try {
+
+    const sessionResult =
+      await supabaseClient.auth
+        .getSession();
 
 
-  // ========================================================
-  // GET CURRENT PROFILE
-  // ========================================================
-
-  const profileResult =
-    await supabaseClient
-      .from("profiles")
-      .select("*")
-      .eq(
-        "id",
-        userId
-      )
-      .maybeSingle();
+    const session =
+      sessionResult.data?.session;
 
 
-  if (profileResult.error) {
+    if (!session) {
 
-    console.error(
-      "PROFILE LOAD ERROR:",
-      profileResult.error
-    );
+      openModal("login");
 
-    alert(
-      "Profile could not be loaded: " +
-      profileResult.error.message
-    );
-
-    return;
-  }
+      return;
+    }
 
 
-  if (!profileResult.data) {
-
-    alert(
-      "Your account exists, but your profile has not been created yet."
-    );
-
-    return;
-  }
+    await savePendingProfile();
 
 
-  const profile =
-    profileResult.data;
+    const userId =
+      session.user.id;
 
 
-  closeModal();
+    const profileResult =
+      await supabaseClient
+        .from("profiles")
+        .select("*")
+        .eq(
+          "id",
+          userId
+        )
+        .maybeSingle();
 
 
-  // ========================================================
-  // REMOVE OLD DASHBOARD
-  // ========================================================
+    if (profileResult.error) {
 
-  const oldDashboard =
-    document.getElementById(
-      "samajSaathiDashboard"
-    );
+      console.error(
+        "PROFILE LOAD ERROR:",
+        profileResult.error
+      );
 
+      alert(
+        "Profile could not be loaded: " +
+        profileResult.error.message
+      );
 
-  if (oldDashboard) {
-
-    oldDashboard.remove();
-
-  }
-
-
-  // ========================================================
-  // DASHBOARD
-  // ========================================================
-
-  const dashboard =
-    document.createElement(
-      "div"
-    );
+      return;
+    }
 
 
-  dashboard.id =
-    "samajSaathiDashboard";
+    if (!profileResult.data) {
+
+      alert(
+        "Your account exists, but your profile has not been created yet."
+      );
+
+      return;
+    }
 
 
-  dashboard.innerHTML = `
-
-    <div style="
-      position:fixed;
-      inset:0;
-      z-index:9999;
-      background:#fff;
-      overflow:auto;
-    ">
+    const profile =
+      profileResult.data;
 
 
-      <!-- ==================================================
-           DASHBOARD HEADER
-           ================================================== -->
-
-      <header
-        class="samaj-dashboard-header"
-        style="
-          background:#6f1025;
-          color:#fff;
-          padding:18px 24px;
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          gap:15px;
-          flex-wrap:wrap;
-        "
-      >
-
-        <div>
-
-          <div
-            class="samaj-dashboard-brand-name"
-            style="
-              font-size:24px;
-              font-weight:700;
-            "
-          >
-            SamajSaathi
-          </div>
-
-          <small
-            class="samaj-dashboard-brand-sub"
-          >
-            SC Matrimony • Your journey starts here
-          </small>
-
-        </div>
+    closeModal();
 
 
-        <div style="
-          display:flex;
-          align-items:center;
-          gap:10px;
-          flex-wrap:wrap;
-        ">
-
-          <button
-            type="button"
-            onclick="
-              showDashboardSection('matches')
-            "
-            style="
-              border:1px solid rgba(255,255,255,.5);
-              background:rgba(255,255,255,.12);
-              color:#fff;
-              padding:10px 16px;
-              border-radius:8px;
-              cursor:pointer;
-            "
-          >
-            💕 Find Matches
-          </button>
+    const oldDashboard =
+      document.getElementById(
+        "samajSaathiDashboard"
+      );
 
 
-          <button
-            type="button"
-            onclick="logoutUser()"
-            style="
-              border:1px solid rgba(255,255,255,.5);
-              background:transparent;
-              color:#fff;
-              padding:10px 16px;
-              border-radius:8px;
-              cursor:pointer;
-            "
-          >
-            Logout
-          </button>
+    if (oldDashboard) {
 
-        </div>
+      oldDashboard.remove();
 
-      </header>
+    }
 
 
-      <!-- ==================================================
-           DASHBOARD CONTAINER
-           ================================================== -->
+    const dashboard =
+      document.createElement(
+        "div"
+      );
+
+
+    dashboard.id =
+      "samajSaathiDashboard";
+
+
+    dashboard.innerHTML = `
 
       <div style="
-        max-width:1100px;
-        margin:0 auto;
-        padding:25px 20px 60px;
+        position:fixed;
+        inset:0;
+        z-index:9999;
+        background:#fff;
+        overflow:auto;
       ">
 
-
-        <!-- =================================================
-             WELCOME
-             ================================================= -->
-
-        <div
-          class="samaj-dashboard-welcome"
+        <header
+          class="samaj-dashboard-header"
           style="
-            background:#f8f1f3;
-            border-radius:18px;
-            padding:25px;
-            margin-bottom:20px;
+            background:#6f1025;
+            color:#fff;
+            padding:18px 24px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:15px;
+            flex-wrap:wrap;
           "
         >
 
-          <span class="eyebrow">
-            WELCOME
-          </span>
-
-          <h1 style="
-            margin:8px 0;
-          ">
-
-            Hello,
-            ${escapeHtml(
-              profile.full_name
-            )}!
-
-          </h1>
-
-          <p style="
-            margin-bottom:0;
-          ">
-            Your SamajSaathi profile is ready.
-            Discover suitable members below.
-          </p>
-
-        </div>
-
-
-        <!-- =================================================
-             DASHBOARD MENU
-             ================================================= -->
-
-        <nav
-          class="samaj-dashboard-menu"
-          style="
-            display:grid;
-            grid-template-columns:
-            repeat(auto-fit,minmax(145px,1fr));
-            gap:10px;
-            margin-bottom:25px;
-          "
-        >
-
-
-          <button
-            type="button"
-            class="
-              samaj-dashboard-menu-btn
-              active
-            "
-            data-section="profile"
-            onclick="
-              showDashboardSection('profile')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              👤
-            </span>
-
-            <span class="samaj-menu-title">
-              My Profile
-            </span>
-
-            <span class="samaj-menu-description">
-              View your profile
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="edit"
-            onclick="
-              showDashboardSection('edit')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              ✏️
-            </span>
-
-            <span class="samaj-menu-title">
-              Edit Profile
-            </span>
-
-            <span class="samaj-menu-description">
-              Update details
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="matches"
-            onclick="
-              showDashboardSection('matches')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              💕
-            </span>
-
-            <span class="samaj-menu-title">
-              Find Your Matches
-            </span>
-
-            <span class="samaj-menu-description">
-              Discover members
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="interests"
-            onclick="
-              showDashboardSection('interests')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              ❤️
-            </span>
-
-            <span class="samaj-menu-title">
-              My Interests
-            </span>
-
-            <span class="samaj-menu-description">
-              Coming soon
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="received"
-            onclick="
-              showDashboardSection('received')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              💌
-            </span>
-
-            <span class="samaj-menu-title">
-              Received
-            </span>
-
-            <span class="samaj-menu-description">
-              Interests received
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="notifications"
-            onclick="
-              showDashboardSection('notifications')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              🔔
-            </span>
-
-            <span class="samaj-menu-title">
-              Notifications
-            </span>
-
-            <span class="samaj-menu-description">
-              Updates
-            </span>
-
-          </button>
-
-
-          <button
-            type="button"
-            class="samaj-dashboard-menu-btn"
-            data-section="account"
-            onclick="
-              showDashboardSection('account')
-            "
-          >
-
-            <span class="samaj-menu-icon">
-              ⚙️
-            </span>
-
-            <span class="samaj-menu-title">
-              Account
-            </span>
-
-            <span class="samaj-menu-description">
-              Account settings
-            </span>
-
-          </button>
-
-
-        </nav>
-
-
-        <!-- =================================================
-             PROFILE
-             ================================================= -->
-
-        <section
-          id="dashboardSection-profile"
-          class="
-            samaj-dashboard-section
-          "
-        >
-
-          <div
-            class="samaj-dashboard-section-header"
-          >
-
-            <span class="eyebrow">
-              MY PROFILE
-            </span>
-
-            <h2>
-              Your Profile
-            </h2>
-
-          </div>
-
-
-          <!-- PHOTO -->
-
-          <div style="
-            background:#f8f1f3;
-            border-radius:18px;
-            padding:25px;
-            margin-bottom:20px;
-            text-align:center;
-          ">
-
-            <span class="eyebrow">
-              PROFILE PHOTO
-            </span>
-
+          <div>
 
             <div
-              id="dashboardProfilePhoto"
+              class="samaj-dashboard-brand-name"
               style="
-                margin:20px auto;
-                width:150px;
-                height:150px;
-                border-radius:50%;
-                overflow:hidden;
-                background:#eee;
-                display:flex;
-                align-items:center;
-                justify-content:center;
+                font-size:24px;
+                font-weight:700;
               "
             >
-
-              <span style="
-                font-size:55px;
-                color:#aaa;
-              ">
-                👤
-              </span>
-
+              SamajSaathi
             </div>
 
-
-            <input
-              id="profilePhotoInput"
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              style="
-                display:block;
-                margin:15px auto;
-                max-width:100%;
-              "
+            <small
+              class="samaj-dashboard-brand-sub"
             >
-
-
-            <button
-              type="button"
-              class="btn primary"
-              onclick="uploadProfilePhoto()"
-            >
-              📷 Upload / Change Photo
-            </button>
-
-
-            <div
-              id="photoMessage"
-              style="
-                margin-top:10px;
-              "
-            ></div>
+              SC Matrimony • Your journey starts here
+            </small>
 
           </div>
-
-
-          <!-- PROFILE DETAILS -->
-
-          <div
-            class="samaj-profile-details-grid"
-            style="
-              display:grid;
-              grid-template-columns:
-              repeat(auto-fit,minmax(210px,1fr));
-              gap:12px;
-            "
-          >
-
-            ${dashboardItem(
-              "Name",
-              profile.full_name
-            )}
-
-            ${dashboardItem(
-              "Gender",
-              profile.gender
-            )}
-
-            ${dashboardItem(
-              "Date of Birth",
-              profile.date_of_birth
-            )}
-
-            ${dashboardItem(
-              "Age",
-              profile.age
-            )}
-
-            ${dashboardItem(
-              "City",
-              [
-                profile.city,
-                profile.state
-              ]
-                .filter(Boolean)
-                .join(", ")
-            )}
-
-            ${dashboardItem(
-              "Community",
-              profile.community
-            )}
-
-            ${dashboardItem(
-              "Surname",
-              profile.surname
-            )}
-
-            ${dashboardItem(
-              "Kul / Clan",
-              profile.kul
-            )}
-
-            ${dashboardItem(
-              "Marital Status",
-              profile.marital_status
-            )}
-
-          </div>
-
 
           <div style="
-            margin-top:25px;
-            text-align:center;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            flex-wrap:wrap;
           ">
 
             <button
               type="button"
-              class="btn primary"
               onclick="
                 showDashboardSection('matches')
               "
+              style="
+                border:1px solid rgba(255,255,255,.5);
+                background:rgba(255,255,255,.12);
+                color:#fff;
+                padding:10px 16px;
+                border-radius:8px;
+                cursor:pointer;
+              "
             >
-              💕 Find Your Matches
+              💕 Find Matches
             </button>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             EDIT PROFILE
-             ================================================= -->
-
-        <section
-          id="dashboardSection-edit"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
-
-          <span class="eyebrow">
-            PROFILE SETTINGS
-          </span>
-
-          <h2>
-            ✏️ Edit Profile
-          </h2>
-
-
-          <div class="form-grid">
-
-
-            <div class="field full">
-
-              <label>
-                Full Name
-              </label>
-
-              <input
-                id="editFullName"
-                value="${escapeHtml(
-                  profile.full_name || ""
-                )}"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Gender
-              </label>
-
-              <select id="editGender">
-
-                <option
-                  value="female"
-                  ${
-                    profile.gender === "female"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Woman
-                </option>
-
-                <option
-                  value="male"
-                  ${
-                    profile.gender === "male"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Man
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Date of Birth
-              </label>
-
-              <input
-                id="editDob"
-                type="date"
-                value="${escapeHtml(
-                  profile.date_of_birth || ""
-                )}"
-              >
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Community / Jati
-              </label>
-
-              <select id="editCommunity">
-
-                <option
-                  value="Dom"
-                  ${
-                    profile.community === "Dom"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Dom
-                </option>
-
-                <option
-                  value="Other SC Community"
-                  ${
-                    profile.community ===
-                    "Other SC Community"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other SC Community
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Surname
-              </label>
-
-              <select id="editSurname">
-
-                <option
-                  value="Rauth"
-                  ${
-                    profile.surname === "Rauth"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Rauth
-                </option>
-
-                <option
-                  value="Basfor"
-                  ${
-                    profile.surname === "Basfor"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Basfor
-                </option>
-
-                <option
-                  value="Bansfor"
-                  ${
-                    profile.surname === "Bansfor"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Bansfor
-                </option>
-
-                <option
-                  value="Other"
-                  ${
-                    profile.surname === "Other"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field">
-
-              <label>
-                Kul / Clan
-              </label>
-
-              <select id="editKul">
-
-                <option
-                  value="Piari Baiswar"
-                  ${
-                    profile.kul ===
-                    "Piari Baiswar"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Piari Baiswar
-                </option>
-
-                <option
-                  value="Other"
-                  ${
-                    profile.kul === "Other"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Other
-                </option>
-
-                <option
-                  value="Not Known"
-                  ${
-                    profile.kul === "Not Known"
-                      ? "selected"
-                      : ""
-                  }
-                >
-                  Not Known
-                </option>
-
-              </select>
-
-            </div>
-
-
-            <div class="field full">
-
-              <label>
-                Current City
-              </label>
-
-              <input
-                id="editCity"
-                value="${escapeHtml(
-                  profile.city || ""
-                )}"
-              >
-
-            </div>
-
-          </div>
-
-
-          <div
-            id="updateProfileMessage"
-            style="
-              margin-top:15px;
-            "
-          ></div>
-
-
-          <div class="modal-actions">
 
             <button
               type="button"
-              class="btn primary"
-              onclick="updateProfile()"
+              onclick="logoutUser()"
+              style="
+                border:1px solid rgba(255,255,255,.5);
+                background:transparent;
+                color:#fff;
+                padding:10px 16px;
+                border-radius:8px;
+                cursor:pointer;
+              "
             >
-              💾 Save Profile Changes
+              Logout
             </button>
 
           </div>
 
-        </section>
+        </header>
 
 
-        <!-- =================================================
-             FIND YOUR MATCHES
-             ================================================= -->
+        <div style="
+          max-width:1100px;
+          margin:0 auto;
+          padding:25px 20px 60px;
+        ">
 
-        <section
-          id="dashboardSection-matches"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
 
           <div
-            class="samaj-dashboard-section-header"
+            class="samaj-dashboard-welcome"
             style="
+              background:#f8f1f3;
+              border-radius:18px;
+              padding:25px;
               margin-bottom:20px;
             "
           >
 
             <span class="eyebrow">
-              DISCOVER
+              WELCOME
             </span>
 
-            <h2>
-              💕 Find Your Matches
-            </h2>
-
-            <p>
-              Suitable members from the SamajSaathi community.
-            </p>
-
-          </div>
-
-
-          <div
-            id="matchesGrid"
-            style="
-              display:grid;
-              grid-template-columns:
-              repeat(auto-fit,minmax(250px,1fr));
-              gap:18px;
-            "
-          >
-
-            <div style="
-              grid-column:1/-1;
-              text-align:center;
-              padding:35px;
+            <h1 style="
+              margin:8px 0;
             ">
 
-              Click Find Your Matches to load profiles.
+              Hello,
+              ${escapeHtml(
+                profile.full_name
+              )}!
 
-            </div>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             INTERESTS
-             ================================================= -->
-
-        <section
-          id="dashboardSection-interests"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
-
-          <span class="eyebrow">
-            CONNECTIONS
-          </span>
-
-          <h2>
-            ❤️ My Interests
-          </h2>
-
-          <div class="samaj-coming-soon">
-
-            <div class="samaj-coming-soon-icon">
-              ❤️
-            </div>
-
-            <h3>
-              Interests
-            </h3>
-
-            <p>
-              Profiles you have shown interest in will appear here.
-            </p>
-
-            <small>
-              Interest system will be connected in Stage 3.
-            </small>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             RECEIVED
-             ================================================= -->
-
-        <section
-          id="dashboardSection-received"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
-
-          <span class="eyebrow">
-            CONNECTIONS
-          </span>
-
-          <h2>
-            💌 Received Interests
-          </h2>
-
-          <div class="samaj-coming-soon">
-
-            <div class="samaj-coming-soon-icon">
-              💌
-            </div>
-
-            <h3>
-              No interest system yet
-            </h3>
-
-            <p>
-              Received interests will appear here.
-            </p>
-
-            <small>
-              This feature will be connected in Stage 4.
-            </small>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             NOTIFICATIONS
-             ================================================= -->
-
-        <section
-          id="dashboardSection-notifications"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
-
-          <span class="eyebrow">
-            UPDATES
-          </span>
-
-          <h2>
-            🔔 Notifications
-          </h2>
-
-          <div class="samaj-coming-soon">
-
-            <div class="samaj-coming-soon-icon">
-              🔔
-            </div>
-
-            <h3>
-              No new notifications
-            </h3>
-
-            <p>
-              Important SamajSaathi updates will appear here.
-            </p>
-
-          </div>
-
-        </section>
-
-
-        <!-- =================================================
-             ACCOUNT
-             ================================================= -->
-
-        <section
-          id="dashboardSection-account"
-          class="
-            samaj-dashboard-section
-            samaj-section-hidden
-          "
-          style="
-            display:none;
-          "
-        >
-
-          <span class="eyebrow">
-            ACCOUNT
-          </span>
-
-          <h2>
-            ⚙️ Account
-          </h2>
-
-
-          <div
-            class="samaj-profile-details-grid"
-            style="
-              display:grid;
-              grid-template-columns:
-              repeat(auto-fit,minmax(210px,1fr));
-              gap:12px;
-            "
-          >
-
-            ${dashboardItem(
-              "Email",
-              session.user.email
-            )}
-
-            ${dashboardItem(
-              "User ID",
-              localStorage.getItem(
-                "samajSaathiUserId"
-              )
-            )}
-
-            ${dashboardItem(
-              "Username",
-              localStorage.getItem(
-                "samajSaathiUsername"
-              )
-            )}
-
-            ${dashboardItem(
-              "Account Status",
-              "Active"
-            )}
-
-          </div>
-
-
-          <div style="
-            margin-top:20px;
-            padding:18px;
-            background:#fff8e6;
-            border-radius:12px;
-            color:#7a4d00;
-          ">
-
-            <strong>
-              🔐 Account Security
-            </strong>
+            </h1>
 
             <p style="
               margin-bottom:0;
             ">
-              Never share your password with anyone.
+              Your SamajSaathi profile is ready.
+              Discover suitable members below.
             </p>
 
           </div>
 
 
-          <div style="
-            margin-top:20px;
-          ">
+          <nav
+            class="samaj-dashboard-menu"
+            style="
+              display:grid;
+              grid-template-columns:
+              repeat(auto-fit,minmax(145px,1fr));
+              gap:10px;
+              margin-bottom:25px;
+            "
+          >
 
             <button
               type="button"
-              class="btn primary"
-              onclick="logoutUser()"
+              class="
+                samaj-dashboard-menu-btn
+                active
+              "
+              data-section="profile"
+              onclick="
+                showDashboardSection('profile')
+              "
             >
-              🚪 Logout
+
+              <span class="samaj-menu-icon">
+                👤
+              </span>
+
+              <span class="samaj-menu-title">
+                My Profile
+              </span>
+
+              <span class="samaj-menu-description">
+                View your profile
+              </span>
+
             </button>
 
-          </div>
 
-        </section>
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="edit"
+              onclick="
+                showDashboardSection('edit')
+              "
+            >
 
+              <span class="samaj-menu-icon">
+                ✏️
+              </span>
+
+              <span class="samaj-menu-title">
+                Edit Profile
+              </span>
+
+              <span class="samaj-menu-description">
+                Update details
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="matches"
+              onclick="
+                showDashboardSection('matches')
+              "
+            >
+
+              <span class="samaj-menu-icon">
+                💕
+              </span>
+
+              <span class="samaj-menu-title">
+                Find Your Matches
+              </span>
+
+              <span class="samaj-menu-description">
+                Discover members
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="interests"
+              onclick="
+                showDashboardSection('interests')
+              "
+            >
+
+              <span class="samaj-menu-icon">
+                ❤️
+              </span>
+
+              <span class="samaj-menu-title">
+                My Interests
+              </span>
+
+              <span class="samaj-menu-description">
+                Coming soon
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="received"
+              onclick="
+                showDashboardSection('received')
+              "
+            >
+
+              <span class="samaj-menu-icon">
+                💌
+              </span>
+
+              <span class="samaj-menu-title">
+                Received
+              </span>
+
+              <span class="samaj-menu-description">
+                Interests received
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="notifications"
+              onclick="
+                showDashboardSection('notifications')
+              "
+            >
+
+              <span class="samaj-menu-icon">
+                🔔
+              </span>
+
+              <span class="samaj-menu-title">
+                Notifications
+              </span>
+
+              <span class="samaj-menu-description">
+                Updates
+              </span>
+
+            </button>
+
+
+            <button
+              type="button"
+              class="samaj-dashboard-menu-btn"
+              data-section="account"
+              onclick="
+                showDashboardSection('account')
+              "
+            >
+
+              <span class="samaj-menu-icon">
+                ⚙️
+              </span>
+
+              <span class="samaj-menu-title">
+                Account
+              </span>
+
+              <span class="samaj-menu-description">
+                Account settings
+              </span>
+
+            </button>
+
+          </nav>
+
+
+          <!-- =================================================
+               PROFILE
+               ================================================= -->
+
+          <section
+            id="dashboardSection-profile"
+            class="
+              samaj-dashboard-section
+            "
+          >
+
+            <div
+              class="samaj-dashboard-section-header"
+            >
+
+              <span class="eyebrow">
+                MY PROFILE
+              </span>
+
+              <h2>
+                Your Profile
+              </h2>
+
+            </div>
+
+
+            <div style="
+              background:#f8f1f3;
+              border-radius:18px;
+              padding:25px;
+              margin-bottom:20px;
+              text-align:center;
+            ">
+
+              <span class="eyebrow">
+                PROFILE PHOTO
+              </span>
+
+              <div
+                id="dashboardProfilePhoto"
+                style="
+                  margin:20px auto;
+                  width:150px;
+                  height:150px;
+                  border-radius:50%;
+                  overflow:hidden;
+                  background:#eee;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                "
+              >
+
+                <span style="
+                  font-size:55px;
+                  color:#aaa;
+                ">
+                  👤
+                </span>
+
+              </div>
+
+              <input
+                id="profilePhotoInput"
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style="
+                  display:block;
+                  margin:15px auto;
+                  max-width:100%;
+                "
+              >
+
+              <button
+                type="button"
+                class="btn primary"
+                onclick="uploadProfilePhoto()"
+              >
+                📷 Upload / Change Photo
+              </button>
+
+              <div
+                id="photoMessage"
+                style="
+                  margin-top:10px;
+                "
+              ></div>
+
+            </div>
+
+
+            <div
+              class="samaj-profile-details-grid"
+              style="
+                display:grid;
+                grid-template-columns:
+                repeat(auto-fit,minmax(210px,1fr));
+                gap:12px;
+              "
+            >
+
+              ${dashboardItem(
+                "Name",
+                profile.full_name
+              )}
+
+              ${dashboardItem(
+                "Gender",
+                profile.gender
+              )}
+
+              ${dashboardItem(
+                "Date of Birth",
+                profile.date_of_birth
+              )}
+
+              ${dashboardItem(
+                "Age",
+                profile.age
+              )}
+
+              ${dashboardItem(
+                "City",
+                [
+                  profile.city,
+                  profile.state
+                ]
+                  .filter(Boolean)
+                  .join(", ")
+              )}
+
+              ${dashboardItem(
+                "Community",
+                profile.community
+              )}
+
+              ${dashboardItem(
+                "Surname",
+                profile.surname
+              )}
+
+              ${dashboardItem(
+                "Kul / Clan",
+                profile.kul
+              )}
+
+              ${dashboardItem(
+                "Marital Status",
+                profile.marital_status
+              )}
+
+            </div>
+
+
+            <div style="
+              margin-top:25px;
+              text-align:center;
+            ">
+
+              <button
+                type="button"
+                class="btn primary"
+                onclick="
+                  showDashboardSection('matches')
+                "
+              >
+                💕 Find Your Matches
+              </button>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               EDIT PROFILE
+               ================================================= -->
+
+          <section
+            id="dashboardSection-edit"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <span class="eyebrow">
+              PROFILE SETTINGS
+            </span>
+
+            <h2>
+              ✏️ Edit Profile
+            </h2>
+
+            <div class="form-grid">
+
+              <div class="field full">
+
+                <label>
+                  Full Name
+                </label>
+
+                <input
+                  id="editFullName"
+                  value="${escapeHtml(
+                    profile.full_name || ""
+                  )}"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label>
+                  Gender
+                </label>
+
+                <select id="editGender">
+
+                  <option
+                    value="female"
+                    ${
+                      profile.gender === "female"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Woman
+                  </option>
+
+                  <option
+                    value="male"
+                    ${
+                      profile.gender === "male"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Man
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label>
+                  Date of Birth
+                </label>
+
+                <input
+                  id="editDob"
+                  type="date"
+                  value="${escapeHtml(
+                    profile.date_of_birth || ""
+                  )}"
+                >
+
+              </div>
+
+
+              <div class="field">
+
+                <label>
+                  Community / Jati
+                </label>
+
+                <select id="editCommunity">
+
+                  <option
+                    value="Dom"
+                    ${
+                      profile.community === "Dom"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Dom
+                  </option>
+
+                  <option
+                    value="Other SC Community"
+                    ${
+                      profile.community ===
+                      "Other SC Community"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Other SC Community
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label>
+                  Surname
+                </label>
+
+                <select id="editSurname">
+
+                  <option
+                    value="Rauth"
+                    ${
+                      profile.surname === "Rauth"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Rauth
+                  </option>
+
+                  <option
+                    value="Basfor"
+                    ${
+                      profile.surname === "Basfor"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Basfor
+                  </option>
+
+                  <option
+                    value="Bansfor"
+                    ${
+                      profile.surname === "Bansfor"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Bansfor
+                  </option>
+
+                  <option
+                    value="Other"
+                    ${
+                      profile.surname === "Other"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Other
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field">
+
+                <label>
+                  Kul / Clan
+                </label>
+
+                <select id="editKul">
+
+                  <option
+                    value="Piari Baiswar"
+                    ${
+                      profile.kul ===
+                      "Piari Baiswar"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Piari Baiswar
+                  </option>
+
+                  <option
+                    value="Other"
+                    ${
+                      profile.kul === "Other"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Other
+                  </option>
+
+                  <option
+                    value="Not Known"
+                    ${
+                      profile.kul === "Not Known"
+                        ? "selected"
+                        : ""
+                    }
+                  >
+                    Not Known
+                  </option>
+
+                </select>
+
+              </div>
+
+
+              <div class="field full">
+
+                <label>
+                  Current City
+                </label>
+
+                <input
+                  id="editCity"
+                  value="${escapeHtml(
+                    profile.city || ""
+                  )}"
+                >
+
+              </div>
+
+            </div>
+
+
+            <div
+              id="updateProfileMessage"
+              style="
+                margin-top:15px;
+              "
+            ></div>
+
+
+            <div class="modal-actions">
+
+              <button
+                type="button"
+                class="btn primary"
+                onclick="updateProfile()"
+              >
+                💾 Save Profile Changes
+              </button>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               MATCHES
+               ================================================= -->
+
+          <section
+            id="dashboardSection-matches"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <div
+              class="samaj-dashboard-section-header"
+              style="
+                margin-bottom:20px;
+              "
+            >
+
+              <span class="eyebrow">
+                DISCOVER
+              </span>
+
+              <h2>
+                💕 Find Your Matches
+              </h2>
+
+              <p>
+                Suitable members from the SamajSaathi community.
+              </p>
+
+            </div>
+
+
+            <div
+              id="matchesGrid"
+              style="
+                display:grid;
+                grid-template-columns:
+                repeat(auto-fit,minmax(250px,1fr));
+                gap:18px;
+              "
+            >
+
+              <div style="
+                grid-column:1/-1;
+                text-align:center;
+                padding:35px;
+              ">
+
+                Finding suitable profiles...
+
+              </div>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               INTERESTS
+               ================================================= -->
+
+          <section
+            id="dashboardSection-interests"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <span class="eyebrow">
+              CONNECTIONS
+            </span>
+
+            <h2>
+              ❤️ My Interests
+            </h2>
+
+            <div class="samaj-coming-soon">
+
+              <div class="samaj-coming-soon-icon">
+                ❤️
+              </div>
+
+              <h3>
+                Interests
+              </h3>
+
+              <p>
+                Profiles you have shown interest in will appear here.
+              </p>
+
+              <small>
+                Interest system will be connected in Stage 3.
+              </small>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               RECEIVED
+               ================================================= -->
+
+          <section
+            id="dashboardSection-received"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <span class="eyebrow">
+              CONNECTIONS
+            </span>
+
+            <h2>
+              💌 Received Interests
+            </h2>
+
+            <div class="samaj-coming-soon">
+
+              <div class="samaj-coming-soon-icon">
+                💌
+              </div>
+
+              <h3>
+                No interest system yet
+              </h3>
+
+              <p>
+                Received interests will appear here.
+              </p>
+
+              <small>
+                This feature will be connected in Stage 4.
+              </small>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               NOTIFICATIONS
+               ================================================= -->
+
+          <section
+            id="dashboardSection-notifications"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <span class="eyebrow">
+              UPDATES
+            </span>
+
+            <h2>
+              🔔 Notifications
+            </h2>
+
+            <div class="samaj-coming-soon">
+
+              <div class="samaj-coming-soon-icon">
+                🔔
+              </div>
+
+              <h3>
+                No new notifications
+              </h3>
+
+              <p>
+                Important SamajSaathi updates will appear here.
+              </p>
+
+            </div>
+
+          </section>
+
+
+          <!-- =================================================
+               ACCOUNT
+               ================================================= -->
+
+          <section
+            id="dashboardSection-account"
+            class="
+              samaj-dashboard-section
+              samaj-section-hidden
+            "
+            style="
+              display:none;
+            "
+          >
+
+            <span class="eyebrow">
+              ACCOUNT
+            </span>
+
+            <h2>
+              ⚙️ Account
+            </h2>
+
+
+            <div
+              class="samaj-profile-details-grid"
+              style="
+                display:grid;
+                grid-template-columns:
+                repeat(auto-fit,minmax(210px,1fr));
+                gap:12px;
+              "
+            >
+
+              ${dashboardItem(
+                "Email",
+                session.user.email
+              )}
+
+              ${dashboardItem(
+                "User ID",
+                localStorage.getItem(
+                  "samajSaathiUserId"
+                )
+              )}
+
+              ${dashboardItem(
+                "Username",
+                localStorage.getItem(
+                  "samajSaathiUsername"
+                )
+              )}
+
+              ${dashboardItem(
+                "Account Status",
+                "Active"
+              )}
+
+            </div>
+
+
+            <div style="
+              margin-top:20px;
+              padding:18px;
+              background:#fff8e6;
+              border-radius:12px;
+              color:#7a4d00;
+            ">
+
+              <strong>
+                🔐 Account Security
+              </strong>
+
+              <p style="
+                margin-bottom:0;
+              ">
+                Never share your password with anyone.
+              </p>
+
+            </div>
+
+
+            <div style="
+              margin-top:20px;
+            ">
+
+              <button
+                type="button"
+                class="btn primary"
+                onclick="logoutUser()"
+              >
+                🚪 Logout
+              </button>
+
+            </div>
+
+          </section>
+
+
+        </div>
 
       </div>
 
-    </div>
-
-  `;
+    `;
 
 
-  document.body.appendChild(
-    dashboard
-  );
+    document.body.appendChild(
+      dashboard
+    );
 
 
-  // ========================================================
-  // LOAD OWN PHOTO
-  // ========================================================
+    // ========================================================
+    // LOAD OWN PHOTO
+    // ========================================================
 
-  await loadProfilePhoto(
-    profile.profile_photo
-  );
-
-
-  // ========================================================
-  // IMPORTANT:
-  // LOAD MATCHES AND OPEN MATCHES
-  // ========================================================
-
-  await loadMatches();
+    await loadProfilePhoto(
+      profile.profile_photo
+    );
 
 
-  /*
-   * THIS IS THE MAIN FIX.
-   *
-   * OLD CODE:
-   * showDashboardSection("profile");
-   *
-   * NEW:
-   * showDashboardSection("matches");
-   *
-   * So after login the user immediately sees
-   * Find Your Matches.
-   */
+    // ========================================================
+    // OPEN MATCHES
+    // ========================================================
 
-  showDashboardSection(
-    "matches"
-  );
+    showDashboardSection(
+      "matches"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "OPEN DASHBOARD ERROR:",
+      error
+    );
+
+  } finally {
+
+    samajDashboardOpening = false;
+
+  }
 
 }
 
@@ -4192,7 +4124,6 @@ function dashboardItem(
         ${escapeHtml(label)}
 
       </small>
-
 
       <strong>
 
@@ -4392,10 +4323,6 @@ async function uploadProfilePhoto() {
   );
 
 
-  // ========================================================
-  // REMOVE OLD PHOTO
-  // ========================================================
-
   const oldFiles = [
 
     userId +
@@ -4432,10 +4359,6 @@ async function uploadProfilePhoto() {
   }
 
 
-  // ========================================================
-  // UPLOAD
-  // ========================================================
-
   const uploadResult =
     await supabaseClient
       .storage
@@ -4467,10 +4390,6 @@ async function uploadProfilePhoto() {
     return;
   }
 
-
-  // ========================================================
-  // SAVE PATH
-  // ========================================================
 
   const profileResult =
     await supabaseClient
@@ -4520,11 +4439,9 @@ async function uploadProfilePhoto() {
   input.value = "";
 
 
-  // Refresh public profile cards
   await loadProfiles();
 
 
-  // Refresh matches
   await loadMatches();
 
 }
@@ -4706,15 +4623,37 @@ async function updateProfile() {
 
 // ============================================================
 // LOGOUT
+// IMPORTANT:
+// ONLY THIS FUNCTION CLEARS LOGIN SESSION.
+// BACK BUTTON NEVER CALLS THIS.
 // ============================================================
 
 async function logoutUser() {
 
+  if (samajLoggingOut) {
+    return;
+  }
+
+
+  samajLoggingOut = true;
+
+
   try {
 
-    await supabaseClient
-      .auth
-      .signOut();
+    const result =
+      await supabaseClient
+        .auth
+        .signOut();
+
+
+    if (result.error) {
+
+      console.error(
+        "SUPABASE LOGOUT ERROR:",
+        result.error
+      );
+
+    }
 
   } catch (error) {
 
@@ -4758,6 +4697,11 @@ async function logoutUser() {
   );
 
 
+  localStorage.removeItem(
+    "samajSaathiPendingProfile"
+  );
+
+
   window.scrollTo({
 
     top:0,
@@ -4768,6 +4712,301 @@ async function logoutUser() {
 
 
   await loadProfiles();
+
+
+  samajLoggingOut = false;
+
+}
+
+
+// ============================================================
+// RESTORE LOGIN SESSION
+// ============================================================
+// This is the main back/reload protection.
+//
+// If Supabase still has an active session,
+// we DO NOT log the user out.
+// We simply restore the dashboard.
+// ============================================================
+
+async function restoreLoginSession() {
+
+  if (samajLoggingOut) {
+    return;
+  }
+
+
+  try {
+
+    const result =
+      await supabaseClient.auth
+        .getSession();
+
+
+    if (result.error) {
+
+      console.error(
+        "RESTORE SESSION ERROR:",
+        result.error
+      );
+
+      return;
+    }
+
+
+    const session =
+      result.data?.session;
+
+
+    if (!session) {
+
+      console.log(
+        "SamajSaathi: No active session."
+      );
+
+      return;
+    }
+
+
+    console.log(
+      "SamajSaathi: Active session restored."
+    );
+
+
+    // Make sure any pending profile is saved.
+    await savePendingProfile();
+
+
+    // Restore dashboard only if it is not already visible.
+    const existingDashboard =
+      document.getElementById(
+        "samajSaathiDashboard"
+      );
+
+
+    if (!existingDashboard) {
+
+      await openDashboard();
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "SESSION RESTORE ERROR:",
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// AUTH STATE LISTENER
+// ============================================================
+// IMPORTANT:
+// We do NOT sign out on hash changes,
+// browser back,
+// browser forward,
+// page navigation.
+//
+// Supabase controls the real authentication session.
+// ============================================================
+
+function setupAuthListener() {
+
+  supabaseClient.auth.onAuthStateChange(
+    async function(event, session) {
+
+      console.log(
+        "SamajSaathi Auth Event:",
+        event
+      );
+
+
+      if (event === "SIGNED_OUT") {
+
+        if (!samajLoggingOut) {
+
+          const dashboard =
+            document.getElementById(
+              "samajSaathiDashboard"
+            );
+
+          if (dashboard) {
+            dashboard.remove();
+          }
+
+        }
+
+        return;
+      }
+
+
+      if (
+        event === "SIGNED_IN" ||
+        event === "TOKEN_REFRESHED" ||
+        event === "USER_UPDATED"
+      ) {
+
+        if (!session) {
+          return;
+        }
+
+
+        // Don't repeatedly rebuild dashboard
+        // while the user is already inside it.
+        const existingDashboard =
+          document.getElementById(
+            "samajSaathiDashboard"
+          );
+
+
+        if (
+          !existingDashboard &&
+          !samajDashboardOpening &&
+          !samajLoggingOut
+        ) {
+
+          // Delay slightly to avoid
+          // Supabase auth callback race conditions.
+          setTimeout(
+            function() {
+
+              restoreLoginSession();
+
+            },
+            100
+          );
+
+        }
+
+      }
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// HASH / BROWSER NAVIGATION PROTECTION
+// ============================================================
+// IMPORTANT:
+// Changing the URL hash must NEVER logout the user.
+//
+// This listener only checks whether the session still exists.
+// It does NOT call signOut().
+// ============================================================
+
+function setupNavigationProtection() {
+
+  window.addEventListener(
+    "hashchange",
+    function() {
+
+      console.log(
+        "SamajSaathi: Hash changed. Session remains active."
+      );
+
+
+      if (samajLoggingOut) {
+        return;
+      }
+
+
+      const dashboard =
+        document.getElementById(
+          "samajSaathiDashboard"
+        );
+
+
+      if (dashboard) {
+
+        return;
+
+      }
+
+
+      setTimeout(
+        function() {
+
+          restoreLoginSession();
+
+        },
+        100
+      );
+
+    }
+  );
+
+
+  window.addEventListener(
+    "popstate",
+    function() {
+
+      console.log(
+        "SamajSaathi: Browser navigation detected. Checking session."
+      );
+
+
+      if (samajLoggingOut) {
+        return;
+      }
+
+
+      setTimeout(
+        function() {
+
+          restoreLoginSession();
+
+        },
+        100
+      );
+
+    }
+  );
+
+}
+
+
+// ============================================================
+// PAGE VISIBILITY CHECK
+// ============================================================
+// If user switches tabs/windows and comes back,
+// we check the session again.
+// ============================================================
+
+function setupVisibilityProtection() {
+
+  document.addEventListener(
+    "visibilitychange",
+    function() {
+
+      if (
+        document.visibilityState !== "visible"
+      ) {
+        return;
+      }
+
+
+      if (samajLoggingOut) {
+        return;
+      }
+
+
+      setTimeout(
+        function() {
+
+          restoreLoginSession();
+
+        },
+        150
+      );
+
+    }
+  );
 
 }
 
@@ -4865,15 +5104,41 @@ document.addEventListener(
   "DOMContentLoaded",
   async function() {
 
+    if (samajInitialised) {
+      return;
+    }
+
+
+    samajInitialised = true;
+
+
     console.log(
       "SamajSaathi app loading..."
     );
 
 
+    // Set up authentication listener first.
+    setupAuthListener();
+
+
+    // Set up navigation protection.
+    setupNavigationProtection();
+
+
+    // Set up tab visibility protection.
+    setupVisibilityProtection();
+
+
+    // Modal.
+    setupModalEvents();
+
+
+    // Public profiles.
     await loadProfiles();
 
 
-    setupModalEvents();
+    // Restore existing Supabase session.
+    await restoreLoginSession();
 
 
     console.log(
@@ -4885,7 +5150,10 @@ document.addEventListener(
 
 
 // ============================================================
-// SESSION CHECK
+// EARLY SESSION CHECK
+// ============================================================
+// This does NOT logout anybody.
+// It only confirms whether Supabase has a saved session.
 // ============================================================
 
 (async function() {
@@ -4903,7 +5171,13 @@ document.addEventListener(
     ) {
 
       console.log(
-        "SamajSaathi: User session active."
+        "SamajSaathi: User session active and persisted."
+      );
+
+    } else {
+
+      console.log(
+        "SamajSaathi: No saved session found."
       );
 
     }
