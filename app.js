@@ -4,19 +4,19 @@
 // COMPLETE APP.JS
 // ============================================================
 // FIXES:
-// ✅ Login button
-// ✅ Create Profile button
-// ✅ Supabase safe initialization
-// ✅ Global functions exposed to HTML onclick
-// ✅ Session persistence
-// ✅ Back button protection
-// ✅ Find Your Matches
-// ✅ View Profile
-// ✅ Send Interest
-// ✅ My Interests
-// ✅ Received Interests
-// ✅ Accept / Reject Interest
-// ✅ Profile photo upload
+// âœ… Login button
+// âœ… Create Profile button
+// âœ… Supabase safe initialization
+// âœ… Global functions exposed to HTML onclick
+// âœ… Session persistence
+// âœ… Back button protection
+// âœ… Find Your Matches
+// âœ… View Profile
+// âœ… Send Interest
+// âœ… My Interests
+// âœ… Received Interests
+// âœ… Accept / Reject Interest
+// âœ… Profile photo upload
 // ============================================================
 
 
@@ -647,7 +647,7 @@ function openModal(type) {
           class="btn primary"
           onclick="registerUser()"
         >
-          Create Account →
+          Create Account â†’
         </button>
 
       </div>
@@ -1046,7 +1046,7 @@ function showRegistrationSuccess(user) {
         font-size:48px;
         margin-bottom:10px;
       ">
-        ✓
+        âœ“
       </div>
 
       <span class="eyebrow">
@@ -1157,7 +1157,7 @@ function showRegistrationSuccess(user) {
           class="btn primary"
           onclick="openDashboard()"
         >
-          Go to My Dashboard →
+          Go to My Dashboard â†’
         </button>
 
       </div>
@@ -1198,7 +1198,7 @@ function contentAfterSignup(
       <div style="
         font-size:48px;
       ">
-        ✓
+        âœ“
       </div>
 
       <span class="eyebrow">
@@ -1715,11 +1715,11 @@ function createPublicProfileCard(
         justify-content:center;
         height:100%;
       ">
-        👤
+        ðŸ‘¤
       </span>
 
       <span class="profile-tag">
-        ✓ Verified
+        âœ“ Verified
       </span>
 
     </div>
@@ -1751,12 +1751,12 @@ function createPublicProfileCard(
           onerror="
             this.style.display='none';
             this.parentElement.classList.remove('has-real-photo');
-            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>👤</span><span class=&quot;profile-tag&quot;>✓ Verified</span>';
+            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>ðŸ‘¤</span><span class=&quot;profile-tag&quot;>âœ“ Verified</span>';
           "
         >
 
         <span class="profile-tag">
-          ✓ Verified
+          âœ“ Verified
         </span>
 
       </div>
@@ -1807,7 +1807,7 @@ function createPublicProfileCard(
 
           ${
             profile.surname
-              ? " · " +
+              ? " Â· " +
                 escapeHtml(
                   profile.surname
                 )
@@ -1816,7 +1816,7 @@ function createPublicProfileCard(
 
           ${
             profile.kul
-              ? " · " +
+              ? " Â· " +
                 escapeHtml(
                   profile.kul
                 )
@@ -1871,7 +1871,7 @@ async function loadMatches() {
         font-size:35px;
         margin-bottom:10px;
       ">
-        💕
+        ðŸ’•
       </div>
 
       Finding suitable profiles...
@@ -2117,7 +2117,7 @@ async function loadMatches() {
           <div style="
             font-size:42px;
           ">
-            ⚠️
+            âš ï¸
           </div>
 
           <h3>
@@ -2160,7 +2160,7 @@ async function loadMatches() {
             font-size:55px;
             margin-bottom:10px;
           ">
-            💕
+            ðŸ’•
           </div>
 
           <h3>
@@ -2180,7 +2180,7 @@ async function loadMatches() {
             class="btn primary"
             onclick="loadMatches()"
           >
-            🔄 Refresh Matches
+            ðŸ”„ Refresh Matches
           </button>
 
         </div>
@@ -2332,7 +2332,7 @@ function createMatchCard(
           sendInterest('${profile.id}')
         "
       >
-        ❤️ Send Interest
+        â¤ï¸ Send Interest
       </button>
     `;
 
@@ -2354,7 +2354,7 @@ function createMatchCard(
             cursor:not-allowed;
           "
         >
-          ✓ Interest Sent
+          âœ“ Interest Sent
         </button>
       `;
 
@@ -2376,7 +2376,7 @@ function createMatchCard(
             cursor:default;
           "
         >
-          💚 Accepted
+          ðŸ’š Accepted
         </button>
       `;
 
@@ -2395,7 +2395,7 @@ function createMatchCard(
             sendInterest('${profile.id}', true)
           "
         >
-          ❤️ Send Again
+          â¤ï¸ Send Again
         </button>
       `;
 
@@ -2418,7 +2418,7 @@ function createMatchCard(
       <span style="
         font-size:75px;
       ">
-        👤
+        ðŸ‘¤
       </span>
 
     </div>
@@ -2454,7 +2454,7 @@ function createMatchCard(
           "
           onerror="
             this.style.display='none';
-            this.parentElement.innerHTML='<div style=&quot;height:280px;display:flex;align-items:center;justify-content:center;font-size:75px;background:#f1e5e8;&quot;>👤</div>';
+            this.parentElement.innerHTML='<div style=&quot;height:280px;display:flex;align-items:center;justify-content:center;font-size:75px;background:#f1e5e8;&quot;>ðŸ‘¤</div>';
           "
         >
 
@@ -2493,7 +2493,7 @@ function createMatchCard(
             z-index:2;
           "
         >
-          ✓ Verified
+          âœ“ Verified
         </span>
 
       </div>
@@ -2530,7 +2530,7 @@ function createMatchCard(
           margin-bottom:7px;
         ">
 
-          📍
+          ðŸ“
 
           ${escapeHtml(
             location ||
@@ -2551,7 +2551,7 @@ function createMatchCard(
 
           ${
             profile.surname
-              ? " · " +
+              ? " Â· " +
                 escapeHtml(
                   profile.surname
                 )
@@ -2710,7 +2710,7 @@ async function viewProfile(
       margin:0 auto 20px;
       font-size:55px;
     ">
-      👤
+      ðŸ‘¤
     </div>
 
   `;
@@ -2806,7 +2806,7 @@ async function viewProfile(
           font-size:20px;
         "
       >
-        ×
+        Ã—
       </button>
 
       ${photoHtml}
@@ -2943,7 +2943,7 @@ async function viewProfile(
             sendInterest('${profile.id}')
           "
         >
-          ❤️ Send Interest
+          â¤ï¸ Send Interest
         </button>
 
       </div>
@@ -3025,10 +3025,6 @@ function profileViewerItem(
 // SEND INTEREST
 // ============================================================
 
-// ============================================================
-// SEND INTEREST + NOTIFICATION
-// ============================================================
-
 async function sendInterest(
   profileId,
   resend = false
@@ -3042,32 +3038,48 @@ async function sendInterest(
     return;
   }
 
+
   const sessionResult =
-    await supabaseClient.auth.getSession();
+    await supabaseClient.auth
+      .getSession();
+
 
   const session =
     sessionResult.data?.session;
 
+
   if (!session) {
-    openModal("login");
+
+    openModal(
+      "login"
+    );
+
     return;
   }
+
 
   const senderId =
     session.user.id;
 
-  if (profileId === senderId) {
+
+  if (
+    profileId ===
+    senderId
+  ) {
+
     alert(
       "You cannot send interest to your own profile."
     );
+
     return;
   }
 
+
   try {
 
-    // --------------------------------------------------------
+    // ========================================================
     // CHECK EXISTING INTEREST
-    // --------------------------------------------------------
+    // ========================================================
 
     const existingResult =
       await supabaseClient
@@ -3088,6 +3100,7 @@ async function sendInterest(
         )
         .maybeSingle();
 
+
     if (existingResult.error) {
 
       console.error(
@@ -3096,70 +3109,79 @@ async function sendInterest(
       );
 
       alert(
-        "Could not check interest: " +
+        "Interest system error: " +
         existingResult.error.message
       );
 
       return;
     }
 
+
     const existing =
       existingResult.data;
 
-    // --------------------------------------------------------
-    // ALREADY PENDING
-    // --------------------------------------------------------
 
     if (
       existing &&
-      existing.status === "pending"
+      existing.status ===
+      "pending"
     ) {
 
-      alert(
-        "❤️ Interest already sent."
+      markInterestSentUI(
+        profileId
       );
 
-      await loadMatches();
+      alert(
+        "â¤ï¸ You have already sent interest to this profile."
+      );
 
       return;
     }
 
-    // --------------------------------------------------------
-    // ALREADY ACCEPTED
-    // --------------------------------------------------------
 
     if (
       existing &&
-      existing.status === "accepted"
+      existing.status ===
+      "accepted"
     ) {
 
-      alert(
-        "💚 Interest has already been accepted."
+      markInterestAcceptedUI(
+        profileId
       );
 
-      await loadMatches();
+      alert(
+        "ðŸ’š Your interest has already been accepted."
+      );
 
       return;
     }
 
-    // --------------------------------------------------------
-    // INSERT / RESEND
-    // --------------------------------------------------------
 
-    let interestResult;
+    // ========================================================
+    // INSERT NEW INTEREST OR RESEND AFTER REJECTION
+    // ========================================================
+
+    let result;
+    let interestId = null;
+
 
     if (
       existing &&
-      existing.status === "rejected"
+      existing.status ===
+      "rejected"
     ) {
 
-      interestResult =
+      result =
         await supabaseClient
           .from("interests")
           .update({
-            status: "pending",
+
+            status:
+              "pending",
+
             updated_at:
               new Date().toISOString()
+
           })
           .eq(
             "id",
@@ -3173,15 +3195,23 @@ async function sendInterest(
             "receiver_id",
             profileId
           )
-          .select()
+          .select("id")
           .single();
 
-    } else {
 
-      interestResult =
+      interestId =
+        result.data?.id ||
+        existing.id;
+
+    }
+
+    else {
+
+      result =
         await supabaseClient
           .from("interests")
           .insert({
+
             sender_id:
               senderId,
 
@@ -3190,96 +3220,100 @@ async function sendInterest(
 
             status:
               "pending"
+
           })
-          .select()
+          .select("id")
           .single();
+
+
+      interestId =
+        result.data?.id ||
+        null;
+
     }
 
-    if (interestResult.error) {
+
+    if (result.error) {
 
       console.error(
         "SEND INTEREST ERROR:",
-        interestResult.error
+        result.error
       );
 
       alert(
         "Could not send interest: " +
-        interestResult.error.message
+        result.error.message
       );
 
       return;
     }
 
-    const interest =
-      interestResult.data;
 
-    // --------------------------------------------------------
-    // CREATE NOTIFICATION
-    // --------------------------------------------------------
+    // ========================================================
+    // IMMEDIATELY UPDATE SENDER UI
+    // ========================================================
 
-    const notificationResult =
-      await supabaseClient
-        .from("notifications")
-        .insert({
-          user_id:
-            profileId,
+    markInterestSentUI(
+      profileId
+    );
 
-          sender_id:
-            senderId,
 
-          interest_id:
-            interest?.id || null,
+    // ========================================================
+    // CREATE RECEIVER NOTIFICATION
+    // IMPORTANT:
+    // Notification failure must NOT make the interest fail.
+    // ========================================================
 
-          type:
-            "interest",
+    await createInterestNotification(
+      senderId,
+      profileId,
+      interestId
+    );
 
-          title:
-            "New Interest ❤️",
 
-          message:
-            "Someone has sent you an interest.",
-
-          is_read:
-            false
-        });
-
-    if (notificationResult.error) {
-
-      console.warn(
-        "NOTIFICATION CREATE WARNING:",
-        notificationResult.error
-      );
-
-    }
-
-    // --------------------------------------------------------
-    // CLOSE PROFILE VIEWER
-    // --------------------------------------------------------
+    // ========================================================
+    // REFRESH SENDER INTERESTS / MATCHES
+    // ========================================================
 
     const viewer =
       document.getElementById(
         "samajProfileViewer"
       );
 
+
     if (viewer) {
       viewer.remove();
     }
 
-    // --------------------------------------------------------
-    // REFRESH SENDER UI
-    // --------------------------------------------------------
 
     await loadMatches();
 
-    await loadMyInterests();
 
-    // --------------------------------------------------------
-    // SUCCESS
-    // --------------------------------------------------------
+    const interestsSection =
+      document.getElementById(
+        "dashboardSection-interests"
+      );
+
+
+    if (
+      interestsSection &&
+      !interestsSection.classList.contains(
+        "samaj-section-hidden"
+      )
+    ) {
+
+      await loadMyInterests();
+
+    }
+
 
     alert(
-      "❤️ Interest sent successfully!"
+      "â¤ï¸ Interest sent successfully!"
     );
+
+
+    return true;
+
 
   } catch (error) {
 
@@ -3292,8 +3326,810 @@ async function sendInterest(
       "Something went wrong: " +
       error.message
     );
+
+    return false;
   }
 }
+
+
+// ============================================================
+// SENDER UI HELPERS
+// ============================================================
+
+function markInterestSentUI(
+  profileId
+) {
+
+  if (!profileId) {
+    return;
+  }
+
+
+  // Match cards
+  document
+    .querySelectorAll(
+      ".samaj-match-card"
+    )
+    .forEach(
+      function(card) {
+
+        const buttons =
+          card.querySelectorAll(
+            "button"
+          );
+
+
+        buttons.forEach(
+          function(button) {
+
+            const onclick =
+              button.getAttribute(
+                "onclick"
+              ) || "";
+
+
+            if (
+              onclick.includes(
+                "sendInterest('" +
+                profileId +
+                "'"
+              )
+            ) {
+
+              button.disabled =
+                true;
+
+              button.innerHTML =
+                "âœ“ Interest Sent";
+
+              button.style.opacity =
+                ".7";
+
+              button.style.cursor =
+                "not-allowed";
+
+            }
+
+          }
+        );
+
+      }
+    );
+
+
+  // Profile viewer button
+  const viewer =
+    document.getElementById(
+      "samajProfileViewer"
+    );
+
+
+  if (viewer) {
+
+    viewer
+      .querySelectorAll(
+        "button"
+      )
+      .forEach(
+        function(button) {
+
+          const onclick =
+            button.getAttribute(
+              "onclick"
+            ) || "";
+
+
+          if (
+            onclick.includes(
+              "sendInterest('" +
+              profileId +
+              "'"
+            )
+          ) {
+
+            button.disabled =
+              true;
+
+            button.innerHTML =
+              "âœ“ Interest Sent";
+
+            button.style.opacity =
+              ".7";
+
+          }
+
+        }
+      );
+
+  }
+
+}
+
+
+function markInterestAcceptedUI(
+  profileId
+) {
+
+  document
+    .querySelectorAll(
+      ".samaj-match-card"
+    )
+    .forEach(
+      function(card) {
+
+        const buttons =
+          card.querySelectorAll(
+            "button"
+          );
+
+
+        buttons.forEach(
+          function(button) {
+
+            const onclick =
+              button.getAttribute(
+                "onclick"
+              ) || "";
+
+
+            if (
+              onclick.includes(
+                "sendInterest('" +
+                profileId +
+                "'"
+              )
+            ) {
+
+              button.disabled =
+                true;
+
+              button.innerHTML =
+                "ðŸ’š Accepted";
+
+            }
+
+          }
+        );
+
+      }
+    );
+}
+
+
+// ============================================================
+// CREATE INTEREST NOTIFICATION
+// ============================================================
+
+async function createInterestNotification(
+  senderId,
+  receiverId,
+  interestId
+) {
+
+  if (
+    !supabaseClient ||
+    !senderId ||
+    !receiverId
+  ) {
+    return false;
+  }
+
+
+  try {
+
+    let senderName =
+      "A SamajSaathi member";
+
+
+    const senderResult =
+      await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq(
+          "id",
+          senderId
+        )
+        .maybeSingle();
+
+
+    if (
+      !senderResult.error &&
+      senderResult.data?.full_name
+    ) {
+
+      senderName =
+        senderResult.data.full_name;
+
+    }
+
+
+    const notificationResult =
+      await supabaseClient
+        .from("notifications")
+        .insert({
+
+          user_id:
+            receiverId,
+
+          sender_id:
+            senderId,
+
+          interest_id:
+            interestId || null,
+
+          type:
+            "interest",
+
+          title:
+            "New Interest â¤ï¸",
+
+          message:
+            senderName +
+            " has sent you an interest.",
+
+          is_read:
+            false
+
+        });
+
+
+    if (
+      notificationResult.error
+    ) {
+
+      console.warn(
+        "NOTIFICATION INSERT WARNING:",
+        notificationResult.error
+      );
+
+      return false;
+    }
+
+
+    return true;
+
+
+  } catch (error) {
+
+    console.warn(
+      "NOTIFICATION ERROR:",
+      error
+    );
+
+    return false;
+  }
+}
+
+
+// ============================================================
+// CREATE RESPONSE NOTIFICATION
+// ============================================================
+
+async function createInterestResponseNotification(
+  receiverId,
+  senderId,
+  interestId,
+  status
+) {
+
+  if (
+    !supabaseClient ||
+    !receiverId ||
+    !senderId
+  ) {
+    return false;
+  }
+
+
+  try {
+
+    const receiverResult =
+      await supabaseClient
+        .from("profiles")
+        .select("full_name")
+        .eq(
+          "id",
+          receiverId
+        )
+        .maybeSingle();
+
+
+    const receiverName =
+      receiverResult.data?.full_name ||
+      "The member";
+
+
+    const accepted =
+      status ===
+      "accepted";
+
+
+    const notificationResult =
+      await supabaseClient
+        .from("notifications")
+        .insert({
+
+          user_id:
+            senderId,
+
+          sender_id:
+            receiverId,
+
+          interest_id:
+            interestId || null,
+
+          type:
+            accepted
+              ? "interest_accepted"
+              : "interest_rejected",
+
+          title:
+            accepted
+              ? "Interest Accepted ðŸ’š"
+              : "Interest Update",
+
+          message:
+            accepted
+              ? receiverName +
+                " has accepted your interest."
+              : receiverName +
+                " has declined your interest.",
+
+          is_read:
+            false
+
+        });
+
+
+    if (
+      notificationResult.error
+    ) {
+
+      console.warn(
+        "RESPONSE NOTIFICATION WARNING:",
+        notificationResult.error
+      );
+
+      return false;
+    }
+
+
+    return true;
+
+
+  } catch (error) {
+
+    console.warn(
+      "RESPONSE NOTIFICATION ERROR:",
+      error
+    );
+
+    return false;
+  }
+}
+
+
+// ============================================================
+// LOAD NOTIFICATIONS
+// ============================================================
+
+async function loadNotifications() {
+
+  const container =
+    document.getElementById(
+      "notificationsContainer"
+    );
+
+
+  if (!supabaseClient) {
+    return;
+  }
+
+
+  const sessionResult =
+    await supabaseClient.auth
+      .getSession();
+
+
+  const session =
+    sessionResult.data?.session;
+
+
+  if (!session) {
+    return;
+  }
+
+
+  if (container) {
+
+    container.innerHTML = `
+      <div style="
+        text-align:center;
+        padding:30px;
+      ">
+        Loading notifications...
+      </div>
+    `;
+
+  }
+
+
+  try {
+
+    const result =
+      await supabaseClient
+        .from("notifications")
+        .select(`
+          id,
+          user_id,
+          sender_id,
+          interest_id,
+          type,
+          title,
+          message,
+          is_read,
+          created_at
+        `)
+        .eq(
+          "user_id",
+          session.user.id
+        )
+        .order(
+          "created_at",
+          {
+            ascending:
+              false
+          }
+        );
+
+
+    if (result.error) {
+
+      console.error(
+        "NOTIFICATIONS LOAD ERROR:",
+        result.error
+      );
+
+
+      if (container) {
+
+        container.innerHTML = `
+          <div class="samaj-coming-soon">
+
+            <h3>
+              Unable to load notifications
+            </h3>
+
+            <p>
+              ${escapeHtml(
+                result.error.message
+              )}
+            </p>
+
+          </div>
+        `;
+
+      }
+
+      return;
+    }
+
+
+    const notifications =
+      result.data || [];
+
+
+    updateNotificationBadge(
+      notifications
+    );
+
+
+    if (!container) {
+      return;
+    }
+
+
+    if (!notifications.length) {
+
+      container.innerHTML = `
+        <div class="samaj-coming-soon">
+
+          <div class="samaj-coming-soon-icon">
+            ðŸ””
+          </div>
+
+          <h3>
+            No new notifications
+          </h3>
+
+          <p>
+            Important SamajSaathi updates will appear here.
+          </p>
+
+        </div>
+      `;
+
+      return;
+    }
+
+
+    container.innerHTML =
+      notifications
+        .map(
+          function(notification) {
+
+            const unreadStyle =
+              notification.is_read
+                ? "background:#fff;"
+                : "background:#fff8e6;";
+
+
+            return `
+
+              <article
+                style="
+                  ${unreadStyle}
+                  border:1px solid #ead9dd;
+                  border-radius:16px;
+                  padding:18px;
+                  margin-bottom:12px;
+                "
+              >
+
+                <div style="
+                  display:flex;
+                  gap:12px;
+                  align-items:flex-start;
+                ">
+
+                  <div style="
+                    width:44px;
+                    height:44px;
+                    border-radius:50%;
+                    background:#f8f1f3;
+                    display:flex;
+                    align-items:center;
+                    justify-content:center;
+                    flex-shrink:0;
+                    font-size:22px;
+                  ">
+                    ðŸ””
+                  </div>
+
+                  <div style="
+                    flex:1;
+                  ">
+
+                    <strong>
+                      ${escapeHtml(
+                        notification.title ||
+                        "Notification"
+                      )}
+                    </strong>
+
+                    <p style="
+                      margin:6px 0;
+                    ">
+                      ${escapeHtml(
+                        notification.message ||
+                        ""
+                      )}
+                    </p>
+
+                    <small style="
+                      opacity:.65;
+                    ">
+                      ${escapeHtml(
+                        formatNotificationDate(
+                          notification.created_at
+                        )
+                      )}
+                    </small>
+
+                  </div>
+
+                  ${
+                    !notification.is_read
+                      ? `
+                        <span style="
+                          width:9px;
+                          height:9px;
+                          border-radius:50%;
+                          background:#6f1025;
+                          flex-shrink:0;
+                          margin-top:7px;
+                        "></span>
+                      `
+                      : ""
+                  }
+
+                </div>
+
+              </article>
+
+            `;
+
+          }
+        )
+        .join("");
+
+
+  } catch (error) {
+
+    console.error(
+      "NOTIFICATIONS ERROR:",
+      error
+    );
+
+  }
+
+}
+
+
+// ============================================================
+// NOTIFICATION HELPERS
+// ============================================================
+
+function formatNotificationDate(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
+
+  const date =
+    new Date(value);
+
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+
+  return date.toLocaleString(
+    "en-IN",
+    {
+      day:
+        "numeric",
+
+      month:
+        "short",
+
+      year:
+        "numeric",
+
+      hour:
+        "numeric",
+
+      minute:
+        "2-digit"
+    }
+  );
+
+}
+
+
+function updateNotificationBadge(
+  notifications
+) {
+
+  const unread =
+    (notifications || [])
+      .filter(
+        item =>
+          !item.is_read
+      )
+      .length;
+
+
+  const badgeIds = [
+    "notificationBadge",
+    "notificationCount"
+  ];
+
+
+  badgeIds.forEach(
+    function(id) {
+
+      const badge =
+        document.getElementById(
+          id
+        );
+
+
+      if (!badge) {
+        return;
+      }
+
+
+      if (unread > 0) {
+
+        badge.textContent =
+          unread > 99
+            ? "99+"
+            : String(unread);
+
+        badge.style.display =
+          "inline-flex";
+
+      } else {
+
+        badge.textContent =
+          "";
+
+        badge.style.display =
+          "none";
+
+      }
+
+    }
+  );
+
+}
+
+
+async function markNotificationsRead() {
+
+  if (!supabaseClient) {
+    return;
+  }
+
+
+  const sessionResult =
+    await supabaseClient.auth
+      .getSession();
+
+
+  const session =
+    sessionResult.data?.session;
+
+
+  if (!session) {
+    return;
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("notifications")
+      .update({
+        is_read:
+          true
+      })
+      .eq(
+        "user_id",
+        session.user.id
+      )
+      .eq(
+        "is_read",
+        false
+      );
+
+
+  if (result.error) {
+
+    console.warn(
+      "MARK NOTIFICATIONS READ:",
+      result.error
+    );
+
+    return;
+  }
+
+
+  await loadNotifications();
+}
+
+
+// ============================================================
+// LOAD MY INTERESTS
+// ============================================================
 
 // ============================================================
 // LOAD MY INTERESTS
@@ -3406,7 +4242,7 @@ async function loadMyInterests() {
         <div class="samaj-coming-soon">
 
           <div class="samaj-coming-soon-icon">
-            ❤️
+            â¤ï¸
           </div>
 
           <h3>
@@ -3507,7 +4343,7 @@ async function loadMyInterests() {
                   color:#7a4d00;
                   font-size:12px;
                 ">
-                  ⏳ Pending
+                  â³ Pending
                 </span>
               `;
 
@@ -3527,7 +4363,7 @@ async function loadMyInterests() {
                     color:#18794e;
                     font-size:12px;
                   ">
-                    💚 Accepted
+                    ðŸ’š Accepted
                   </span>
                 `;
 
@@ -3549,7 +4385,7 @@ async function loadMyInterests() {
                     color:#b42318;
                     font-size:12px;
                   ">
-                    ❌ Rejected
+                    âŒ Rejected
                   </span>
                 `;
 
@@ -3597,7 +4433,7 @@ async function loadMyInterests() {
                         <span style="
                           font-size:30px;
                         ">
-                          👤
+                          ðŸ‘¤
                         </span>
                       `
                   }
@@ -3633,7 +4469,7 @@ async function loadMyInterests() {
                     margin-bottom:8px;
                   ">
 
-                    📍
+                    ðŸ“
 
                     ${escapeHtml(
                       [
@@ -3700,9 +4536,6 @@ async function loadMyInterests() {
 // ============================================================
 // LOAD RECEIVED INTERESTS
 // ============================================================
-// ============================================================
-// LOAD RECEIVED INTERESTS
-// ============================================================
 
 async function loadReceivedInterests() {
 
@@ -3715,24 +4548,25 @@ async function loadReceivedInterests() {
     return;
   }
 
-  if (!isSupabaseReady()) {
+
+  if (!supabaseClient) {
     return;
   }
 
+
   const sessionResult =
-    await supabaseClient.auth.getSession();
+    await supabaseClient.auth
+      .getSession();
+
 
   const session =
     sessionResult.data?.session;
 
+
   if (!session) {
-    container.innerHTML = `
-      <div class="samaj-coming-soon">
-        <h3>Please login first</h3>
-      </div>
-    `;
     return;
   }
+
 
   container.innerHTML = `
     <div style="
@@ -3743,10 +4577,8 @@ async function loadReceivedInterests() {
     </div>
   `;
 
-  try {
 
-    // IMPORTANT:
-    // Only use columns that actually exist.
+  try {
 
     const result =
       await supabaseClient
@@ -3754,7 +4586,6 @@ async function loadReceivedInterests() {
         .select(`
           id,
           sender_id,
-          receiver_id,
           status,
           created_at,
           updated_at
@@ -3766,16 +4597,13 @@ async function loadReceivedInterests() {
         .order(
           "created_at",
           {
-            ascending: false
+            ascending:
+              false
           }
         );
 
-    if (result.error) {
 
-      console.error(
-        "RECEIVED INTERESTS ERROR:",
-        result.error
-      );
+    if (result.error) {
 
       container.innerHTML = `
         <div class="samaj-coming-soon">
@@ -3790,22 +4618,16 @@ async function loadReceivedInterests() {
             )}
           </p>
 
-          <button
-            type="button"
-            class="btn primary"
-            onclick="loadReceivedInterests()"
-          >
-            🔄 Try Again
-          </button>
-
         </div>
       `;
 
       return;
     }
 
+
     const interests =
       result.data || [];
+
 
     if (!interests.length) {
 
@@ -3813,7 +4635,7 @@ async function loadReceivedInterests() {
         <div class="samaj-coming-soon">
 
           <div class="samaj-coming-soon-icon">
-            💌
+            ðŸ’Œ
           </div>
 
           <h3>
@@ -3821,8 +4643,7 @@ async function loadReceivedInterests() {
           </h3>
 
           <p>
-            When someone sends you an interest,
-            it will appear here.
+            When someone sends you an interest, it will appear here.
           </p>
 
         </div>
@@ -3831,54 +4652,38 @@ async function loadReceivedInterests() {
       return;
     }
 
-    // --------------------------------------------------------
-    // LOAD SENDER PROFILES
-    // --------------------------------------------------------
 
-    const senderIds =
-      interests
-        .map(
-          item => item.sender_id
-        )
-        .filter(Boolean);
+    const profileIds =
+      interests.map(
+        item =>
+          item.sender_id
+      );
 
-    let profiles = [];
 
-    if (senderIds.length) {
-
-      const profilesResult =
-        await supabaseClient
-          .from("profiles")
-          .select(`
-            id,
-            full_name,
-            age,
-            city,
-            state,
-            community,
-            surname,
-            kul,
-            profile_photo,
-            photo_url
-          `)
-          .in(
-            "id",
-            senderIds
-          );
-
-      if (profilesResult.error) {
-
-        console.error(
-          "SENDER PROFILES ERROR:",
-          profilesResult.error
+    const profilesResult =
+      await supabaseClient
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          age,
+          city,
+          state,
+          community,
+          surname,
+          kul,
+          profile_photo,
+          photo_url
+        `)
+        .in(
+          "id",
+          profileIds
         );
 
-      } else {
 
-        profiles =
-          profilesResult.data || [];
-      }
-    }
+    const profiles =
+      profilesResult.data || [];
+
 
     const profileMap =
       new Map(
@@ -3890,11 +4695,8 @@ async function loadReceivedInterests() {
         )
       );
 
-    // --------------------------------------------------------
-    // RENDER
-    // --------------------------------------------------------
 
-    const html =
+    container.innerHTML =
       interests
         .map(
           interest => {
@@ -3904,9 +4706,11 @@ async function loadReceivedInterests() {
                 interest.sender_id
               );
 
+
             if (!profile) {
               return "";
             }
+
 
             const photo =
               getProfilePhotoUrl(
@@ -3914,67 +4718,75 @@ async function loadReceivedInterests() {
                 profile.photo_url
               );
 
-            let statusHtml = `
-              <span style="
-                display:inline-block;
-                padding:6px 10px;
-                border-radius:20px;
-                background:#fff4d6;
-                color:#7a4d00;
-                font-size:12px;
-              ">
-                ⏳ Pending
-              </span>
-            `;
+
+            let statusHtml =
+              `
+                <span style="
+                  display:inline-block;
+                  padding:6px 10px;
+                  border-radius:20px;
+                  background:#fff4d6;
+                  color:#7a4d00;
+                  font-size:12px;
+                ">
+                  â³ Pending
+                </span>
+              `;
+
 
             if (
               interest.status ===
               "accepted"
             ) {
 
-              statusHtml = `
-                <span style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  border-radius:20px;
-                  background:#e7f7ed;
-                  color:#18794e;
-                  font-size:12px;
-                ">
-                  💚 Accepted
-                </span>
-              `;
+              statusHtml =
+                `
+                  <span style="
+                    display:inline-block;
+                    padding:6px 10px;
+                    border-radius:20px;
+                    background:#e7f7ed;
+                    color:#18794e;
+                    font-size:12px;
+                  ">
+                    ðŸ’š Accepted
+                  </span>
+                `;
+
             }
+
 
             if (
               interest.status ===
               "rejected"
             ) {
 
-              statusHtml = `
-                <span style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  border-radius:20px;
-                  background:#fff0f0;
-                  color:#b42318;
-                  font-size:12px;
-                ">
-                  ❌ Rejected
-                </span>
-              `;
+              statusHtml =
+                `
+                  <span style="
+                    display:inline-block;
+                    padding:6px 10px;
+                    border-radius:20px;
+                    background:#fff0f0;
+                    color:#b42318;
+                    font-size:12px;
+                  ">
+                    âŒ Rejected
+                  </span>
+                `;
+
             }
 
-            const actions =
+
+            const actionButtons =
               interest.status ===
               "pending"
-
                 ? `
                   <div style="
                     display:flex;
                     gap:8px;
                     flex-wrap:wrap;
-                    margin-top:14px;
+                    margin-top:12px;
                   ">
 
                     <button
@@ -3987,7 +4799,7 @@ async function loadReceivedInterests() {
                         )
                       "
                     >
-                      💚 Accept
+                      ðŸ’š Accept
                     </button>
 
                     <button
@@ -4000,7 +4812,7 @@ async function loadReceivedInterests() {
                         )
                       "
                     >
-                      ❌ Reject
+                      âŒ Reject
                     </button>
 
                     <button
@@ -4017,10 +4829,9 @@ async function loadReceivedInterests() {
 
                   </div>
                 `
-
                 : `
                   <div style="
-                    margin-top:14px;
+                    margin-top:12px;
                   ">
 
                     <button
@@ -4038,20 +4849,16 @@ async function loadReceivedInterests() {
                   </div>
                 `;
 
+
             return `
-              <article
-                class="received-interest-card"
-                data-interest-id="${escapeHtml(
-                  interest.id
-                )}"
-                style="
-                  background:#fff;
-                  border:1px solid #ead9dd;
-                  border-radius:16px;
-                  padding:18px;
-                  margin-bottom:14px;
-                "
-              >
+
+              <article style="
+                background:#fff;
+                border:1px solid #ead9dd;
+                border-radius:16px;
+                padding:18px;
+                margin-bottom:12px;
+              ">
 
                 <div style="
                   display:flex;
@@ -4075,12 +4882,7 @@ async function loadReceivedInterests() {
                       photo
                         ? `
                           <img
-                            src="${escapeHtml(
-                              photo
-                            )}"
-                            alt="${escapeHtml(
-                              profile.full_name
-                            )}"
+                            src="${escapeHtml(photo)}"
                             style="
                               width:100%;
                               height:100%;
@@ -4092,7 +4894,7 @@ async function loadReceivedInterests() {
                           <span style="
                             font-size:30px;
                           ">
-                            👤
+                            ðŸ‘¤
                           </span>
                         `
                     }
@@ -4128,7 +4930,7 @@ async function loadReceivedInterests() {
                       margin-bottom:6px;
                     ">
 
-                      📍
+                      ðŸ“
 
                       ${escapeHtml(
                         [
@@ -4154,7 +4956,7 @@ async function loadReceivedInterests() {
 
                       ${
                         profile.surname
-                          ? " · " +
+                          ? " Â· " +
                             escapeHtml(
                               profile.surname
                             )
@@ -4169,28 +4971,21 @@ async function loadReceivedInterests() {
 
                 </div>
 
-                ${actions}
+                ${actionButtons}
 
               </article>
+
             `;
+
           }
         )
         .join("");
 
-    container.innerHTML =
-      html ||
-      `
-        <div class="samaj-coming-soon">
-          <h3>
-            No interests received yet
-          </h3>
-        </div>
-      `;
 
   } catch (error) {
 
     console.error(
-      "RECEIVED INTERESTS ERROR:",
+      "RECEIVED INTEREST ERROR:",
       error
     );
 
@@ -4209,16 +5004,13 @@ async function loadReceivedInterests() {
 
       </div>
     `;
+
   }
-}}
+}
 
 
 // ============================================================
 // ACCEPT / REJECT INTEREST
-// ============================================================
-
-// ============================================================
-// ACCEPT / REJECT INTEREST + NOTIFICATION
 // ============================================================
 
 async function respondToInterest(
@@ -4230,6 +5022,7 @@ async function respondToInterest(
     return;
   }
 
+
   if (
     status !== "accepted" &&
     status !== "rejected"
@@ -4237,27 +5030,34 @@ async function respondToInterest(
     return;
   }
 
+
   if (!isSupabaseReady()) {
     return;
   }
 
+
   const sessionResult =
-    await supabaseClient.auth.getSession();
+    await supabaseClient.auth
+      .getSession();
+
 
   const session =
     sessionResult.data?.session;
 
+
   if (!session) {
-    openModal("login");
+
+    openModal(
+      "login"
+    );
+
     return;
   }
 
+
   try {
 
-    // --------------------------------------------------------
-    // GET INTEREST FIRST
-    // --------------------------------------------------------
-
+    // Get the interest first so we know the sender.
     const interestResult =
       await supabaseClient
         .from("interests")
@@ -4277,18 +5077,21 @@ async function respondToInterest(
         )
         .maybeSingle();
 
+
     if (interestResult.error) {
 
       alert(
-        "Could not find interest: " +
+        "Could not load interest: " +
         interestResult.error.message
       );
 
       return;
     }
 
+
     const interest =
       interestResult.data;
+
 
     if (!interest) {
 
@@ -4299,19 +5102,18 @@ async function respondToInterest(
       return;
     }
 
-    // --------------------------------------------------------
-    // UPDATE STATUS
-    // --------------------------------------------------------
 
-    const updateResult =
+    const result =
       await supabaseClient
         .from("interests")
         .update({
+
           status:
             status,
 
           updated_at:
             new Date().toISOString()
+
         })
         .eq(
           "id",
@@ -4322,82 +5124,42 @@ async function respondToInterest(
           session.user.id
         );
 
-    if (updateResult.error) {
+
+    if (result.error) {
 
       alert(
         "Could not update interest: " +
-        updateResult.error.message
+        result.error.message
       );
 
       return;
     }
 
-    // --------------------------------------------------------
-    // NOTIFY ORIGINAL SENDER
-    // --------------------------------------------------------
 
-    const title =
-      status === "accepted"
-        ? "Interest Accepted 💚"
-        : "Interest Rejected";
+    // Notify the original sender.
+    await createInterestResponseNotification(
+      session.user.id,
+      interest.sender_id,
+      interestId,
+      status
+    );
 
-    const message =
-      status === "accepted"
-        ? "Your interest has been accepted."
-        : "Your interest has been rejected.";
-
-    const notificationResult =
-      await supabaseClient
-        .from("notifications")
-        .insert({
-          user_id:
-            interest.sender_id,
-
-          sender_id:
-            session.user.id,
-
-          interest_id:
-            interest.id,
-
-          type:
-            "interest_" + status,
-
-          title:
-            title,
-
-          message:
-            message,
-
-          is_read:
-            false
-        });
-
-    if (notificationResult.error) {
-
-      console.warn(
-        "RESPONSE NOTIFICATION WARNING:",
-        notificationResult.error
-      );
-
-    }
-
-    // --------------------------------------------------------
-    // REFRESH RECEIVER
-    // --------------------------------------------------------
 
     await loadReceivedInterests();
 
-    // --------------------------------------------------------
-    // REFRESH SENDER-SIDE INTERESTS IF AVAILABLE
-    // --------------------------------------------------------
-
     await loadMyInterests();
+
+    await loadMatches();
+
+    await loadNotifications();
+
 
     alert(
       status === "accepted"
-        ? "💚 Interest accepted!"
-        : "❌ Interest rejected."
+        ? "ðŸ’š Interest accepted!"
+        : "Interest rejected."
     );
+
 
   } catch (error) {
 
@@ -4410,342 +5172,14 @@ async function respondToInterest(
       "Something went wrong: " +
       error.message
     );
-  }
-}
-// ============================================================
-// LOAD NOTIFICATIONS
-// ============================================================
 
-async function loadNotifications() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-  const sessionResult =
-    await supabaseClient.auth.getSession();
-
-  const session =
-    sessionResult.data?.session;
-
-  if (!session) {
-    return;
-  }
-
-  // Find whichever notification container exists
-  const container =
-    document.getElementById(
-      "notificationsContainer"
-    ) ||
-    document.getElementById(
-      "notificationContainer"
-    ) ||
-    document.getElementById(
-      "notificationsList"
-    );
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("notifications")
-        .select(`
-          id,
-          user_id,
-          sender_id,
-          interest_id,
-          type,
-          title,
-          message,
-          is_read,
-          created_at
-        `)
-        .eq(
-          "user_id",
-          session.user.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    if (result.error) {
-
-      console.error(
-        "NOTIFICATIONS LOAD ERROR:",
-        result.error
-      );
-
-      if (container) {
-        container.innerHTML = `
-          <div class="samaj-coming-soon">
-
-            <h3>
-              Unable to load notifications
-            </h3>
-
-            <p>
-              ${escapeHtml(
-                result.error.message
-              )}
-            </p>
-
-          </div>
-        `;
-      }
-
-      return;
-    }
-
-    const notifications =
-      result.data || [];
-
-    // --------------------------------------------------------
-    // BADGE
-    // --------------------------------------------------------
-
-    const unreadCount =
-      notifications.filter(
-        notification =>
-          !notification.is_read
-      ).length;
-
-    document
-      .querySelectorAll(
-        "#notificationBadge, .notification-badge"
-      )
-      .forEach(
-        badge => {
-
-          if (unreadCount > 0) {
-
-            badge.textContent =
-              unreadCount > 99
-                ? "99+"
-                : String(unreadCount);
-
-            badge.style.display =
-              "inline-flex";
-
-          } else {
-
-            badge.textContent = "";
-
-            badge.style.display =
-              "none";
-          }
-
-        }
-      );
-
-    // --------------------------------------------------------
-    // RENDER
-    // --------------------------------------------------------
-
-    if (!container) {
-      return;
-    }
-
-    if (!notifications.length) {
-
-      container.innerHTML = `
-        <div class="samaj-coming-soon">
-
-          <div class="samaj-coming-soon-icon">
-            🔔
-          </div>
-
-          <h3>
-            No notifications yet
-          </h3>
-
-          <p>
-            Your new interests and updates will appear here.
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-    container.innerHTML =
-      notifications
-        .map(
-          notification => `
-            <article style="
-              padding:16px;
-              margin-bottom:12px;
-              border-radius:14px;
-              border:1px solid #ead9dd;
-              background:${
-                notification.is_read
-                  ? "#fff"
-                  : "#fff8e6"
-              };
-            ">
-
-              <div style="
-                display:flex;
-                gap:12px;
-                align-items:flex-start;
-              ">
-
-                <div style="
-                  font-size:25px;
-                ">
-                  🔔
-                </div>
-
-                <div style="
-                  flex:1;
-                ">
-
-                  <strong>
-                    ${escapeHtml(
-                      notification.title ||
-                      "Notification"
-                    )}
-                  </strong>
-
-                  <p style="
-                    margin:6px 0;
-                  ">
-                    ${escapeHtml(
-                      notification.message ||
-                      ""
-                    )}
-                  </p>
-
-                  <small style="
-                    opacity:.6;
-                  ">
-                    ${escapeHtml(
-                      formatNotificationDate(
-                        notification.created_at
-                      )
-                    )}
-                  </small>
-
-                </div>
-
-                ${
-                  !notification.is_read
-                    ? `
-                      <span style="
-                        width:9px;
-                        height:9px;
-                        border-radius:50%;
-                        background:#6f1025;
-                        display:block;
-                        margin-top:6px;
-                      "></span>
-                    `
-                    : ""
-                }
-
-              </div>
-
-            </article>
-          `
-        )
-        .join("");
-
-  } catch (error) {
-
-    console.error(
-      "NOTIFICATIONS ERROR:",
-      error
-    );
   }
 }
 
 
 // ============================================================
-// NOTIFICATION DATE
+// OPEN FIND MATCHES
 // ============================================================
-
-function formatNotificationDate(
-  dateString
-) {
-
-  if (!dateString) {
-    return "";
-  }
-
-  const date =
-    new Date(dateString);
-
-  if (
-    Number.isNaN(
-      date.getTime()
-    )
-  ) {
-    return "";
-  }
-
-  return date.toLocaleString(
-    "en-IN",
-    {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit"
-    }
-  );
-}
-
-
-// ============================================================
-// MARK NOTIFICATIONS READ
-// ============================================================
-
-async function markNotificationsRead() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-  const sessionResult =
-    await supabaseClient.auth.getSession();
-
-  const session =
-    sessionResult.data?.session;
-
-  if (!session) {
-    return;
-  }
-
-  const result =
-    await supabaseClient
-      .from("notifications")
-      .update({
-        is_read: true
-      })
-      .eq(
-        "user_id",
-        session.user.id
-      )
-      .eq(
-        "is_read",
-        false
-      );
-
-  if (result.error) {
-
-    console.error(
-      "MARK NOTIFICATIONS READ ERROR:",
-      result.error
-    );
-
-    return;
-  }
-
-  await loadNotifications();
-}
 
 // ============================================================
 // OPEN FIND MATCHES
@@ -4923,26 +5357,27 @@ function showDashboardSection(
   if (
     section === "received"
   ) {
-if (
-  section === "notifications"
-) {
 
-  setTimeout(
-    function() {
-
-      loadNotifications();
-
-      markNotificationsRead();
-
-    },
-    50
-  );
-
-}
     setTimeout(
       function() {
 
         loadReceivedInterests();
+
+      },
+      50
+    );
+
+  }
+
+
+  if (
+    section === "notifications"
+  ) {
+
+    setTimeout(
+      function() {
+
+        loadNotifications();
 
       },
       50
@@ -5133,7 +5568,7 @@ async function openDashboard() {
             <small
               class="samaj-dashboard-brand-sub"
             >
-              SC Matrimony • Your journey starts here
+              SC Matrimony â€¢ Your journey starts here
             </small>
 
           </div>
@@ -5159,7 +5594,7 @@ async function openDashboard() {
                 cursor:pointer;
               "
             >
-              💕 Find Matches
+              ðŸ’• Find Matches
             </button>
 
             <button
@@ -5250,7 +5685,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                👤
+                ðŸ‘¤
               </span>
 
               <span class="samaj-menu-title">
@@ -5274,7 +5709,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ✏️
+                âœï¸
               </span>
 
               <span class="samaj-menu-title">
@@ -5298,7 +5733,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                💕
+                ðŸ’•
               </span>
 
               <span class="samaj-menu-title">
@@ -5322,7 +5757,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ❤️
+                â¤ï¸
               </span>
 
               <span class="samaj-menu-title">
@@ -5346,7 +5781,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                💌
+                ðŸ’Œ
               </span>
 
               <span class="samaj-menu-title">
@@ -5370,7 +5805,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                🔔
+                ðŸ””
               </span>
 
               <span class="samaj-menu-title">
@@ -5394,7 +5829,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ⚙️
+                âš™ï¸
               </span>
 
               <span class="samaj-menu-title">
@@ -5467,7 +5902,7 @@ async function openDashboard() {
                   font-size:55px;
                   color:#aaa;
                 ">
-                  👤
+                  ðŸ‘¤
                 </span>
 
               </div>
@@ -5490,7 +5925,7 @@ async function openDashboard() {
                   uploadProfilePhoto()
                 "
               >
-                📷 Upload / Change Photo
+                ðŸ“· Upload / Change Photo
               </button>
 
               <div
@@ -5578,7 +6013,7 @@ async function openDashboard() {
                   showDashboardSection('matches')
                 "
               >
-                💕 Find Your Matches
+                ðŸ’• Find Your Matches
               </button>
 
             </div>
@@ -5606,7 +6041,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              ✏️ Edit Profile
+              âœï¸ Edit Profile
             </h2>
 
             <div class="form-grid">
@@ -5866,7 +6301,7 @@ async function openDashboard() {
                   updateProfile()
                 "
               >
-                💾 Save Profile Changes
+                ðŸ’¾ Save Profile Changes
               </button>
 
             </div>
@@ -5901,7 +6336,7 @@ async function openDashboard() {
               </span>
 
               <h2>
-                💕 Find Your Matches
+                ðŸ’• Find Your Matches
               </h2>
 
               <p>
@@ -5956,7 +6391,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              ❤️ My Interests
+              â¤ï¸ My Interests
             </h2>
 
             <div
@@ -5966,7 +6401,7 @@ async function openDashboard() {
               <div class="samaj-coming-soon">
 
                 <div class="samaj-coming-soon-icon">
-                  ❤️
+                  â¤ï¸
                 </div>
 
                 <h3>
@@ -6004,7 +6439,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              💌 Received Interests
+              ðŸ’Œ Received Interests
             </h2>
 
             <div
@@ -6014,7 +6449,7 @@ async function openDashboard() {
               <div class="samaj-coming-soon">
 
                 <div class="samaj-coming-soon-icon">
-                  💌
+                  ðŸ’Œ
                 </div>
 
                 <h3>
@@ -6052,22 +6487,43 @@ async function openDashboard() {
             </span>
 
             <h2>
-              🔔 Notifications
+              ðŸ”” Notifications
             </h2>
 
-            <div class="samaj-coming-soon">
+            <div
+              id="notificationsContainer"
+            >
 
-              <div class="samaj-coming-soon-icon">
-                🔔
+              <div class="samaj-coming-soon">
+
+                <div class="samaj-coming-soon-icon">
+                  ðŸ””
+                </div>
+
+                <h3>
+                  Loading notifications...
+                </h3>
+
+                <p>
+                  Your latest SamajSaathi updates will appear here.
+                </p>
+
               </div>
 
-              <h3>
-                No new notifications
-              </h3>
+            </div>
 
-              <p>
-                Important SamajSaathi updates will appear here.
-              </p>
+            <div style="
+              margin-top:15px;
+              text-align:right;
+            ">
+
+              <button
+                type="button"
+                class="btn"
+                onclick="markNotificationsRead()"
+              >
+                âœ“ Mark All as Read
+              </button>
 
             </div>
 
@@ -6094,7 +6550,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              ⚙️ Account
+              âš™ï¸ Account
             </h2>
 
 
@@ -6144,7 +6600,7 @@ async function openDashboard() {
             ">
 
               <strong>
-                🔐 Account Security
+                ðŸ” Account Security
               </strong>
 
               <p style="
@@ -6167,7 +6623,7 @@ async function openDashboard() {
                   logoutUser()
                 "
               >
-                🚪 Logout
+                ðŸšª Logout
               </button>
 
             </div>
@@ -7298,11 +7754,13 @@ window.loadMyInterests =
 
 window.loadReceivedInterests =
   loadReceivedInterests;
+
 window.loadNotifications =
   loadNotifications;
 
 window.markNotificationsRead =
   markNotificationsRead;
+
 window.showDashboardSection =
   showDashboardSection;
 
@@ -7364,6 +7822,9 @@ document.addEventListener(
 
 
     await restoreLoginSession();
+
+
+    await loadNotifications();
 
 
     console.log(
