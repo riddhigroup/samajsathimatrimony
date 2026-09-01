@@ -86,6 +86,7 @@ try {
 
 let samajDashboardOpening = false;
 let samajLoggingOut = false;
+let samajNavigatingHome = false;
 let samajInitialised = false;
 
 
@@ -5701,16 +5702,33 @@ async function openDashboard() {
 
             <button
               type="button"
-              onclick="
-                showDashboardSection('matches')
-              "
+              onclick="goHomeFromDashboard()"
               style="
-                border:1px solid rgba(255,255,255,.5);
-                background:rgba(255,255,255,.12);
+                border:1px solid rgba(255,255,255,.55);
+                background:rgba(255,255,255,.18);
                 color:#fff;
                 padding:10px 16px;
-                border-radius:8px;
+                border-radius:10px;
                 cursor:pointer;
+                font-weight:700;
+                box-shadow:0 6px 18px rgba(0,0,0,.10);
+              "
+            >
+              \u{1F3E0} Home
+            </button>
+
+            <button
+              type="button"
+              onclick="showDashboardSection('matches')"
+              style="
+                border:1px solid rgba(255,255,255,.55);
+                background:rgba(255,255,255,.18);
+                color:#fff;
+                padding:10px 16px;
+                border-radius:10px;
+                cursor:pointer;
+                font-weight:700;
+                box-shadow:0 6px 18px rgba(0,0,0,.10);
               "
             >
               \u{1F495} Find Matches
@@ -5718,19 +5736,18 @@ async function openDashboard() {
 
             <button
               type="button"
-              onclick="
-                logoutUser()
-              "
+              onclick="logoutUser()"
               style="
-                border:1px solid rgba(255,255,255,.5);
-                background:transparent;
+                border:1px solid rgba(255,255,255,.55);
+                background:rgba(255,255,255,.08);
                 color:#fff;
                 padding:10px 16px;
-                border-radius:8px;
+                border-radius:10px;
                 cursor:pointer;
+                font-weight:700;
               "
             >
-              Logout
+              \u{1F6AA} Logout
             </button>
 
           </div>
@@ -7357,6 +7374,60 @@ async function updateProfile() {
 
 
 // ============================================================
+// GO TO HOME PAGE FROM DASHBOARD
+// Keeps the user logged in.
+// ============================================================
+
+async function goHomeFromDashboard() {
+
+  if (samajNavigatingHome) {
+    return;
+  }
+
+  samajNavigatingHome = true;
+
+  try {
+
+    const dashboard = document.getElementById("samajSaathiDashboard");
+    if (dashboard) {
+      dashboard.remove();
+    }
+
+    const viewer = document.getElementById("samajProfileViewer");
+    if (viewer) {
+      viewer.remove();
+    }
+
+    if (window.location.hash !== "#home") {
+      window.location.hash = "home";
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    await loadProfiles();
+
+  } catch (error) {
+
+    console.error("GO HOME ERROR:", error);
+
+    const dashboard = document.getElementById("samajSaathiDashboard");
+    if (dashboard) {
+      dashboard.remove();
+    }
+
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+  } finally {
+
+    setTimeout(function() {
+      samajNavigatingHome = false;
+    }, 800);
+
+  }
+
+}
+
+
+// ============================================================
 // LOGOUT
 // ============================================================
 
@@ -7466,6 +7537,7 @@ async function restoreLoginSession() {
 
   if (
     samajLoggingOut ||
+    samajNavigatingHome ||
     !supabaseClient
   ) {
     return;
@@ -7587,6 +7659,10 @@ function setupAuthListener() {
         event === "USER_UPDATED"
       ) {
 
+        if (samajNavigatingHome) {
+          return;
+        }
+
         if (!session) {
           return;
         }
@@ -7638,7 +7714,10 @@ function setupNavigationProtection() {
       );
 
 
-      if (samajLoggingOut) {
+      if (
+        samajLoggingOut ||
+        samajNavigatingHome
+      ) {
         return;
       }
 
