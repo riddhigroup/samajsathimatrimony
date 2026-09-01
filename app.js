@@ -1,27 +1,7 @@
 // ============================================================
 // SAMAJ SAATHI MATRIMONY
-// SUPABASE CONNECTED APP
 // COMPLETE APP.JS
-// ============================================================
-// FIXES:
-// ✅ Login button
-// ✅ Create Profile button
-// ✅ Supabase safe initialization
-// ✅ Global functions exposed to HTML onclick
-// ✅ Session persistence
-// ✅ Back button protection
-// ✅ Find Your Matches
-// ✅ View Profile
-// ✅ Send Interest
-// ✅ My Interests
-// ✅ Received Interests
-// ✅ Accept / Reject Interest
-// ✅ Profile photo upload
-// ============================================================
-
-
-// ============================================================
-// SUPABASE CONFIG
+// SUPABASE CONNECTED
 // ============================================================
 
 const SUPABASE_URL =
@@ -32,51 +12,35 @@ const SUPABASE_PUBLISHABLE_KEY =
 
 
 // ============================================================
-// SUPABASE CLIENT
+// SUPABASE
 // ============================================================
 
 let supabaseClient = null;
 
 try {
-
   if (
     window.supabase &&
     typeof window.supabase.createClient === "function"
   ) {
-
-    supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY,
-        {
-          auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-            storage: window.localStorage
-          }
+    supabaseClient = window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY,
+      {
+        auth: {
+          persistSession: true,
+          autoRefreshToken: true,
+          detectSessionInUrl: true,
+          storage: window.localStorage
         }
-      );
-
-    console.log(
-      "SamajSaathi: Supabase initialized successfully."
+      }
     );
 
+    console.log("SamajSaathi: Supabase connected.");
   } else {
-
-    console.error(
-      "SamajSaathi: Supabase library was not loaded."
-    );
-
+    console.error("Supabase library not loaded.");
   }
-
 } catch (error) {
-
-  console.error(
-    "SUPABASE INITIALIZATION ERROR:",
-    error
-  );
-
+  console.error("Supabase initialization error:", error);
 }
 
 
@@ -84,9 +48,10 @@ try {
 // GLOBAL STATE
 // ============================================================
 
-let samajDashboardOpening = false;
-let samajLoggingOut = false;
-let samajInitialised = false;
+let currentUser = null;
+let currentProfile = null;
+let allProfiles = [];
+let currentViewedProfile = null;
 
 
 // ============================================================
@@ -94,13 +59,10 @@ let samajInitialised = false;
 // ============================================================
 
 function isSupabaseReady() {
-
-  if (supabaseClient) {
-    return true;
-  }
+  if (supabaseClient) return true;
 
   alert(
-    "SamajSaathi could not connect to the database. Please refresh the page and try again."
+    "SamajSaathi could not connect to the database. Please refresh the page."
   );
 
   return false;
@@ -112,14 +74,12 @@ function isSupabaseReady() {
 // ============================================================
 
 function escapeHtml(value) {
-
   return String(value ?? "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
-
 }
 
 
@@ -128,24 +88,15 @@ function escapeHtml(value) {
 // ============================================================
 
 function calculateAge(dateString) {
+  if (!dateString) return null;
 
-  if (!dateString) {
+  const birthDate = new Date(dateString);
+
+  if (Number.isNaN(birthDate.getTime())) {
     return null;
   }
 
-  const birthDate =
-    new Date(dateString);
-
-  if (
-    Number.isNaN(
-      birthDate.getTime()
-    )
-  ) {
-    return null;
-  }
-
-  const today =
-    new Date();
+  const today = new Date();
 
   let age =
     today.getFullYear() -
@@ -162,9 +113,7 @@ function calculateAge(dateString) {
       today.getDate() < birthDate.getDate()
     )
   ) {
-
     age--;
-
   }
 
   return age;
@@ -176,14 +125,13 @@ function calculateAge(dateString) {
 // ============================================================
 
 function generateUserId() {
-
-  const number =
+  return (
+    "SS" +
     Math.floor(
       100000 +
       Math.random() * 900000
-    );
-
-  return "SS" + number;
+    )
+  );
 }
 
 
@@ -191,11 +139,7 @@ function generateUserId() {
 // USERNAME
 // ============================================================
 
-function generateUsername(
-  firstName,
-  lastName
-) {
-
+function generateUsername(firstName, lastName) {
   const first =
     String(firstName || "")
       .toLowerCase()
@@ -212,12 +156,7 @@ function generateUsername(
       Math.random() * 900
     );
 
-  return (
-    first +
-    "." +
-    last +
-    random
-  );
+  return `${first}.${last}${random}`;
 }
 
 
@@ -226,26 +165,17 @@ function generateUsername(
 // ============================================================
 
 function generatePassword() {
-
   const chars =
     "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
   let password = "";
 
-  for (
-    let i = 0;
-    i < 8;
-    i++
-  ) {
-
-    password +=
-      chars.charAt(
-        Math.floor(
-          Math.random() *
-          chars.length
-        )
-      );
-
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(
+      Math.floor(
+        Math.random() * chars.length
+      )
+    );
   }
 
   return password;
@@ -256,26 +186,18 @@ function generatePassword() {
 // MESSAGE
 // ============================================================
 
-function showMessage(
-  element,
-  text,
-  type
-) {
+function showMessage(element, text, type = "info") {
+  if (!element) return;
 
-  if (!element) {
-    return;
-  }
-
-  const isError =
-    type === "error";
+  const error = type === "error";
 
   element.innerHTML = `
     <div style="
       margin-top:15px;
       padding:12px;
       border-radius:10px;
-      background:${isError ? "#fff3f3" : "#f8f1f3"};
-      color:${isError ? "#b42318" : "#6f1025"};
+      background:${error ? "#fff3f3" : "#f8f1f3"};
+      color:${error ? "#b42318" : "#6f1025"};
       font-size:14px;
     ">
       ${escapeHtml(text)}
@@ -285,44 +207,92 @@ function showMessage(
 
 
 // ============================================================
-// PUBLIC PHOTO URL
+// PHOTO URL
 // ============================================================
 
-function getProfilePhotoUrl(
-  photoPath
-) {
-
-  if (
-    !photoPath ||
-    !supabaseClient
-  ) {
+function getProfilePhotoUrl(photoPath) {
+  if (!photoPath || !supabaseClient) {
     return null;
   }
 
   try {
-
     const result =
       supabaseClient
         .storage
         .from("profile-photos")
-        .getPublicUrl(
-          photoPath
-        );
+        .getPublicUrl(photoPath);
 
-    return (
-      result.data?.publicUrl ||
-      null
-    );
-
+    return result.data?.publicUrl || null;
   } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 
+
+// ============================================================
+// SESSION
+// ============================================================
+
+async function getCurrentUser() {
+  if (!supabaseClient) return null;
+
+  try {
+    const {
+      data,
+      error
+    } = await supabaseClient.auth.getUser();
+
+    if (error) {
+      console.warn("getUser:", error.message);
+      return null;
+    }
+
+    currentUser = data?.user || null;
+
+    return currentUser;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
+
+
+// ============================================================
+// LOAD CURRENT PROFILE
+// ============================================================
+
+async function loadCurrentProfile() {
+  if (!supabaseClient) return null;
+
+  const user = await getCurrentUser();
+
+  if (!user) {
+    currentProfile = null;
+    return null;
+  }
+
+  const {
+    data,
+    error
+  } = await supabaseClient
+    .from("profiles")
+    .select("*")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (error) {
     console.error(
-      "PHOTO URL ERROR:",
+      "CURRENT PROFILE ERROR:",
       error
     );
 
     return null;
   }
+
+  currentProfile = data || null;
+
+  return currentProfile;
 }
 
 
@@ -331,36 +301,25 @@ function getProfilePhotoUrl(
 // ============================================================
 
 function openModal(type) {
-
   const modal =
-    document.getElementById(
-      "modal"
-    );
+    document.getElementById("modal");
 
   const content =
-    document.getElementById(
-      "modalContent"
-    );
+    document.getElementById("modalContent");
 
-  if (
-    !modal ||
-    !content
-  ) {
-
+  if (!modal || !content) {
     console.error(
       "Modal elements not found."
     );
-
     return;
   }
 
 
-  // ========================================================
+  // ==========================================================
   // LOGIN
-  // ========================================================
+  // ==========================================================
 
   if (type === "login") {
-
     content.innerHTML = `
 
       <span class="eyebrow">
@@ -378,10 +337,7 @@ function openModal(type) {
       <div class="form-grid">
 
         <div class="field full">
-
-          <label>
-            Email
-          </label>
+          <label>Email</label>
 
           <input
             id="loginEmail"
@@ -389,14 +345,10 @@ function openModal(type) {
             placeholder="Enter your email"
             autocomplete="email"
           >
-
         </div>
 
         <div class="field full">
-
-          <label>
-            Password
-          </label>
+          <label>Password</label>
 
           <input
             id="loginPassword"
@@ -404,7 +356,6 @@ function openModal(type) {
             placeholder="Enter your password"
             autocomplete="current-password"
           >
-
         </div>
 
       </div>
@@ -428,7 +379,6 @@ function openModal(type) {
         text-align:center;
         font-size:13px;
       ">
-
         Don't have an account?
 
         <a
@@ -440,20 +390,16 @@ function openModal(type) {
         >
           Create Profile
         </a>
-
       </p>
-
     `;
-
   }
 
 
-  // ========================================================
+  // ==========================================================
   // REGISTER
-  // ========================================================
+  // ==========================================================
 
   else {
-
     content.innerHTML = `
 
       <span class="eyebrow">
@@ -471,169 +417,91 @@ function openModal(type) {
       <div class="form-grid">
 
         <div class="field">
-
-          <label>
-            First Name *
-          </label>
-
+          <label>First Name *</label>
           <input
             id="firstName"
             placeholder="First name"
-            autocomplete="given-name"
           >
-
         </div>
 
         <div class="field">
-
-          <label>
-            Last Name *
-          </label>
-
+          <label>Last Name *</label>
           <input
             id="lastName"
             placeholder="Last name"
-            autocomplete="family-name"
           >
-
         </div>
 
         <div class="field full">
-
-          <label>
-            Email *
-          </label>
-
+          <label>Email *</label>
           <input
             id="email"
             type="email"
             placeholder="Email address"
-            autocomplete="email"
           >
-
         </div>
 
         <div class="field">
-
-          <label>
-            Date of Birth *
-          </label>
-
+          <label>Date of Birth *</label>
           <input
             id="dob"
             type="date"
           >
-
         </div>
 
         <div class="field">
-
-          <label>
-            Gender *
-          </label>
+          <label>Gender *</label>
 
           <select id="gender">
-
-            <option value="">
-              Select
-            </option>
-
-            <option value="female">
-              Woman
-            </option>
-
-            <option value="male">
-              Man
-            </option>
-
+            <option value="">Select</option>
+            <option value="female">Woman</option>
+            <option value="male">Man</option>
           </select>
-
         </div>
 
         <div class="field">
-
-          <label>
-            Community / Jati
-          </label>
+          <label>Community / Jati</label>
 
           <select id="community">
-
-            <option value="Dom">
-              Dom
-            </option>
-
+            <option value="Dom">Dom</option>
             <option value="Other SC Community">
               Other SC Community
             </option>
-
           </select>
-
         </div>
 
         <div class="field">
-
-          <label>
-            Surname
-          </label>
+          <label>Surname</label>
 
           <select id="surname">
-
-            <option value="Rauth">
-              Rauth
-            </option>
-
-            <option value="Basfor">
-              Basfor
-            </option>
-
-            <option value="Bansfor">
-              Bansfor
-            </option>
-
-            <option value="Other">
-              Other
-            </option>
-
+            <option value="Rauth">Rauth</option>
+            <option value="Basfor">Basfor</option>
+            <option value="Bansfor">Bansfor</option>
+            <option value="Other">Other</option>
           </select>
-
         </div>
 
         <div class="field">
-
-          <label>
-            Kul / Clan
-          </label>
+          <label>Kul / Clan</label>
 
           <select id="kul">
-
             <option value="Piari Baiswar">
               Piari Baiswar
             </option>
-
-            <option value="Other">
-              Other
-            </option>
-
+            <option value="Other">Other</option>
             <option value="Not Known">
               Not Known
             </option>
-
           </select>
-
         </div>
 
         <div class="field full">
-
-          <label>
-            Current City *
-          </label>
+          <label>Current City *</label>
 
           <input
             id="city"
             placeholder="e.g. Siliguri"
-            autocomplete="address-level2"
           >
-
         </div>
 
       </div>
@@ -657,7 +525,6 @@ function openModal(type) {
         text-align:center;
         font-size:13px;
       ">
-
         Already have an account?
 
         <a
@@ -669,11 +536,8 @@ function openModal(type) {
         >
           Login
         </a>
-
       </p>
-
     `;
-
   }
 
   modal.classList.add("show");
@@ -685,18 +549,11 @@ function openModal(type) {
 // ============================================================
 
 function closeModal() {
-
   const modal =
-    document.getElementById(
-      "modal"
-    );
+    document.getElementById("modal");
 
   if (modal) {
-
-    modal.classList.remove(
-      "show"
-    );
-
+    modal.classList.remove("show");
   }
 }
 
@@ -706,55 +563,43 @@ function closeModal() {
 // ============================================================
 
 async function registerUser() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
+  if (!isSupabaseReady()) return;
 
   const firstName =
-    document.getElementById(
-      "firstName"
-    )?.value.trim();
+    document.getElementById("firstName")
+      ?.value.trim();
 
   const lastName =
-    document.getElementById(
-      "lastName"
-    )?.value.trim();
+    document.getElementById("lastName")
+      ?.value.trim();
 
   const email =
-    document.getElementById(
-      "email"
-    )?.value.trim();
+    document.getElementById("email")
+      ?.value.trim();
 
   const dob =
-    document.getElementById(
-      "dob"
-    )?.value;
+    document.getElementById("dob")
+      ?.value;
 
   const gender =
-    document.getElementById(
-      "gender"
-    )?.value;
+    document.getElementById("gender")
+      ?.value;
 
   const community =
-    document.getElementById(
-      "community"
-    )?.value;
+    document.getElementById("community")
+      ?.value;
 
   const surname =
-    document.getElementById(
-      "surname"
-    )?.value;
+    document.getElementById("surname")
+      ?.value;
 
   const kul =
-    document.getElementById(
-      "kul"
-    )?.value;
+    document.getElementById("kul")
+      ?.value;
 
   const city =
-    document.getElementById(
-      "city"
-    )?.value.trim();
+    document.getElementById("city")
+      ?.value.trim();
 
   const message =
     document.getElementById(
@@ -770,7 +615,6 @@ async function registerUser() {
     !gender ||
     !city
   ) {
-
     showMessage(
       message,
       "Please fill in all required fields.",
@@ -788,7 +632,6 @@ async function registerUser() {
     age === null ||
     age < 18
   ) {
-
     showMessage(
       message,
       "SamajSaathi is available only for adults aged 18 or above.",
@@ -810,9 +653,7 @@ async function registerUser() {
     generatePassword();
 
   const fullName =
-    firstName +
-    " " +
-    lastName;
+    `${firstName} ${lastName}`;
 
   const displayUserId =
     generateUserId();
@@ -828,41 +669,22 @@ async function registerUser() {
 
     const result =
       await supabaseClient.auth.signUp({
-
-        email:
-          email,
-
-        password:
-          password,
+        email,
+        password,
 
         options: {
-
           data: {
-
-            first_name:
-              firstName,
-
-            last_name:
-              lastName,
-
-            full_name:
-              fullName,
-
-            username:
-              username,
-
-            display_user_id:
-              displayUserId
-
+            first_name: firstName,
+            last_name: lastName,
+            full_name: fullName,
+            username,
+            display_user_id: displayUserId
           }
-
         }
-
       });
 
 
     if (result.error) {
-
       showMessage(
         message,
         result.error.message,
@@ -873,12 +695,10 @@ async function registerUser() {
     }
 
 
-    const data =
-      result.data;
+    const user =
+      result.data?.user;
 
-
-    if (!data?.user) {
-
+    if (!user) {
       showMessage(
         message,
         "Account could not be created.",
@@ -901,60 +721,38 @@ async function registerUser() {
 
 
     const profileData = {
-
-      id:
-        data.user.id,
-
-      full_name:
-        fullName,
-
-      gender:
-        gender,
-
-      date_of_birth:
-        dob,
-
-      age:
-        age,
-
-      city:
-        city,
-
-      community:
-        community,
-
-      surname:
-        surname,
-
-      kul:
-        kul,
-
-      is_active:
-        true
-
+      id: user.id,
+      full_name: fullName,
+      gender,
+      date_of_birth: dob,
+      age,
+      city,
+      community,
+      surname,
+      kul,
+      is_active: true
     };
 
 
-    if (data.session) {
+    if (result.data?.session) {
 
-      const profileResult =
-        await supabaseClient
-          .from("profiles")
-          .upsert(
-            profileData,
-            {
-              onConflict:
-                "id"
-            }
-          );
+      const {
+        error
+      } = await supabaseClient
+        .from("profiles")
+        .upsert(
+          profileData,
+          {
+            onConflict: "id"
+          }
+        );
 
 
-      if (profileResult.error) {
-
+      if (error) {
         showMessage(
           message,
           "Account created, but profile could not be saved: " +
-          profileResult.error.message,
+          error.message,
           "error"
         );
 
@@ -962,34 +760,22 @@ async function registerUser() {
       }
 
 
+      currentUser = user;
+      currentProfile = profileData;
+
+
       showRegistrationSuccess({
-
-        userId:
-          displayUserId,
-
-        username:
-          username,
-
-        firstName:
-          firstName,
-
-        password:
-          password
-
+        userId: displayUserId,
+        username,
+        firstName,
+        password
       });
 
-
-      await loadProfiles();
-
-    }
-
-    else {
+    } else {
 
       localStorage.setItem(
         "samajSaathiPendingProfile",
-        JSON.stringify(
-          profileData
-        )
+        JSON.stringify(profileData)
       );
 
 
@@ -999,7 +785,6 @@ async function registerUser() {
         username,
         password
       );
-
     }
 
   } catch (error) {
@@ -1015,7 +800,6 @@ async function registerUser() {
       error.message,
       "error"
     );
-
   }
 }
 
@@ -1025,22 +809,17 @@ async function registerUser() {
 // ============================================================
 
 function showRegistrationSuccess(user) {
-
   const content =
     document.getElementById(
       "modalContent"
     );
 
-  if (!content) {
-    return;
-  }
+  if (!content) return;
 
 
   content.innerHTML = `
 
-    <div style="
-      text-align:center;
-    ">
+    <div style="text-align:center">
 
       <div style="
         font-size:48px;
@@ -1055,9 +834,7 @@ function showRegistrationSuccess(user) {
 
       <h2>
         Welcome to SamajSaathi,
-        ${escapeHtml(
-          user.firstName
-        )}!
+        ${escapeHtml(user.firstName)}!
       </h2>
 
       <p>
@@ -1072,61 +849,39 @@ function showRegistrationSuccess(user) {
         text-align:left;
       ">
 
-        <div style="
-          margin-bottom:12px;
-        ">
-
-          <small>
-            User ID
-          </small>
+        <div style="margin-bottom:12px">
+          <small>User ID</small>
 
           <strong style="
             display:block;
             font-size:20px;
             margin-top:4px;
           ">
-            ${escapeHtml(
-              user.userId
-            )}
+            ${escapeHtml(user.userId)}
           </strong>
-
         </div>
 
-        <div style="
-          margin-bottom:12px;
-        ">
-
-          <small>
-            Username
-          </small>
+        <div style="margin-bottom:12px">
+          <small>Username</small>
 
           <strong style="
             display:block;
             margin-top:4px;
           ">
-            ${escapeHtml(
-              user.username
-            )}
+            ${escapeHtml(user.username)}
           </strong>
-
         </div>
 
         <div>
-
-          <small>
-            Temporary Password
-          </small>
+          <small>Temporary Password</small>
 
           <strong style="
             display:block;
             margin-top:4px;
             letter-spacing:1px;
           ">
-            ${escapeHtml(
-              user.password
-            )}
+            ${escapeHtml(user.password)}
           </strong>
-
         </div>
 
       </div>
@@ -1139,7 +894,6 @@ function showRegistrationSuccess(user) {
         font-size:13px;
         margin-bottom:18px;
       ">
-
         <strong>
           Please save your login details.
         </strong>
@@ -1147,7 +901,6 @@ function showRegistrationSuccess(user) {
         <br>
 
         Login uses your email and password.
-
       </div>
 
       <div class="modal-actions">
@@ -1163,13 +916,12 @@ function showRegistrationSuccess(user) {
       </div>
 
     </div>
-
   `;
 }
 
 
 // ============================================================
-// EMAIL CONFIRMATION
+// CONTENT AFTER SIGNUP
 // ============================================================
 
 function contentAfterSignup(
@@ -1178,139 +930,12 @@ function contentAfterSignup(
   username,
   password
 ) {
-
-  const content =
-    document.getElementById(
-      "modalContent"
-    );
-
-  if (!content) {
-    return;
-  }
-
-
-  content.innerHTML = `
-
-    <div style="
-      text-align:center;
-    ">
-
-      <div style="
-        font-size:48px;
-      ">
-        ✓
-      </div>
-
-      <span class="eyebrow">
-        ACCOUNT CREATED
-      </span>
-
-      <h2>
-        Welcome to SamajSaathi,
-        ${escapeHtml(
-          firstName
-        )}!
-      </h2>
-
-      <p>
-        Please confirm your email address,
-        then login to continue.
-      </p>
-
-      <div style="
-        margin:20px 0;
-        padding:18px;
-        border-radius:14px;
-        background:#f8f1f3;
-        text-align:left;
-      ">
-
-        <div>
-
-          <small>
-            User ID
-          </small>
-
-          <strong style="
-            display:block;
-            margin-top:4px;
-          ">
-            ${escapeHtml(
-              userId
-            )}
-          </strong>
-
-        </div>
-
-        <br>
-
-        <div>
-
-          <small>
-            Username
-          </small>
-
-          <strong style="
-            display:block;
-            margin-top:4px;
-          ">
-            ${escapeHtml(
-              username
-            )}
-          </strong>
-
-        </div>
-
-        <br>
-
-        <div>
-
-          <small>
-            Temporary Password
-          </small>
-
-          <strong style="
-            display:block;
-            margin-top:4px;
-            letter-spacing:1px;
-          ">
-            ${escapeHtml(
-              password
-            )}
-          </strong>
-
-        </div>
-
-      </div>
-
-      <div style="
-        padding:12px;
-        border-radius:10px;
-        background:#fff8e6;
-        color:#7a4d00;
-        font-size:13px;
-        margin-bottom:18px;
-      ">
-
-        Please save your login details.
-
-      </div>
-
-      <div class="modal-actions">
-
-        <button
-          type="button"
-          class="btn primary"
-          onclick="openModal('login')"
-        >
-          Login
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
+  showRegistrationSuccess({
+    firstName,
+    userId,
+    username,
+    password
+  });
 }
 
 
@@ -1319,11 +944,7 @@ function contentAfterSignup(
 // ============================================================
 
 async function loginUser() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
+  if (!isSupabaseReady()) return;
 
   const email =
     document.getElementById(
@@ -1341,11 +962,7 @@ async function loginUser() {
     );
 
 
-  if (
-    !email ||
-    !password
-  ) {
-
+  if (!email || !password) {
     showMessage(
       message,
       "Please enter your email and password.",
@@ -1365,24 +982,21 @@ async function loginUser() {
 
   try {
 
-    const result =
+    const {
+      data,
+      error
+    } =
       await supabaseClient.auth
         .signInWithPassword({
-
-          email:
-            email,
-
-          password:
-            password
-
+          email,
+          password
         });
 
 
-    if (result.error) {
-
+    if (error) {
       showMessage(
         message,
-        result.error.message,
+        error.message,
         "error"
       );
 
@@ -1390,19 +1004,11 @@ async function loginUser() {
     }
 
 
-    if (!result.data?.user) {
-
-      showMessage(
-        message,
-        "Login failed.",
-        "error"
-      );
-
-      return;
-    }
+    currentUser =
+      data?.user || null;
 
 
-    await savePendingProfile();
+    await loadCurrentProfile();
 
 
     closeModal();
@@ -1419,1191 +1025,776 @@ async function loginUser() {
 
     showMessage(
       message,
-      "Login error: " +
+      "Login failed: " +
       error.message,
       "error"
     );
-
   }
 }
 
 
 // ============================================================
-// SAVE PENDING PROFILE
+// LOGOUT
 // ============================================================
 
-async function savePendingProfile() {
-
-  if (!supabaseClient) {
-    return;
-  }
-
-
-  const pending =
-    localStorage.getItem(
-      "samajSaathiPendingProfile"
-    );
-
-  if (!pending) {
-    return;
-  }
-
-
-  let profileData;
+async function logoutUser() {
+  if (!supabaseClient) return;
 
   try {
+    await supabaseClient.auth.signOut();
 
-    profileData =
-      JSON.parse(
-        pending
-      );
-
-  } catch (error) {
+    currentUser = null;
+    currentProfile = null;
 
     localStorage.removeItem(
-      "samajSaathiPendingProfile"
+      "samajSaathiUserId"
     );
 
+    localStorage.removeItem(
+      "samajSaathiUsername"
+    );
+
+    window.location.hash = "home";
+
+    window.location.reload();
+
+  } catch (error) {
+    console.error(
+      "LOGOUT ERROR:",
+      error
+    );
+  }
+}
+
+
+// ============================================================
+// OPEN DASHBOARD
+// ============================================================
+
+async function openDashboard() {
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) {
+    openModal("login");
     return;
   }
 
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
+  await loadCurrentProfile();
+
+  closeModal();
 
 
-  const session =
-    sessionResult.data?.session;
+  const dashboard =
+    document.getElementById(
+      "dashboard"
+    );
 
-  if (!session) {
-    return;
+  if (dashboard) {
+    dashboard.style.display = "block";
   }
 
 
-  profileData.id =
-    session.user.id;
+  await loadProfiles();
+
+  await refreshInterestUI();
+
+  await loadNotifications();
+
+  window.location.hash =
+    "dashboard";
+}
 
 
-  const result =
+// ============================================================
+// LOAD PROFILES
+// ============================================================
+
+async function loadProfiles() {
+  if (!isSupabaseReady()) return [];
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) return [];
+
+
+  const {
+    data,
+    error
+  } =
     await supabaseClient
       .from("profiles")
-      .upsert(
-        profileData,
+      .select("*")
+      .eq("is_active", true)
+      .neq("id", user.id)
+      .order(
+        "created_at",
         {
-          onConflict:
-            "id"
+          ascending: false
         }
       );
 
 
-  if (result.error) {
-
+  if (error) {
     console.error(
-      "PENDING PROFILE SAVE ERROR:",
-      result.error
+      "LOAD PROFILES ERROR:",
+      error
     );
 
+    return [];
+  }
+
+
+  allProfiles =
+    data || [];
+
+
+  renderProfiles(
+    allProfiles
+  );
+
+
+  return allProfiles;
+}
+
+
+// ============================================================
+// RENDER PROFILES
+// ============================================================
+
+async function renderProfiles(
+  profiles
+) {
+  const containers = [
+    document.getElementById("profilesGrid"),
+    document.getElementById("matchesGrid"),
+    document.getElementById("profiles")
+  ].filter(Boolean);
+
+
+  if (!containers.length) {
     return;
   }
 
 
-  localStorage.removeItem(
-    "samajSaathiPendingProfile"
+  const user =
+    await getCurrentUser();
+
+
+  let sentIds = [];
+
+
+  if (user) {
+    sentIds =
+      await getSentInterestReceiverIds(
+        user.id
+      );
+  }
+
+
+  const html =
+    profiles
+      .map(profile => {
+
+        const sent =
+          sentIds.includes(
+            profile.id
+          );
+
+
+        const photo =
+          getProfilePhotoUrl(
+            profile.profile_photo
+          );
+
+
+        return `
+
+          <div
+            class="profile-card"
+            data-profile-id="${escapeHtml(profile.id)}"
+          >
+
+            <div class="profile-img">
+
+              ${
+                photo
+                  ? `
+                    <img
+                      src="${escapeHtml(photo)}"
+                      alt="${escapeHtml(profile.full_name)}"
+                      style="
+                        width:100%;
+                        height:100%;
+                        object-fit:cover;
+                      "
+                    >
+                  `
+                  : `
+                    <div style="
+                      width:100%;
+                      height:100%;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      font-size:45px;
+                    ">
+                      👤
+                    </div>
+                  `
+              }
+
+            </div>
+
+
+            <div class="profile-card-content">
+
+              <h3>
+                ${escapeHtml(
+                  profile.full_name
+                )}
+              </h3>
+
+              <p>
+                ${
+                  profile.age
+                    ? escapeHtml(profile.age) + " years"
+                    : ""
+                }
+                ${
+                  profile.city
+                    ? " • " +
+                      escapeHtml(profile.city)
+                    : ""
+                }
+              </p>
+
+              <p>
+                ${
+                  profile.community
+                    ? escapeHtml(profile.community)
+                    : ""
+                }
+                ${
+                  profile.surname
+                    ? " • " +
+                      escapeHtml(profile.surname)
+                    : ""
+                }
+              </p>
+
+
+              <div style="
+                display:flex;
+                gap:8px;
+                flex-wrap:wrap;
+                margin-top:12px;
+              ">
+
+                <button
+                  type="button"
+                  class="btn"
+                  onclick="viewProfile('${escapeHtml(profile.id)}')"
+                >
+                  View Profile
+                </button>
+
+                ${
+                  sent
+                    ? `
+                      <button
+                        type="button"
+                        class="btn"
+                        disabled
+                        style="
+                          opacity:.7;
+                          cursor:default;
+                        "
+                      >
+                        ❤️ Interest Sent
+                      </button>
+                    `
+                    : `
+                      <button
+                        type="button"
+                        class="btn primary"
+                        onclick="sendInterest('${escapeHtml(profile.id)}')"
+                      >
+                        ❤️ Send Interest
+                      </button>
+                    `
+                }
+
+              </div>
+
+            </div>
+
+          </div>
+        `;
+      })
+      .join("");
+
+
+  containers.forEach(
+    container => {
+      container.innerHTML =
+        html ||
+        `
+          <div style="
+            padding:30px;
+            text-align:center;
+          ">
+            No suitable profiles found.
+          </div>
+        `;
+    }
   );
 }
 
 
 // ============================================================
-// LOAD PUBLIC PROFILES
+// GET SENT INTEREST IDS
 // ============================================================
 
-async function loadProfiles() {
-
-  const grid =
-    document.getElementById(
-      "profiles"
-    );
-
-  if (!grid) {
-    return;
+async function getSentInterestReceiverIds(
+  senderId
+) {
+  if (!supabaseClient || !senderId) {
+    return [];
   }
 
 
-  if (!supabaseClient) {
-
-    grid.innerHTML = `
-      <div style="
-        grid-column:1/-1;
-        text-align:center;
-        padding:40px;
-      ">
-        <h3>
-          SamajSaathi is loading...
-        </h3>
-        <p>
-          Please refresh the page.
-        </p>
-      </div>
-    `;
-
-    return;
-  }
-
-
-  grid.innerHTML = `
-    <div style="
-      grid-column:1/-1;
-      text-align:center;
-      padding:40px;
-      color:#6f1025;
-    ">
-      Loading profiles...
-    </div>
-  `;
-
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          gender,
-          age,
-          city,
-          state,
-          community,
-          surname,
-          kul,
-          profile_photo,
-          photo_url,
-          is_active,
-          created_at
-        `)
-        .eq(
-          "is_active",
-          true
-        )
-        .order(
-          "created_at",
-          {
-            ascending:
-              false
-          }
-        )
-        .limit(6);
-
-
-    if (result.error) {
-
-      console.error(
-        "PUBLIC PROFILES ERROR:",
-        result.error
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("interests")
+      .select("receiver_id")
+      .eq(
+        "sender_id",
+        senderId
+      )
+      .in(
+        "status",
+        [
+          "pending",
+          "accepted"
+        ]
       );
 
-      grid.innerHTML = `
-        <div style="
-          grid-column:1/-1;
-          text-align:center;
-          padding:40px;
-        ">
 
-          <h3>
-            Unable to load profiles
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              result.error.message
-            )}
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const profiles =
-      result.data || [];
-
-
-    if (!profiles.length) {
-
-      grid.innerHTML = `
-        <div style="
-          grid-column:1/-1;
-          text-align:center;
-          padding:40px;
-        ">
-
-          <h3>
-            No profiles available yet.
-          </h3>
-
-          <p>
-            New members will appear here after registration.
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    grid.innerHTML =
-      profiles
-        .map(
-          createPublicProfileCard
-        )
-        .join("");
-
-
-  } catch (error) {
-
+  if (error) {
     console.error(
-      "PUBLIC PROFILE ERROR:",
+      "SENT INTEREST ERROR:",
       error
     );
 
+    return [];
   }
+
+
+  return (
+    data || []
+  ).map(
+    row => row.receiver_id
+  );
 }
 
 
 // ============================================================
-// PUBLIC PROFILE CARD
+// SEND INTEREST
 // ============================================================
 
-function createPublicProfileCard(
-  profile
+async function sendInterest(
+  receiverId
 ) {
-
-  const location =
-    [
-      profile.city,
-      profile.state
-    ]
-      .filter(Boolean)
-      .join(", ");
+  if (!isSupabaseReady()) {
+    return false;
+  }
 
 
-  const photoPath =
-    profile.profile_photo ||
-    profile.photo_url ||
-    null;
+  const user =
+    await getCurrentUser();
 
 
-  const photoUrl =
-    getProfilePhotoUrl(
-      photoPath
+  if (!user) {
+    openModal("login");
+    return false;
+  }
+
+
+  if (!receiverId) {
+    alert(
+      "Receiver profile not found."
+    );
+
+    return false;
+  }
+
+
+  if (receiverId === user.id) {
+    alert(
+      "You cannot send interest to yourself."
+    );
+
+    return false;
+  }
+
+
+  const buttons =
+    document.querySelectorAll(
+      `[onclick*="sendInterest('${receiverId}')"]`
     );
 
 
-  let photoHtml = `
+  buttons.forEach(
+    button => {
+      button.disabled = true;
+      button.dataset.oldText =
+        button.innerHTML;
 
-    <div class="profile-img">
-
-      <span style="
-        font-size:55px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        height:100%;
-      ">
-        👤
-      </span>
-
-      <span class="profile-tag">
-        ✓ Verified
-      </span>
-
-    </div>
-
-  `;
-
-
-  if (photoUrl) {
-
-    photoHtml = `
-
-      <div class="profile-img has-real-photo">
-
-        <img
-          src="${escapeHtml(
-            photoUrl
-          )}"
-          alt="${escapeHtml(
-            profile.full_name ||
-            "Profile"
-          )}"
-          loading="lazy"
-          style="
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-          "
-          onerror="
-            this.style.display='none';
-            this.parentElement.classList.remove('has-real-photo');
-            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>👤</span><span class=&quot;profile-tag&quot;>✓ Verified</span>';
-          "
-        >
-
-        <span class="profile-tag">
-          ✓ Verified
-        </span>
-
-      </div>
-
-    `;
-
-  }
-
-
-  return `
-
-    <article class="profile">
-
-      ${photoHtml}
-
-      <div class="profile-body">
-
-        <b>
-          ${escapeHtml(
-            profile.full_name ||
-            "Member"
-          )}
-
-          ${
-            profile.age
-              ? ", " +
-                escapeHtml(
-                  profile.age
-                )
-              : ""
-          }
-
-        </b>
-
-        <small>
-          ${escapeHtml(
-            location ||
-            "Location not specified"
-          )}
-        </small>
-
-        <small>
-
-          ${escapeHtml(
-            profile.community ||
-            ""
-          )}
-
-          ${
-            profile.surname
-              ? " · " +
-                escapeHtml(
-                  profile.surname
-                )
-              : ""
-          }
-
-          ${
-            profile.kul
-              ? " · " +
-                escapeHtml(
-                  profile.kul
-                )
-              : ""
-          }
-
-        </small>
-
-        <small class="match">
-          SamajSaathi Member
-        </small>
-
-      </div>
-
-    </article>
-
-  `;
-}
-
-
-// ============================================================
-// FIND YOUR MATCHES
-// ============================================================
-
-async function loadMatches() {
-
-  const grid =
-    document.getElementById(
-      "matchesGrid"
-    );
-
-  if (!grid) {
-    return;
-  }
-
-
-  if (!supabaseClient) {
-    return;
-  }
-
-
-  grid.innerHTML = `
-
-    <div style="
-      grid-column:1/-1;
-      text-align:center;
-      padding:40px;
-      color:#6f1025;
-    ">
-
-      <div style="
-        font-size:35px;
-        margin-bottom:10px;
-      ">
-        💕
-      </div>
-
-      Finding suitable profiles...
-
-    </div>
-
-  `;
+      button.innerHTML =
+        "Sending...";
+    }
+  );
 
 
   try {
 
-    const sessionResult =
-      await supabaseClient.auth
-        .getSession();
+    // --------------------------------------------------------
+    // CHECK EXISTING INTEREST
+    // --------------------------------------------------------
 
-
-    const session =
-      sessionResult.data?.session;
-
-
-    if (!session) {
-
-      grid.innerHTML = `
-
-        <div class="samaj-no-matches">
-
-          <h3>
-            Please login first
-          </h3>
-
-          <p>
-            Login to see profiles matching your gender preference.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="openModal('login')"
-          >
-            Login
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-    }
-
-
-    const currentUserId =
-      session.user.id;
-
-
-    const currentResult =
+    const {
+      data: existing,
+      error: existingError
+    } =
       await supabaseClient
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          gender,
-          age,
-          city,
-          state,
-          community,
-          surname,
-          kul,
-          profile_photo,
-          photo_url,
-          is_active
-        `)
+        .from("interests")
+        .select("*")
         .eq(
-          "id",
-          currentUserId
+          "sender_id",
+          user.id
+        )
+        .eq(
+          "receiver_id",
+          receiverId
         )
         .maybeSingle();
 
 
-    if (currentResult.error) {
-
-      grid.innerHTML = `
-        <div class="samaj-no-matches">
-
-          <h3>
-            Unable to load your profile
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              currentResult.error.message
-            )}
-          </p>
-
-        </div>
-      `;
-
-      return;
+    if (existingError) {
+      console.error(
+        "CHECK INTEREST ERROR:",
+        existingError
+      );
     }
 
 
-    const currentProfile =
-      currentResult.data;
-
-
-    if (!currentProfile) {
-
-      grid.innerHTML = `
-
-        <div class="samaj-no-matches">
-
-          <h3>
-            Complete your profile first
-          </h3>
-
-          <p>
-            Your profile must be created before we can find matches.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="
-              showDashboardSection('edit')
-            "
-          >
-            Complete Profile
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-    }
-
-
-    const gender =
-      String(
-        currentProfile.gender ||
-        ""
-      )
-        .trim()
-        .toLowerCase();
-
+    // --------------------------------------------------------
+    // ALREADY SENT
+    // --------------------------------------------------------
 
     if (
-      gender !== "male" &&
-      gender !== "female"
+      existing &&
+      (
+        existing.status === "pending" ||
+        existing.status === "accepted"
+      )
     ) {
 
-      grid.innerHTML = `
-
-        <div class="samaj-no-matches">
-
-          <h3>
-            Gender information required
-          </h3>
-
-          <p>
-            Please update your gender in your profile.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="
-              showDashboardSection('edit')
-            "
-          >
-            Edit Profile
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-    }
-
-
-    const oppositeGender =
-      gender === "male"
-        ? "female"
-        : "male";
-
-
-    const matchesResult =
-      await supabaseClient
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          gender,
-          date_of_birth,
-          age,
-          city,
-          state,
-          community,
-          surname,
-          kul,
-          bio,
-          education,
-          occupation,
-          height,
-          marital_status,
-          profile_photo,
-          photo_url,
-          is_active,
-          created_at
-        `)
-        .eq(
-          "is_active",
-          true
-        )
-        .eq(
-          "gender",
-          oppositeGender
-        )
-        .neq(
-          "id",
-          currentUserId
-        )
-        .order(
-          "created_at",
-          {
-            ascending:
-              false
-          }
-        );
-
-
-    if (matchesResult.error) {
-
-      console.error(
-        "MATCHES DATABASE ERROR:",
-        matchesResult.error
+      markInterestSent(
+        receiverId
       );
 
-      grid.innerHTML = `
-
-        <div class="samaj-no-matches">
-
-          <div style="
-            font-size:42px;
-          ">
-            ⚠️
-          </div>
-
-          <h3>
-            Unable to load matches
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              matchesResult.error.message
-            )}
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="loadMatches()"
-          >
-            Try Again
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-    }
-
-
-    const matches =
-      matchesResult.data || [];
-
-
-    if (!matches.length) {
-
-      grid.innerHTML = `
-
-        <div class="samaj-no-matches">
-
-          <div style="
-            font-size:55px;
-            margin-bottom:10px;
-          ">
-            💕
-          </div>
-
-          <h3>
-            No matches available yet
-          </h3>
-
-          <p>
-            We couldn't find any active ${
-              oppositeGender === "female"
-                ? "women"
-                : "men"
-            } profiles yet.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="loadMatches()"
-          >
-            🔄 Refresh Matches
-          </button>
-
-        </div>
-
-      `;
-
-      return;
-    }
-
-
-    // Get interest status for these profiles.
-    const matchIds =
-      matches.map(
-        profile => profile.id
+      alert(
+        existing.status === "accepted"
+          ? "Interest already accepted."
+          : "Interest already sent."
       );
 
-
-    let interestRows = [];
-
-
-    const interestResult =
-      await supabaseClient
-        .from("interests")
-        .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status
-        `)
-        .eq(
-          "sender_id",
-          currentUserId
-        )
-        .in(
-          "receiver_id",
-          matchIds
-        );
+      return true;
+    }
 
 
-    if (!interestResult.error) {
+    // --------------------------------------------------------
+    // INSERT / RESTORE INTEREST
+    // --------------------------------------------------------
 
-      interestRows =
-        interestResult.data || [];
+    let interestData;
+
+
+    if (existing) {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("interests")
+          .update({
+            status: "pending",
+            updated_at:
+              new Date().toISOString()
+          })
+          .eq(
+            "id",
+            existing.id
+          )
+          .select()
+          .single();
+
+
+      if (error) {
+        throw error;
+      }
+
+      interestData = data;
 
     } else {
 
-      console.warn(
-        "INTEREST STATUS LOAD WARNING:",
-        interestResult.error
-      );
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("interests")
+          .insert({
+            sender_id: user.id,
+            receiver_id: receiverId,
+            status: "pending"
+          })
+          .select()
+          .single();
 
+
+      if (error) {
+        throw error;
+      }
+
+      interestData = data;
     }
 
 
-    grid.innerHTML =
-      matches
-        .map(
-          profile =>
-            createMatchCard(
-              profile,
-              interestRows
-            )
-        )
-        .join("");
+    // --------------------------------------------------------
+    // UPDATE SENDER UI
+    // --------------------------------------------------------
 
+    markInterestSent(
+      receiverId
+    );
+
+
+    // --------------------------------------------------------
+    // CREATE RECEIVER NOTIFICATION
+    // --------------------------------------------------------
+
+    await createInterestNotification(
+      user.id,
+      receiverId,
+      interestData?.id
+    );
+
+
+    // --------------------------------------------------------
+    // REFRESH EVERYTHING
+    // --------------------------------------------------------
+
+    await refreshInterestUI();
+
+    await loadNotifications();
+
+
+    alert(
+      "❤️ Interest sent successfully!"
+    );
+
+
+    return true;
 
   } catch (error) {
 
     console.error(
-      "FIND MATCHES ERROR:",
+      "SEND INTEREST ERROR:",
       error
     );
 
-    grid.innerHTML = `
 
-      <div class="samaj-no-matches">
+    let message =
+      error?.message ||
+      "Unable to send interest.";
 
-        <h3>
-          Something went wrong
-        </h3>
 
-        <p>
-          ${escapeHtml(
-            error.message ||
-            "Please refresh the page and try again."
-          )}
-        </p>
+    if (
+      message
+        .toLowerCase()
+        .includes("permission")
+    ) {
+      message +=
+        "\n\nPlease check the Supabase RLS policies for the interests table.";
+    }
 
-        <button
-          type="button"
-          class="btn primary"
-          onclick="loadMatches()"
-        >
-          Try Again
-        </button>
 
-      </div>
+    alert(message);
 
-    `;
 
+    buttons.forEach(
+      button => {
+        button.disabled = false;
+
+        if (button.dataset.oldText) {
+          button.innerHTML =
+            button.dataset.oldText;
+        }
+      }
+    );
+
+
+    return false;
   }
 }
 
 
 // ============================================================
-// MATCH CARD
+// MARK INTEREST SENT
 // ============================================================
 
-function createMatchCard(
-  profile,
-  interestRows = []
+function markInterestSent(
+  receiverId
 ) {
 
-  const location =
-    [
-      profile.city,
-      profile.state
-    ]
-      .filter(Boolean)
-      .join(", ");
+  const selectors = [
+    `[data-profile-id="${receiverId}"]`
+  ];
 
 
-  const photoPath =
-    profile.profile_photo ||
-    profile.photo_url ||
-    null;
+  selectors.forEach(
+    selector => {
+
+      document
+        .querySelectorAll(selector)
+        .forEach(card => {
+
+          const buttons =
+            card.querySelectorAll(
+              "button"
+            );
 
 
-  const photoUrl =
-    getProfilePhotoUrl(
-      photoPath
-    );
+          buttons.forEach(
+            button => {
+
+              const text =
+                button.textContent
+                  .toLowerCase();
 
 
-  const existingInterest =
-    interestRows.find(
-      row =>
-        row.receiver_id ===
-        profile.id
-    );
+              if (
+                text.includes("send interest") ||
+                text.includes("interest sent")
+              ) {
+
+                button.disabled = true;
+
+                button.innerHTML =
+                  "❤️ Interest Sent";
+
+                button.classList.remove(
+                  "primary"
+                );
+
+                button.style.opacity =
+                  ".7";
+
+              }
+
+            }
+          );
+
+        });
+    });
 
 
-  let interestButton =
-    `
-      <button
-        type="button"
-        class="samaj-interest-btn"
-        onclick="
-          sendInterest('${profile.id}')
-        "
-      >
-        ❤️ Send Interest
-      </button>
-    `;
+  // Generic fallback for onclick buttons
+
+  document
+    .querySelectorAll(
+      `[onclick*="sendInterest('${receiverId}')"]`
+    )
+    .forEach(button => {
+
+      button.disabled = true;
+
+      button.innerHTML =
+        "❤️ Interest Sent";
+
+      button.style.opacity =
+        ".7";
+    });
+}
 
 
-  if (existingInterest) {
+// ============================================================
+// CREATE NOTIFICATION
+// ============================================================
 
-    if (
-      existingInterest.status ===
-      "pending"
-    ) {
-
-      interestButton = `
-        <button
-          type="button"
-          class="samaj-interest-btn"
-          disabled
-          style="
-            opacity:.7;
-            cursor:not-allowed;
-          "
-        >
-          ✓ Interest Sent
-        </button>
-      `;
-
-    }
-
-    else if (
-      existingInterest.status ===
-      "accepted"
-    ) {
-
-      interestButton = `
-        <button
-          type="button"
-          class="samaj-interest-btn"
-          disabled
-          style="
-            background:#e8f7ee;
-            color:#18794e;
-            cursor:default;
-          "
-        >
-          💚 Accepted
-        </button>
-      `;
-
-    }
-
-    else if (
-      existingInterest.status ===
-      "rejected"
-    ) {
-
-      interestButton = `
-        <button
-          type="button"
-          class="samaj-interest-btn"
-          onclick="
-            sendInterest('${profile.id}', true)
-          "
-        >
-          ❤️ Send Again
-        </button>
-      `;
-
-    }
-
+async function createInterestNotification(
+  senderId,
+  receiverId,
+  interestId
+) {
+  if (!supabaseClient) {
+    return false;
   }
 
 
-  let photoHtml = `
+  try {
 
-    <div style="
-      height:280px;
-      background:#f1e5e8;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      overflow:hidden;
-    ">
+    // First try common notification structure
 
-      <span style="
-        font-size:75px;
-      ">
-        👤
-      </span>
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("notifications")
+        .insert({
+          user_id: receiverId,
+          sender_id: senderId,
+          interest_id: interestId || null,
+          type: "interest",
+          title: "New Interest ❤️",
+          message:
+            "Someone has sent you an interest.",
+          is_read: false
+        });
 
-    </div>
 
-  `;
+    if (error) {
+
+      console.warn(
+        "Notification insert failed:",
+        error.message
+      );
+
+      return false;
+    }
 
 
-  if (photoUrl) {
+    return true;
 
-    photoHtml = `
+  } catch (error) {
 
-      <div style="
-        height:280px;
-        background:#eee;
-        overflow:hidden;
-      ">
+    console.warn(
+      "NOTIFICATION ERROR:",
+      error
+    );
 
-        <img
-          class="samaj-match-photo"
-          src="${escapeHtml(
-            photoUrl
-          )}"
-          alt="${escapeHtml(
-            profile.full_name ||
-            "Profile"
-          )}"
-          loading="lazy"
-          style="
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-          "
-          onerror="
-            this.style.display='none';
-            this.parentElement.innerHTML='<div style=&quot;height:280px;display:flex;align-items:center;justify-content:center;font-size:75px;background:#f1e5e8;&quot;>👤</div>';
-          "
-        >
-
-      </div>
-
-    `;
-
+    return false;
   }
-
-
-  return `
-
-    <article
-      class="profile samaj-match-card"
-      style="
-        background:#fff;
-        border:1px solid #ead9dd;
-        border-radius:16px;
-        overflow:hidden;
-        box-shadow:0 8px 25px rgba(80,20,35,.08);
-      "
-    >
-
-      <div style="
-        position:relative;
-      ">
-
-        ${photoHtml}
-
-        <span
-          class="profile-tag"
-          style="
-            position:absolute;
-            top:12px;
-            left:12px;
-            z-index:2;
-          "
-        >
-          ✓ Verified
-        </span>
-
-      </div>
-
-      <div
-        class="samaj-match-info"
-        style="
-          padding:20px;
-        "
-      >
-
-        <h3 style="
-          margin:0 0 10px;
-        ">
-
-          ${escapeHtml(
-            profile.full_name ||
-            "Member"
-          )}
-
-          ${
-            profile.age
-              ? ", " +
-                escapeHtml(
-                  profile.age
-                )
-              : ""
-          }
-
-        </h3>
-
-        <small style="
-          display:block;
-          margin-bottom:7px;
-        ">
-
-          📍
-
-          ${escapeHtml(
-            location ||
-            "Location not specified"
-          )}
-
-        </small>
-
-        <small style="
-          display:block;
-          margin-bottom:7px;
-        ">
-
-          ${escapeHtml(
-            profile.community ||
-            "Community not specified"
-          )}
-
-          ${
-            profile.surname
-              ? " · " +
-                escapeHtml(
-                  profile.surname
-                )
-              : ""
-          }
-
-        </small>
-
-        <small style="
-          display:block;
-          margin-bottom:15px;
-        ">
-
-          ${
-            profile.kul
-              ? "Kul: " +
-                escapeHtml(
-                  profile.kul
-                )
-              : "Kul: Not specified"
-          }
-
-        </small>
-
-        <div
-          class="samaj-match-actions"
-          style="
-            display:flex;
-            gap:10px;
-            flex-wrap:wrap;
-          "
-        >
-
-          <button
-            type="button"
-            class="samaj-view-profile-btn"
-            onclick="
-              viewProfile('${profile.id}')
-            "
-          >
-            View Profile
-          </button>
-
-          ${interestButton}
-
-        </div>
-
-      </div>
-
-    </article>
-
-  `;
 }
 
 
@@ -2614,38 +1805,16 @@ function createMatchCard(
 async function viewProfile(
   profileId
 ) {
-
-  if (!profileId) {
-    return;
-  }
-
-  if (!isSupabaseReady()) {
-    return;
-  }
+  if (!isSupabaseReady()) return;
 
 
-  const result =
+  const {
+    data,
+    error
+  } =
     await supabaseClient
       .from("profiles")
-      .select(`
-        id,
-        full_name,
-        gender,
-        date_of_birth,
-        age,
-        city,
-        state,
-        community,
-        surname,
-        kul,
-        bio,
-        education,
-        occupation,
-        height,
-        marital_status,
-        profile_photo,
-        photo_url
-      `)
+      .select("*")
       .eq(
         "id",
         profileId
@@ -2653,19 +1822,21 @@ async function viewProfile(
       .maybeSingle();
 
 
-  if (result.error) {
+  if (error) {
+    console.error(
+      "VIEW PROFILE ERROR:",
+      error
+    );
 
     alert(
-      "Profile could not be loaded: " +
-      result.error.message
+      "Unable to load profile."
     );
 
     return;
   }
 
 
-  if (!result.data) {
-
+  if (!data) {
     alert(
       "Profile not found."
     );
@@ -2674,422 +1845,34 @@ async function viewProfile(
   }
 
 
-  const profile =
-    result.data;
+  currentViewedProfile =
+    data;
 
 
-  document
-    .getElementById(
-      "samajProfileViewer"
-    )
-    ?.remove();
-
-
-  const photoPath =
-    profile.profile_photo ||
-    profile.photo_url ||
-    null;
-
-
-  const photoUrl =
+  const photo =
     getProfilePhotoUrl(
-      photoPath
+      data.profile_photo
     );
 
 
-  let photoHtml = `
+  const user =
+    await getCurrentUser();
 
-    <div style="
-      width:150px;
-      height:150px;
-      border-radius:50%;
-      background:#f1e5e8;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin:0 auto 20px;
-      font-size:55px;
-    ">
-      👤
-    </div>
 
-  `;
+  let alreadySent = false;
 
 
-  if (photoUrl) {
+  if (user) {
 
-    photoHtml = `
-
-      <img
-        src="${escapeHtml(
-          photoUrl
-        )}"
-        alt="${escapeHtml(
-          profile.full_name ||
-          "Profile"
-        )}"
-        style="
-          width:150px;
-          height:150px;
-          border-radius:50%;
-          object-fit:cover;
-          display:block;
-          margin:0 auto 20px;
-        "
-        onerror="
-          this.style.display='none';
-        "
-      >
-
-    `;
-
-  }
-
-
-  const modal =
-    document.createElement(
-      "div"
-    );
-
-
-  modal.id =
-    "samajProfileViewer";
-
-
-  modal.style.cssText = `
-
-    position:fixed;
-    inset:0;
-    z-index:10001;
-    background:rgba(20,10,15,.72);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    overflow:auto;
-
-  `;
-
-
-  modal.innerHTML = `
-
-    <div style="
-      width:min(650px,100%);
-      max-height:90vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:22px;
-      padding:30px;
-      position:relative;
-      box-shadow:0 25px 80px rgba(0,0,0,.25);
-    ">
-
-      <button
-        type="button"
-        onclick="
-          document
-            .getElementById(
-              'samajProfileViewer'
-            )
-            ?.remove()
-        "
-        style="
-          position:absolute;
-          top:15px;
-          right:15px;
-          width:38px;
-          height:38px;
-          border:0;
-          border-radius:50%;
-          background:#f5edef;
-          cursor:pointer;
-          font-size:20px;
-        "
-      >
-        ×
-      </button>
-
-      ${photoHtml}
-
-      <div style="
-        text-align:center;
-      ">
-
-        <span class="eyebrow">
-          SAMAJSAATHI MEMBER
-        </span>
-
-        <h2 style="
-          margin:8px 0;
-        ">
-
-          ${escapeHtml(
-            profile.full_name ||
-            "Member"
-          )}
-
-          ${
-            profile.age
-              ? ", " +
-                escapeHtml(
-                  profile.age
-                )
-              : ""
-          }
-
-        </h2>
-
-      </div>
-
-      <div style="
-        display:grid;
-        grid-template-columns:
-        repeat(auto-fit,minmax(180px,1fr));
-        gap:12px;
-        margin-top:25px;
-      ">
-
-        ${profileViewerItem(
-          "Gender",
-          profile.gender
-        )}
-
-        ${profileViewerItem(
-          "Age",
-          profile.age
-        )}
-
-        ${profileViewerItem(
-          "City",
-          [
-            profile.city,
-            profile.state
-          ]
-            .filter(Boolean)
-            .join(", ")
-        )}
-
-        ${profileViewerItem(
-          "Community",
-          profile.community
-        )}
-
-        ${profileViewerItem(
-          "Surname",
-          profile.surname
-        )}
-
-        ${profileViewerItem(
-          "Kul / Clan",
-          profile.kul
-        )}
-
-        ${profileViewerItem(
-          "Education",
-          profile.education
-        )}
-
-        ${profileViewerItem(
-          "Occupation",
-          profile.occupation
-        )}
-
-        ${profileViewerItem(
-          "Height",
-          profile.height
-        )}
-
-        ${profileViewerItem(
-          "Marital Status",
-          profile.marital_status
-        )}
-
-      </div>
-
-      ${
-        profile.bio
-          ? `
-            <div style="
-              margin-top:20px;
-              padding:18px;
-              background:#f8f1f3;
-              border-radius:14px;
-            ">
-
-              <strong>
-                About
-              </strong>
-
-              <p>
-                ${escapeHtml(
-                  profile.bio
-                )}
-              </p>
-
-            </div>
-          `
-          : ""
-      }
-
-      <div style="
-        margin-top:25px;
-        text-align:center;
-      ">
-
-        <button
-          type="button"
-          class="samaj-interest-btn"
-          onclick="
-            sendInterest('${profile.id}')
-          "
-        >
-          ❤️ Send Interest
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  document.body.appendChild(
-    modal
-  );
-
-
-  modal.addEventListener(
-    "click",
-    function(event) {
-
-      if (
-        event.target === modal
-      ) {
-
-        modal.remove();
-
-      }
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// PROFILE VIEW ITEM
-// ============================================================
-
-function profileViewerItem(
-  label,
-  value
-) {
-
-  return `
-
-    <div style="
-      background:#fff;
-      border:1px solid #eee;
-      border-radius:12px;
-      padding:14px;
-    ">
-
-      <small style="
-        display:block;
-        color:#777;
-        margin-bottom:5px;
-      ">
-
-        ${escapeHtml(
-          label
-        )}
-
-      </small>
-
-      <strong>
-
-        ${escapeHtml(
-          value ||
-          "Not specified"
-        )}
-
-      </strong>
-
-    </div>
-
-  `;
-}
-
-
-// ============================================================
-// SEND INTEREST
-// ============================================================
-
-async function sendInterest(
-  profileId,
-  resend = false
-) {
-
-  if (!profileId) {
-    return;
-  }
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-
-    openModal(
-      "login"
-    );
-
-    return;
-  }
-
-
-  const senderId =
-    session.user.id;
-
-
-  if (
-    profileId ===
-    senderId
-  ) {
-
-    alert(
-      "You cannot send interest to your own profile."
-    );
-
-    return;
-  }
-
-
-  try {
-
-    // Check whether interest already exists.
-    const existingResult =
+    const {
+      data: interest
+    } =
       await supabaseClient
         .from("interests")
-        .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status
-        `)
+        .select("id,status")
         .eq(
           "sender_id",
-          senderId
+          user.id
         )
         .eq(
           "receiver_id",
@@ -3098,1102 +1881,820 @@ async function sendInterest(
         .maybeSingle();
 
 
-    if (existingResult.error) {
-
-      console.error(
-        "INTEREST CHECK ERROR:",
-        existingResult.error
+    alreadySent =
+      !!interest &&
+      (
+        interest.status === "pending" ||
+        interest.status === "accepted"
       );
-
-      alert(
-        "Interest system error: " +
-        existingResult.error.message
-      );
-
-      return;
-    }
-
-
-    const existing =
-      existingResult.data;
-
-
-    if (
-      existing &&
-      existing.status ===
-      "pending"
-    ) {
-
-      alert(
-        "❤️ You have already sent interest to this profile."
-      );
-
-      return;
-    }
-
-
-    if (
-      existing &&
-      existing.status ===
-      "accepted"
-    ) {
-
-      alert(
-        "💚 Your interest has already been accepted."
-      );
-
-      return;
-    }
-
-
-    let result;
-
-
-    if (
-      existing &&
-      existing.status ===
-      "rejected"
-    ) {
-
-      result =
-        await supabaseClient
-          .from("interests")
-          .update({
-            status:
-              "pending",
-            updated_at:
-              new Date().toISOString()
-          })
-          .eq(
-            "id",
-            existing.id
-          );
-
-    }
-
-    else {
-
-      result =
-        await supabaseClient
-          .from("interests")
-          .insert({
-
-            sender_id:
-              senderId,
-
-            receiver_id:
-              profileId,
-
-            status:
-              "pending"
-
-          });
-
-    }
-
-
-    if (result.error) {
-
-      console.error(
-        "SEND INTEREST ERROR:",
-        result.error
-      );
-
-      alert(
-        "Could not send interest: " +
-        result.error.message
-      );
-
-      return;
-    }
-
-
-    alert(
-      "❤️ Interest sent successfully!"
-    );
-
-
-    document
-      .getElementById(
-        "samajProfileViewer"
-      )
-      ?.remove();
-
-
-    await loadMatches();
-
-
-    const interestsSection =
-      document.getElementById(
-        "dashboardSection-interests"
-      );
-
-
-    if (
-      interestsSection &&
-      !interestsSection.classList.contains(
-        "samaj-section-hidden"
-      )
-    ) {
-
-      await loadMyInterests();
-
-    }
-
-
-  } catch (error) {
-
-    console.error(
-      "SEND INTEREST ERROR:",
-      error
-    );
-
-    alert(
-      "Something went wrong: " +
-      error.message
-    );
-
   }
-}
 
 
-// ============================================================
-// LOAD MY INTERESTS
-// ============================================================
-
-async function loadMyInterests() {
-
-  const container =
+  const modal =
     document.getElementById(
-      "myInterestsContainer"
+      "modal"
     );
 
-  if (!container) {
+  const content =
+    document.getElementById(
+      "modalContent"
+    );
+
+
+  if (!modal || !content) {
     return;
   }
 
 
-  if (!supabaseClient) {
-    return;
-  }
+  content.innerHTML = `
+
+    <div style="text-align:center">
+
+      ${
+        photo
+          ? `
+            <img
+              src="${escapeHtml(photo)}"
+              alt="${escapeHtml(data.full_name)}"
+              style="
+                width:150px;
+                height:150px;
+                border-radius:50%;
+                object-fit:cover;
+                margin-bottom:15px;
+              "
+            >
+          `
+          : `
+            <div style="
+              width:150px;
+              height:150px;
+              border-radius:50%;
+              margin:0 auto 15px;
+              display:flex;
+              align-items:center;
+              justify-content:center;
+              background:#f5eef1;
+              font-size:55px;
+            ">
+              👤
+            </div>
+          `
+      }
 
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
+      <span class="eyebrow">
+        SAMAJSAATHI PROFILE
+      </span>
 
+      <h2>
+        ${escapeHtml(data.full_name)}
+      </h2>
 
-  const session =
-    sessionResult.data?.session;
+      <p>
+        ${
+          data.age
+            ? escapeHtml(data.age) + " years"
+            : ""
+        }
+        ${
+          data.city
+            ? " • " + escapeHtml(data.city)
+            : ""
+        }
+      </p>
 
+      <div style="
+        text-align:left;
+        margin-top:20px;
+        line-height:1.8;
+      ">
 
-  if (!session) {
+        <p>
+          <strong>Community:</strong>
+          ${escapeHtml(data.community)}
+        </p>
 
-    container.innerHTML = `
-      <div class="samaj-coming-soon">
-        <h3>
-          Please login first
-        </h3>
+        <p>
+          <strong>Surname:</strong>
+          ${escapeHtml(data.surname)}
+        </p>
+
+        <p>
+          <strong>Kul / Clan:</strong>
+          ${escapeHtml(data.kul)}
+        </p>
+
+        ${
+          data.education
+            ? `
+              <p>
+                <strong>Education:</strong>
+                ${escapeHtml(data.education)}
+              </p>
+            `
+            : ""
+        }
+
+        ${
+          data.occupation
+            ? `
+              <p>
+                <strong>Occupation:</strong>
+                ${escapeHtml(data.occupation)}
+              </p>
+            `
+            : ""
+        }
+
       </div>
-    `;
-
-    return;
-  }
 
 
-  container.innerHTML = `
-    <div style="
-      text-align:center;
-      padding:35px;
-    ">
-      Loading your interests...
+      <div class="modal-actions">
+
+        ${
+          alreadySent
+            ? `
+              <button
+                type="button"
+                class="btn"
+                disabled
+                style="opacity:.7"
+              >
+                ❤️ Interest Sent
+              </button>
+            `
+            : `
+              <button
+                type="button"
+                class="btn primary"
+                onclick="
+                  sendInterest('${escapeHtml(profileId)}');
+                "
+              >
+                ❤️ Send Interest
+              </button>
+            `
+        }
+
+      </div>
+
     </div>
   `;
 
 
-  try {
-
-    const result =
-      await supabaseClient
-        .from("interests")
-        .select(`
-          id,
-          receiver_id,
-          status,
-          created_at,
-          updated_at
-        `)
-        .eq(
-          "sender_id",
-          session.user.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending:
-              false
-          }
-        );
-
-
-    if (result.error) {
-
-      container.innerHTML = `
-        <div class="samaj-coming-soon">
-
-          <h3>
-            Unable to load interests
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              result.error.message
-            )}
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const interests =
-      result.data || [];
-
-
-    if (!interests.length) {
-
-      container.innerHTML = `
-        <div class="samaj-coming-soon">
-
-          <div class="samaj-coming-soon-icon">
-            ❤️
-          </div>
-
-          <h3>
-            No interests yet
-          </h3>
-
-          <p>
-            Profiles you show interest in will appear here.
-          </p>
-
-          <button
-            type="button"
-            class="btn primary"
-            onclick="
-              showDashboardSection('matches')
-            "
-          >
-            Find Matches
-          </button>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const profileIds =
-      interests.map(
-        item =>
-          item.receiver_id
-      );
-
-
-    const profilesResult =
-      await supabaseClient
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          age,
-          city,
-          state,
-          profile_photo,
-          photo_url
-        `)
-        .in(
-          "id",
-          profileIds
-        );
-
-
-    const profiles =
-      profilesResult.data || [];
-
-
-    const profileMap =
-      new Map(
-        profiles.map(
-          profile => [
-            profile.id,
-            profile
-          ]
-        )
-      );
-
-
-    container.innerHTML =
-      interests
-        .map(
-          interest => {
-
-            const profile =
-              profileMap.get(
-                interest.receiver_id
-              );
-
-
-            if (!profile) {
-              return "";
-            }
-
-
-            const photo =
-              getProfilePhotoUrl(
-                profile.profile_photo ||
-                profile.photo_url
-              );
-
-
-            let statusHtml =
-              `
-                <span style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  border-radius:20px;
-                  background:#fff4d6;
-                  color:#7a4d00;
-                  font-size:12px;
-                ">
-                  ⏳ Pending
-                </span>
-              `;
-
-
-            if (
-              interest.status ===
-              "accepted"
-            ) {
-
-              statusHtml =
-                `
-                  <span style="
-                    display:inline-block;
-                    padding:6px 10px;
-                    border-radius:20px;
-                    background:#e7f7ed;
-                    color:#18794e;
-                    font-size:12px;
-                  ">
-                    💚 Accepted
-                  </span>
-                `;
-
-            }
-
-
-            if (
-              interest.status ===
-              "rejected"
-            ) {
-
-              statusHtml =
-                `
-                  <span style="
-                    display:inline-block;
-                    padding:6px 10px;
-                    border-radius:20px;
-                    background:#fff0f0;
-                    color:#b42318;
-                    font-size:12px;
-                  ">
-                    ❌ Rejected
-                  </span>
-                `;
-
-            }
-
-
-            return `
-
-              <article style="
-                background:#fff;
-                border:1px solid #ead9dd;
-                border-radius:16px;
-                padding:18px;
-                display:flex;
-                gap:15px;
-                align-items:center;
-                margin-bottom:12px;
-              ">
-
-                <div style="
-                  width:75px;
-                  height:75px;
-                  border-radius:50%;
-                  overflow:hidden;
-                  background:#f1e5e8;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                  flex-shrink:0;
-                ">
-
-                  ${
-                    photo
-                      ? `
-                        <img
-                          src="${escapeHtml(photo)}"
-                          style="
-                            width:100%;
-                            height:100%;
-                            object-fit:cover;
-                          "
-                        >
-                      `
-                      : `
-                        <span style="
-                          font-size:30px;
-                        ">
-                          👤
-                        </span>
-                      `
-                  }
-
-                </div>
-
-                <div style="
-                  flex:1;
-                ">
-
-                  <h3 style="
-                    margin:0 0 6px;
-                  ">
-
-                    ${escapeHtml(
-                      profile.full_name ||
-                      "Member"
-                    )}
-
-                    ${
-                      profile.age
-                        ? ", " +
-                          escapeHtml(
-                            profile.age
-                          )
-                        : ""
-                    }
-
-                  </h3>
-
-                  <small style="
-                    display:block;
-                    margin-bottom:8px;
-                  ">
-
-                    📍
-
-                    ${escapeHtml(
-                      [
-                        profile.city,
-                        profile.state
-                      ]
-                        .filter(Boolean)
-                        .join(", ") ||
-                      "Location not specified"
-                    )}
-
-                  </small>
-
-                  ${statusHtml}
-
-                </div>
-
-                <button
-                  type="button"
-                  class="samaj-view-profile-btn"
-                  onclick="
-                    viewProfile('${profile.id}')
-                  "
-                >
-                  View
-                </button>
-
-              </article>
-
-            `;
-
-          }
-        )
-        .join("");
-
-
-  } catch (error) {
-
-    console.error(
-      "MY INTERESTS ERROR:",
-      error
-    );
-
-    container.innerHTML = `
-      <div class="samaj-coming-soon">
-
-        <h3>
-          Something went wrong
-        </h3>
-
-        <p>
-          ${escapeHtml(
-            error.message
-          )}
-        </p>
-
-      </div>
-    `;
-
-  }
+  modal.classList.add(
+    "show"
+  );
 }
 
 
 // ============================================================
-// LOAD RECEIVED INTERESTS
+// REFRESH INTEREST UI
+// ============================================================
+
+async function refreshInterestUI() {
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) return;
+
+
+  const sentIds =
+    await getSentInterestReceiverIds(
+      user.id
+    );
+
+
+  // Update all profile buttons
+
+  sentIds.forEach(
+    receiverId => {
+      markInterestSent(
+        receiverId
+      );
+    }
+  );
+
+
+  // Reload received interests
+
+  await loadReceivedInterests();
+}
+
+
+// ============================================================
+// RECEIVED INTERESTS
 // ============================================================
 
 async function loadReceivedInterests() {
-
-  const container =
-    document.getElementById(
-      "receivedInterestsContainer"
-    );
-
-  if (!container) {
-    return;
-  }
+  if (!supabaseClient) return [];
 
 
-  if (!supabaseClient) {
-    return;
-  }
+  const user =
+    await getCurrentUser();
+
+  if (!user) return [];
 
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-    return;
-  }
-
-
-  container.innerHTML = `
-    <div style="
-      text-align:center;
-      padding:35px;
-    ">
-      Loading received interests...
-    </div>
-  `;
-
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("interests")
-        .select(`
-          id,
-          sender_id,
-          status,
-          created_at,
-          updated_at
-        `)
-        .eq(
-          "receiver_id",
-          session.user.id
-        )
-        .order(
-          "created_at",
-          {
-            ascending:
-              false
-          }
-        );
-
-
-    if (result.error) {
-
-      container.innerHTML = `
-        <div class="samaj-coming-soon">
-
-          <h3>
-            Unable to load received interests
-          </h3>
-
-          <p>
-            ${escapeHtml(
-              result.error.message
-            )}
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const interests =
-      result.data || [];
-
-
-    if (!interests.length) {
-
-      container.innerHTML = `
-        <div class="samaj-coming-soon">
-
-          <div class="samaj-coming-soon-icon">
-            💌
-          </div>
-
-          <h3>
-            No interests received yet
-          </h3>
-
-          <p>
-            When someone sends you an interest, it will appear here.
-          </p>
-
-        </div>
-      `;
-
-      return;
-    }
-
-
-    const profileIds =
-      interests.map(
-        item =>
-          item.sender_id
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("interests")
+      .select(`
+        id,
+        sender_id,
+        receiver_id,
+        status,
+        created_at,
+        updated_at
+      `)
+      .eq(
+        "receiver_id",
+        user.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
       );
 
 
-    const profilesResult =
-      await supabaseClient
-        .from("profiles")
-        .select(`
-          id,
-          full_name,
-          age,
-          city,
-          state,
-          community,
-          surname,
-          kul,
-          profile_photo,
-          photo_url
-        `)
-        .in(
-          "id",
-          profileIds
-        );
-
-
-    const profiles =
-      profilesResult.data || [];
-
-
-    const profileMap =
-      new Map(
-        profiles.map(
-          profile => [
-            profile.id,
-            profile
-          ]
-        )
-      );
-
-
-    container.innerHTML =
-      interests
-        .map(
-          interest => {
-
-            const profile =
-              profileMap.get(
-                interest.sender_id
-              );
-
-
-            if (!profile) {
-              return "";
-            }
-
-
-            const photo =
-              getProfilePhotoUrl(
-                profile.profile_photo ||
-                profile.photo_url
-              );
-
-
-            let statusHtml =
-              `
-                <span style="
-                  display:inline-block;
-                  padding:6px 10px;
-                  border-radius:20px;
-                  background:#fff4d6;
-                  color:#7a4d00;
-                  font-size:12px;
-                ">
-                  ⏳ Pending
-                </span>
-              `;
-
-
-            if (
-              interest.status ===
-              "accepted"
-            ) {
-
-              statusHtml =
-                `
-                  <span style="
-                    display:inline-block;
-                    padding:6px 10px;
-                    border-radius:20px;
-                    background:#e7f7ed;
-                    color:#18794e;
-                    font-size:12px;
-                  ">
-                    💚 Accepted
-                  </span>
-                `;
-
-            }
-
-
-            if (
-              interest.status ===
-              "rejected"
-            ) {
-
-              statusHtml =
-                `
-                  <span style="
-                    display:inline-block;
-                    padding:6px 10px;
-                    border-radius:20px;
-                    background:#fff0f0;
-                    color:#b42318;
-                    font-size:12px;
-                  ">
-                    ❌ Rejected
-                  </span>
-                `;
-
-            }
-
-
-            const actionButtons =
-              interest.status ===
-              "pending"
-                ? `
-                  <div style="
-                    display:flex;
-                    gap:8px;
-                    flex-wrap:wrap;
-                    margin-top:12px;
-                  ">
-
-                    <button
-                      type="button"
-                      class="btn primary"
-                      onclick="
-                        respondToInterest(
-                          '${interest.id}',
-                          'accepted'
-                        )
-                      "
-                    >
-                      💚 Accept
-                    </button>
-
-                    <button
-                      type="button"
-                      class="btn ghost"
-                      onclick="
-                        respondToInterest(
-                          '${interest.id}',
-                          'rejected'
-                        )
-                      "
-                    >
-                      ❌ Reject
-                    </button>
-
-                    <button
-                      type="button"
-                      class="samaj-view-profile-btn"
-                      onclick="
-                        viewProfile(
-                          '${profile.id}'
-                        )
-                      "
-                    >
-                      View Profile
-                    </button>
-
-                  </div>
-                `
-                : `
-                  <div style="
-                    margin-top:12px;
-                  ">
-
-                    <button
-                      type="button"
-                      class="samaj-view-profile-btn"
-                      onclick="
-                        viewProfile(
-                          '${profile.id}'
-                        )
-                      "
-                    >
-                      View Profile
-                    </button>
-
-                  </div>
-                `;
-
-
-            return `
-
-              <article style="
-                background:#fff;
-                border:1px solid #ead9dd;
-                border-radius:16px;
-                padding:18px;
-                margin-bottom:12px;
-              ">
-
-                <div style="
-                  display:flex;
-                  gap:15px;
-                  align-items:center;
-                ">
-
-                  <div style="
-                    width:75px;
-                    height:75px;
-                    border-radius:50%;
-                    overflow:hidden;
-                    background:#f1e5e8;
-                    display:flex;
-                    align-items:center;
-                    justify-content:center;
-                    flex-shrink:0;
-                  ">
-
-                    ${
-                      photo
-                        ? `
-                          <img
-                            src="${escapeHtml(photo)}"
-                            style="
-                              width:100%;
-                              height:100%;
-                              object-fit:cover;
-                            "
-                          >
-                        `
-                        : `
-                          <span style="
-                            font-size:30px;
-                          ">
-                            👤
-                          </span>
-                        `
-                    }
-
-                  </div>
-
-                  <div style="
-                    flex:1;
-                  ">
-
-                    <h3 style="
-                      margin:0 0 6px;
-                    ">
-
-                      ${escapeHtml(
-                        profile.full_name ||
-                        "Member"
-                      )}
-
-                      ${
-                        profile.age
-                          ? ", " +
-                            escapeHtml(
-                              profile.age
-                            )
-                          : ""
-                      }
-
-                    </h3>
-
-                    <small style="
-                      display:block;
-                      margin-bottom:6px;
-                    ">
-
-                      📍
-
-                      ${escapeHtml(
-                        [
-                          profile.city,
-                          profile.state
-                        ]
-                          .filter(Boolean)
-                          .join(", ") ||
-                        "Location not specified"
-                      )}
-
-                    </small>
-
-                    <small style="
-                      display:block;
-                      margin-bottom:8px;
-                    ">
-
-                      ${escapeHtml(
-                        profile.community ||
-                        ""
-                      )}
-
-                      ${
-                        profile.surname
-                          ? " · " +
-                            escapeHtml(
-                              profile.surname
-                            )
-                          : ""
-                      }
-
-                    </small>
-
-                    ${statusHtml}
-
-                  </div>
-
-                </div>
-
-                ${actionButtons}
-
-              </article>
-
-            `;
-
-          }
-        )
-        .join("");
-
-
-  } catch (error) {
+  if (error) {
 
     console.error(
       "RECEIVED INTEREST ERROR:",
       error
     );
 
-    container.innerHTML = `
-      <div class="samaj-coming-soon">
-
-        <h3>
-          Something went wrong
-        </h3>
-
-        <p>
-          ${escapeHtml(
-            error.message
-          )}
-        </p>
-
-      </div>
-    `;
-
+    return [];
   }
+
+
+  const interests =
+    data || [];
+
+
+  const senderIds =
+    interests.map(
+      item => item.sender_id
+    );
+
+
+  let profiles = [];
+
+
+  if (senderIds.length) {
+
+    const result =
+      await supabaseClient
+        .from("profiles")
+        .select("*")
+        .in(
+          "id",
+          senderIds
+        );
+
+
+    if (!result.error) {
+      profiles =
+        result.data || [];
+    }
+  }
+
+
+  const profileMap =
+    new Map(
+      profiles.map(
+        profile => [
+          profile.id,
+          profile
+        ]
+      )
+    );
+
+
+  const enriched =
+    interests.map(
+      interest => ({
+        ...interest,
+        sender:
+          profileMap.get(
+            interest.sender_id
+          ) || null
+      })
+    );
+
+
+  renderReceivedInterests(
+    enriched
+  );
+
+
+  return enriched;
 }
 
 
 // ============================================================
-// ACCEPT / REJECT INTEREST
+// RENDER RECEIVED INTERESTS
 // ============================================================
 
-async function respondToInterest(
-  interestId,
-  status
+function renderReceivedInterests(
+  interests
 ) {
 
-  if (!interestId) {
+  const containers = [
+    document.getElementById(
+      "receivedInterests"
+    ),
+    document.getElementById(
+      "receivedInterestList"
+    ),
+    document.getElementById(
+      "interestsReceived"
+    )
+  ].filter(Boolean);
+
+
+  if (!containers.length) {
     return;
   }
 
 
-  if (
-    status !== "accepted" &&
-    status !== "rejected"
-  ) {
-    return;
-  }
+  const html =
+    interests
+      .map(item => {
+
+        const profile =
+          item.sender;
 
 
-  if (!isSupabaseReady()) {
-    return;
-  }
+        if (!profile) {
+          return "";
+        }
 
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
+        const photo =
+          getProfilePhotoUrl(
+            profile.profile_photo
+          );
 
 
-  const session =
-    sessionResult.data?.session;
+        const status =
+          item.status || "pending";
 
 
-  if (!session) {
+        let actions = "";
 
-    openModal(
-      "login"
+
+        if (
+          status === "pending"
+        ) {
+
+          actions = `
+
+            <div style="
+              display:flex;
+              gap:8px;
+              flex-wrap:wrap;
+              margin-top:12px;
+            ">
+
+              <button
+                type="button"
+                class="btn primary"
+                onclick="acceptInterest('${escapeHtml(item.id)}')"
+              >
+                ✓ Accept
+              </button>
+
+              <button
+                type="button"
+                class="btn"
+                onclick="rejectInterest('${escapeHtml(item.id)}')"
+              >
+                ✕ Reject
+              </button>
+
+              <button
+                type="button"
+                class="btn"
+                onclick="viewProfile('${escapeHtml(profile.id)}')"
+              >
+                View Profile
+              </button>
+
+            </div>
+          `;
+
+        } else if (
+          status === "accepted"
+        ) {
+
+          actions = `
+            <div style="
+              margin-top:12px;
+              font-weight:600;
+            ">
+              ✅ Interest Accepted
+            </div>
+          `;
+
+        } else if (
+          status === "rejected"
+        ) {
+
+          actions = `
+            <div style="
+              margin-top:12px;
+              opacity:.7;
+            ">
+              Interest Rejected
+            </div>
+          `;
+        }
+
+
+        return `
+
+          <div
+            class="interest-card"
+            data-interest-id="${escapeHtml(item.id)}"
+            style="
+              padding:16px;
+              margin-bottom:12px;
+              border-radius:14px;
+              border:1px solid #eee;
+            "
+          >
+
+            <div style="
+              display:flex;
+              gap:14px;
+              align-items:center;
+            ">
+
+              ${
+                photo
+                  ? `
+                    <img
+                      src="${escapeHtml(photo)}"
+                      alt="${escapeHtml(profile.full_name)}"
+                      style="
+                        width:70px;
+                        height:70px;
+                        object-fit:cover;
+                        border-radius:50%;
+                      "
+                    >
+                  `
+                  : `
+                    <div style="
+                      width:70px;
+                      height:70px;
+                      border-radius:50%;
+                      display:flex;
+                      align-items:center;
+                      justify-content:center;
+                      background:#f5eef1;
+                      font-size:28px;
+                    ">
+                      👤
+                    </div>
+                  `
+              }
+
+              <div>
+
+                <strong>
+                  ${escapeHtml(profile.full_name)}
+                </strong>
+
+                <div>
+                  ${
+                    profile.age
+                      ? escapeHtml(profile.age) +
+                        " years"
+                      : ""
+                  }
+                  ${
+                    profile.city
+                      ? " • " +
+                        escapeHtml(profile.city)
+                      : ""
+                  }
+                </div>
+
+                <small>
+                  Status:
+                  ${escapeHtml(status)}
+                </small>
+
+              </div>
+
+            </div>
+
+            ${actions}
+
+          </div>
+        `;
+      })
+      .join("");
+
+
+  containers.forEach(
+    container => {
+      container.innerHTML =
+        html ||
+        `
+          <div style="
+            padding:25px;
+            text-align:center;
+          ">
+            No interests received yet.
+          </div>
+        `;
+    }
+  );
+}
+
+
+// ============================================================
+// MY SENT INTERESTS
+// ============================================================
+
+async function loadMyInterests() {
+  if (!supabaseClient) return [];
+
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) return [];
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("interests")
+      .select("*")
+      .eq(
+        "sender_id",
+        user.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "MY INTERESTS ERROR:",
+      error
     );
 
+    return [];
+  }
+
+
+  const interests =
+    data || [];
+
+
+  const receiverIds =
+    interests.map(
+      row => row.receiver_id
+    );
+
+
+  let profiles = [];
+
+
+  if (receiverIds.length) {
+
+    const result =
+      await supabaseClient
+        .from("profiles")
+        .select("*")
+        .in(
+          "id",
+          receiverIds
+        );
+
+
+    if (!result.error) {
+      profiles =
+        result.data || [];
+    }
+  }
+
+
+  const map =
+    new Map(
+      profiles.map(
+        profile => [
+          profile.id,
+          profile
+        ]
+      )
+    );
+
+
+  const enriched =
+    interests.map(
+      interest => ({
+        ...interest,
+        receiver:
+          map.get(
+            interest.receiver_id
+          ) || null
+      })
+    );
+
+
+  renderMyInterests(
+    enriched
+  );
+
+
+  return enriched;
+}
+
+
+// ============================================================
+// RENDER MY INTERESTS
+// ============================================================
+
+function renderMyInterests(
+  interests
+) {
+
+  const containers = [
+    document.getElementById(
+      "myInterests"
+    ),
+    document.getElementById(
+      "sentInterests"
+    ),
+    document.getElementById(
+      "interestSentList"
+    )
+  ].filter(Boolean);
+
+
+  if (!containers.length) {
+    return;
+  }
+
+
+  const html =
+    interests
+      .map(item => {
+
+        const profile =
+          item.receiver;
+
+
+        if (!profile) return "";
+
+
+        const status =
+          item.status || "pending";
+
+
+        return `
+
+          <div
+            class="interest-card"
+            style="
+              padding:16px;
+              margin-bottom:12px;
+              border-radius:14px;
+              border:1px solid #eee;
+            "
+          >
+
+            <strong>
+              ${escapeHtml(profile.full_name)}
+            </strong>
+
+            <div>
+              ${
+                profile.age
+                  ? escapeHtml(profile.age) +
+                    " years"
+                  : ""
+              }
+              ${
+                profile.city
+                  ? " • " +
+                    escapeHtml(profile.city)
+                  : ""
+              }
+            </div>
+
+            <div style="
+              margin-top:8px;
+              font-weight:600;
+            ">
+
+              ${
+                status === "pending"
+                  ? "⏳ Interest Pending"
+                  : status === "accepted"
+                    ? "✅ Interest Accepted"
+                    : "❌ Interest Rejected"
+              }
+
+            </div>
+
+          </div>
+        `;
+      })
+      .join("");
+
+
+  containers.forEach(
+    container => {
+      container.innerHTML =
+        html ||
+        `
+          <div style="
+            padding:25px;
+            text-align:center;
+          ">
+            You have not sent any interests yet.
+          </div>
+        `;
+    }
+  );
+}
+
+
+// ============================================================
+// ACCEPT INTEREST
+// ============================================================
+
+async function acceptInterest(
+  interestId
+) {
+  if (!isSupabaseReady()) return;
+
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) {
+    openModal("login");
     return;
   }
 
 
   try {
 
-    const result =
+    const {
+      data: interest,
+      error: findError
+    } =
+      await supabaseClient
+        .from("interests")
+        .select("*")
+        .eq(
+          "id",
+          interestId
+        )
+        .eq(
+          "receiver_id",
+          user.id
+        )
+        .single();
+
+
+    if (findError) {
+      throw findError;
+    }
+
+
+    const {
+      data,
+      error
+    } =
       await supabaseClient
         .from("interests")
         .update({
-
-          status:
-            status,
-
+          status: "accepted",
           updated_at:
             new Date().toISOString()
-
         })
         .eq(
           "id",
@@ -4201,2243 +2702,658 @@ async function respondToInterest(
         )
         .eq(
           "receiver_id",
-          session.user.id
-        );
+          user.id
+        )
+        .select()
+        .single();
 
 
-    if (result.error) {
-
-      alert(
-        "Could not update interest: " +
-        result.error.message
-      );
-
-      return;
+    if (error) {
+      throw error;
     }
 
 
-    alert(
-      status === "accepted"
-        ? "💚 Interest accepted!"
-        : "Interest rejected."
+    await createStatusNotification(
+      user.id,
+      interest.sender_id,
+      interestId,
+      "accepted"
     );
 
 
     await loadReceivedInterests();
 
+    await loadMyInterests();
+
+    await loadNotifications();
+
+
+    alert(
+      "✅ Interest accepted!"
+    );
+
 
   } catch (error) {
 
     console.error(
-      "RESPOND INTEREST ERROR:",
+      "ACCEPT INTEREST ERROR:",
       error
     );
 
     alert(
-      "Something went wrong: " +
-      error.message
+      error.message ||
+      "Unable to accept interest."
     );
-
   }
 }
 
 
 // ============================================================
-// OPEN FIND MATCHES
+// REJECT INTEREST
 // ============================================================
 
-async function openFindMatches() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-
-    openModal(
-      "login"
-    );
-
-    return;
-  }
-
-
-  await openDashboard();
-
-
-  setTimeout(
-    function() {
-
-      showDashboardSection(
-        "matches"
-      );
-
-    },
-    300
-  );
-
-}
-
-
-// ============================================================
-// DASHBOARD NAVIGATION
-// ============================================================
-
-function showDashboardSection(
-  section
+async function rejectInterest(
+  interestId
 ) {
-
-  const sections = [
-    "profile",
-    "edit",
-    "matches",
-    "interests",
-    "received",
-    "notifications",
-    "account"
-  ];
+  if (!isSupabaseReady()) return;
 
 
-  sections.forEach(
-    function(name) {
+  const user =
+    await getCurrentUser();
 
-      const element =
-        document.getElementById(
-          "dashboardSection-" +
-          name
-        );
-
-
-      if (!element) {
-        return;
-      }
-
-
-      if (
-        name === section
-      ) {
-
-        element.classList.remove(
-          "samaj-section-hidden"
-        );
-
-        element.style.display =
-          "block";
-
-      }
-
-      else {
-
-        element.classList.add(
-          "samaj-section-hidden"
-        );
-
-        element.style.display =
-          "none";
-
-      }
-
-    }
-  );
-
-
-  const buttons =
-    document.querySelectorAll(
-      ".samaj-dashboard-menu-btn"
-    );
-
-
-  buttons.forEach(
-    function(button) {
-
-      if (
-        button.dataset.section ===
-        section
-      ) {
-
-        button.classList.add(
-          "active"
-        );
-
-      }
-
-      else {
-
-        button.classList.remove(
-          "active"
-        );
-
-      }
-
-    }
-  );
-
-
-  if (
-    section === "matches"
-  ) {
-
-    setTimeout(
-      function() {
-
-        loadMatches();
-
-      },
-      50
-    );
-
-  }
-
-
-  if (
-    section === "interests"
-  ) {
-
-    setTimeout(
-      function() {
-
-        loadMyInterests();
-
-      },
-      50
-    );
-
-  }
-
-
-  if (
-    section === "received"
-  ) {
-
-    setTimeout(
-      function() {
-
-        loadReceivedInterests();
-
-      },
-      50
-    );
-
-  }
-
-
-  const target =
-    document.getElementById(
-      "dashboardSection-" +
-      section
-    );
-
-
-  if (target) {
-
-    setTimeout(
-      function() {
-
-        target.scrollIntoView({
-          behavior:
-            "smooth",
-          block:
-            "start"
-        });
-
-      },
-      80
-    );
-
-  }
-
-}
-
-
-// ============================================================
-// OPEN DASHBOARD
-// ============================================================
-
-async function openDashboard() {
-
-  if (
-    samajDashboardOpening
-  ) {
+  if (!user) {
+    openModal("login");
     return;
   }
-
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  samajDashboardOpening =
-    true;
 
 
   try {
 
-    const sessionResult =
-      await supabaseClient.auth
-        .getSession();
-
-
-    const session =
-      sessionResult.data?.session;
-
-
-    if (!session) {
-
-      openModal(
-        "login"
-      );
-
-      return;
-    }
-
-
-    await savePendingProfile();
-
-
-    const userId =
-      session.user.id;
-
-
-    const profileResult =
+    const {
+      data: interest,
+      error: findError
+    } =
       await supabaseClient
-        .from("profiles")
+        .from("interests")
         .select("*")
         .eq(
           "id",
-          userId
+          interestId
         )
-        .maybeSingle();
+        .eq(
+          "receiver_id",
+          user.id
+        )
+        .single();
 
 
-    if (profileResult.error) {
-
-      console.error(
-        "PROFILE LOAD ERROR:",
-        profileResult.error
-      );
-
-      alert(
-        "Profile could not be loaded: " +
-        profileResult.error.message
-      );
-
-      return;
+    if (findError) {
+      throw findError;
     }
 
 
-    if (!profileResult.data) {
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("interests")
+        .update({
+          status: "rejected",
+          updated_at:
+            new Date().toISOString()
+        })
+        .eq(
+          "id",
+          interestId
+        )
+        .eq(
+          "receiver_id",
+          user.id
+        );
 
-      alert(
-        "Your account exists, but your profile has not been created yet."
-      );
 
-      return;
+    if (error) {
+      throw error;
     }
 
 
-    const profile =
-      profileResult.data;
-
-
-    closeModal();
-
-
-    const oldDashboard =
-      document.getElementById(
-        "samajSaathiDashboard"
-      );
-
-
-    if (oldDashboard) {
-      oldDashboard.remove();
-    }
-
-
-    const dashboard =
-      document.createElement(
-        "div"
-      );
-
-
-    dashboard.id =
-      "samajSaathiDashboard";
-
-
-    dashboard.innerHTML = `
-
-      <div style="
-        position:fixed;
-        inset:0;
-        z-index:9999;
-        background:#fff;
-        overflow:auto;
-      ">
-
-        <header
-          class="samaj-dashboard-header"
-          style="
-            background:#6f1025;
-            color:#fff;
-            padding:18px 24px;
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            gap:15px;
-            flex-wrap:wrap;
-          "
-        >
-
-          <div>
-
-            <div
-              class="samaj-dashboard-brand-name"
-              style="
-                font-size:24px;
-                font-weight:700;
-              "
-            >
-              SamajSaathi
-            </div>
-
-            <small
-              class="samaj-dashboard-brand-sub"
-            >
-              SC Matrimony • Your journey starts here
-            </small>
-
-          </div>
-
-          <div style="
-            display:flex;
-            align-items:center;
-            gap:10px;
-            flex-wrap:wrap;
-          ">
-
-            <button
-              type="button"
-              onclick="
-                showDashboardSection('matches')
-              "
-              style="
-                border:1px solid rgba(255,255,255,.5);
-                background:rgba(255,255,255,.12);
-                color:#fff;
-                padding:10px 16px;
-                border-radius:8px;
-                cursor:pointer;
-              "
-            >
-              💕 Find Matches
-            </button>
-
-            <button
-              type="button"
-              onclick="
-                logoutUser()
-              "
-              style="
-                border:1px solid rgba(255,255,255,.5);
-                background:transparent;
-                color:#fff;
-                padding:10px 16px;
-                border-radius:8px;
-                cursor:pointer;
-              "
-            >
-              Logout
-            </button>
-
-          </div>
-
-        </header>
-
-
-        <div style="
-          max-width:1100px;
-          margin:0 auto;
-          padding:25px 20px 60px;
-        ">
-
-
-          <div
-            class="samaj-dashboard-welcome"
-            style="
-              background:#f8f1f3;
-              border-radius:18px;
-              padding:25px;
-              margin-bottom:20px;
-            "
-          >
-
-            <span class="eyebrow">
-              WELCOME
-            </span>
-
-            <h1 style="
-              margin:8px 0;
-            ">
-
-              Hello,
-              ${escapeHtml(
-                profile.full_name
-              )}!
-
-            </h1>
-
-            <p style="
-              margin-bottom:0;
-            ">
-              Your SamajSaathi profile is ready.
-              Discover suitable members below.
-            </p>
-
-          </div>
-
-
-          <nav
-            class="samaj-dashboard-menu"
-            style="
-              display:grid;
-              grid-template-columns:
-              repeat(auto-fit,minmax(145px,1fr));
-              gap:10px;
-              margin-bottom:25px;
-            "
-          >
-
-            <button
-              type="button"
-              class="
-                samaj-dashboard-menu-btn
-                active
-              "
-              data-section="profile"
-              onclick="
-                showDashboardSection('profile')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                👤
-              </span>
-
-              <span class="samaj-menu-title">
-                My Profile
-              </span>
-
-              <span class="samaj-menu-description">
-                View your profile
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="edit"
-              onclick="
-                showDashboardSection('edit')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                ✏️
-              </span>
-
-              <span class="samaj-menu-title">
-                Edit Profile
-              </span>
-
-              <span class="samaj-menu-description">
-                Update details
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="matches"
-              onclick="
-                showDashboardSection('matches')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                💕
-              </span>
-
-              <span class="samaj-menu-title">
-                Find Your Matches
-              </span>
-
-              <span class="samaj-menu-description">
-                Discover members
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="interests"
-              onclick="
-                showDashboardSection('interests')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                ❤️
-              </span>
-
-              <span class="samaj-menu-title">
-                My Interests
-              </span>
-
-              <span class="samaj-menu-description">
-                Interests you sent
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="received"
-              onclick="
-                showDashboardSection('received')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                💌
-              </span>
-
-              <span class="samaj-menu-title">
-                Received
-              </span>
-
-              <span class="samaj-menu-description">
-                Interests received
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="notifications"
-              onclick="
-                showDashboardSection('notifications')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                🔔
-              </span>
-
-              <span class="samaj-menu-title">
-                Notifications
-              </span>
-
-              <span class="samaj-menu-description">
-                Updates
-              </span>
-
-            </button>
-
-
-            <button
-              type="button"
-              class="samaj-dashboard-menu-btn"
-              data-section="account"
-              onclick="
-                showDashboardSection('account')
-              "
-            >
-
-              <span class="samaj-menu-icon">
-                ⚙️
-              </span>
-
-              <span class="samaj-menu-title">
-                Account
-              </span>
-
-              <span class="samaj-menu-description">
-                Account settings
-              </span>
-
-            </button>
-
-          </nav>
-
-
-          <!-- =================================================
-               PROFILE
-               ================================================= -->
-
-          <section
-            id="dashboardSection-profile"
-            class="
-              samaj-dashboard-section
-            "
-          >
-
-            <div
-              class="samaj-dashboard-section-header"
-            >
-
-              <span class="eyebrow">
-                MY PROFILE
-              </span>
-
-              <h2>
-                Your Profile
-              </h2>
-
-            </div>
-
-
-            <div style="
-              background:#f8f1f3;
-              border-radius:18px;
-              padding:25px;
-              margin-bottom:20px;
-              text-align:center;
-            ">
-
-              <span class="eyebrow">
-                PROFILE PHOTO
-              </span>
-
-              <div
-                id="dashboardProfilePhoto"
-                style="
-                  margin:20px auto;
-                  width:150px;
-                  height:150px;
-                  border-radius:50%;
-                  overflow:hidden;
-                  background:#eee;
-                  display:flex;
-                  align-items:center;
-                  justify-content:center;
-                "
-              >
-
-                <span style="
-                  font-size:55px;
-                  color:#aaa;
-                ">
-                  👤
-                </span>
-
-              </div>
-
-              <input
-                id="profilePhotoInput"
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style="
-                  display:block;
-                  margin:15px auto;
-                  max-width:100%;
-                "
-              >
-
-              <button
-                type="button"
-                class="btn primary"
-                onclick="
-                  uploadProfilePhoto()
-                "
-              >
-                📷 Upload / Change Photo
-              </button>
-
-              <div
-                id="photoMessage"
-                style="
-                  margin-top:10px;
-                "
-              ></div>
-
-            </div>
-
-
-            <div
-              class="samaj-profile-details-grid"
-              style="
-                display:grid;
-                grid-template-columns:
-                repeat(auto-fit,minmax(210px,1fr));
-                gap:12px;
-              "
-            >
-
-              ${dashboardItem(
-                "Name",
-                profile.full_name
-              )}
-
-              ${dashboardItem(
-                "Gender",
-                profile.gender
-              )}
-
-              ${dashboardItem(
-                "Date of Birth",
-                profile.date_of_birth
-              )}
-
-              ${dashboardItem(
-                "Age",
-                profile.age
-              )}
-
-              ${dashboardItem(
-                "City",
-                [
-                  profile.city,
-                  profile.state
-                ]
-                  .filter(Boolean)
-                  .join(", ")
-              )}
-
-              ${dashboardItem(
-                "Community",
-                profile.community
-              )}
-
-              ${dashboardItem(
-                "Surname",
-                profile.surname
-              )}
-
-              ${dashboardItem(
-                "Kul / Clan",
-                profile.kul
-              )}
-
-              ${dashboardItem(
-                "Marital Status",
-                profile.marital_status
-              )}
-
-            </div>
-
-
-            <div style="
-              margin-top:25px;
-              text-align:center;
-            ">
-
-              <button
-                type="button"
-                class="btn primary"
-                onclick="
-                  showDashboardSection('matches')
-                "
-              >
-                💕 Find Your Matches
-              </button>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               EDIT PROFILE
-               ================================================= -->
-
-          <section
-            id="dashboardSection-edit"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <span class="eyebrow">
-              PROFILE SETTINGS
-            </span>
-
-            <h2>
-              ✏️ Edit Profile
-            </h2>
-
-            <div class="form-grid">
-
-              <div class="field full">
-
-                <label>
-                  Full Name
-                </label>
-
-                <input
-                  id="editFullName"
-                  value="${escapeHtml(
-                    profile.full_name ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Gender
-                </label>
-
-                <select id="editGender">
-
-                  <option
-                    value="female"
-                    ${
-                      profile.gender ===
-                      "female"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Woman
-                  </option>
-
-                  <option
-                    value="male"
-                    ${
-                      profile.gender ===
-                      "male"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Man
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Date of Birth
-                </label>
-
-                <input
-                  id="editDob"
-                  type="date"
-                  value="${escapeHtml(
-                    profile.date_of_birth ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Community / Jati
-                </label>
-
-                <select id="editCommunity">
-
-                  <option
-                    value="Dom"
-                    ${
-                      profile.community ===
-                      "Dom"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Dom
-                  </option>
-
-                  <option
-                    value="Other SC Community"
-                    ${
-                      profile.community ===
-                      "Other SC Community"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other SC Community
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Surname
-                </label>
-
-                <select id="editSurname">
-
-                  <option
-                    value="Rauth"
-                    ${
-                      profile.surname ===
-                      "Rauth"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Rauth
-                  </option>
-
-                  <option
-                    value="Basfor"
-                    ${
-                      profile.surname ===
-                      "Basfor"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Basfor
-                  </option>
-
-                  <option
-                    value="Bansfor"
-                    ${
-                      profile.surname ===
-                      "Bansfor"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Bansfor
-                  </option>
-
-                  <option
-                    value="Other"
-                    ${
-                      profile.surname ===
-                      "Other"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Kul / Clan
-                </label>
-
-                <select id="editKul">
-
-                  <option
-                    value="Piari Baiswar"
-                    ${
-                      profile.kul ===
-                      "Piari Baiswar"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Piari Baiswar
-                  </option>
-
-                  <option
-                    value="Other"
-                    ${
-                      profile.kul ===
-                      "Other"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other
-                  </option>
-
-                  <option
-                    value="Not Known"
-                    ${
-                      profile.kul ===
-                      "Not Known"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Not Known
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field full">
-
-                <label>
-                  Current City
-                </label>
-
-                <input
-                  id="editCity"
-                  value="${escapeHtml(
-                    profile.city ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-            </div>
-
-
-            <div
-              id="updateProfileMessage"
-              style="
-                margin-top:15px;
-              "
-            ></div>
-
-
-            <div class="modal-actions">
-
-              <button
-                type="button"
-                class="btn primary"
-                onclick="
-                  updateProfile()
-                "
-              >
-                💾 Save Profile Changes
-              </button>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               MATCHES
-               ================================================= -->
-
-          <section
-            id="dashboardSection-matches"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <div
-              class="samaj-dashboard-section-header"
-              style="
-                margin-bottom:20px;
-              "
-            >
-
-              <span class="eyebrow">
-                DISCOVER
-              </span>
-
-              <h2>
-                💕 Find Your Matches
-              </h2>
-
-              <p>
-                Suitable members from the SamajSaathi community.
-              </p>
-
-            </div>
-
-
-            <div
-              id="matchesGrid"
-              style="
-                display:grid;
-                grid-template-columns:
-                repeat(auto-fit,minmax(250px,1fr));
-                gap:18px;
-              "
-            >
-
-              <div style="
-                grid-column:1/-1;
-                text-align:center;
-                padding:35px;
-              ">
-
-                Finding suitable profiles...
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               MY INTERESTS
-               ================================================= -->
-
-          <section
-            id="dashboardSection-interests"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <span class="eyebrow">
-              CONNECTIONS
-            </span>
-
-            <h2>
-              ❤️ My Interests
-            </h2>
-
-            <div
-              id="myInterestsContainer"
-            >
-
-              <div class="samaj-coming-soon">
-
-                <div class="samaj-coming-soon-icon">
-                  ❤️
-                </div>
-
-                <h3>
-                  My Interests
-                </h3>
-
-                <p>
-                  Profiles you have shown interest in will appear here.
-                </p>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               RECEIVED INTERESTS
-               ================================================= -->
-
-          <section
-            id="dashboardSection-received"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <span class="eyebrow">
-              CONNECTIONS
-            </span>
-
-            <h2>
-              💌 Received Interests
-            </h2>
-
-            <div
-              id="receivedInterestsContainer"
-            >
-
-              <div class="samaj-coming-soon">
-
-                <div class="samaj-coming-soon-icon">
-                  💌
-                </div>
-
-                <h3>
-                  Received Interests
-                </h3>
-
-                <p>
-                  Interests sent by other members will appear here.
-                </p>
-
-              </div>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               NOTIFICATIONS
-               ================================================= -->
-
-          <section
-            id="dashboardSection-notifications"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <span class="eyebrow">
-              UPDATES
-            </span>
-
-            <h2>
-              🔔 Notifications
-            </h2>
-
-            <div class="samaj-coming-soon">
-
-              <div class="samaj-coming-soon-icon">
-                🔔
-              </div>
-
-              <h3>
-                No new notifications
-              </h3>
-
-              <p>
-                Important SamajSaathi updates will appear here.
-              </p>
-
-            </div>
-
-          </section>
-
-
-          <!-- =================================================
-               ACCOUNT
-               ================================================= -->
-
-          <section
-            id="dashboardSection-account"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
-          >
-
-            <span class="eyebrow">
-              ACCOUNT
-            </span>
-
-            <h2>
-              ⚙️ Account
-            </h2>
-
-
-            <div
-              class="samaj-profile-details-grid"
-              style="
-                display:grid;
-                grid-template-columns:
-                repeat(auto-fit,minmax(210px,1fr));
-                gap:12px;
-              "
-            >
-
-              ${dashboardItem(
-                "Email",
-                session.user.email
-              )}
-
-              ${dashboardItem(
-                "User ID",
-                localStorage.getItem(
-                  "samajSaathiUserId"
-                )
-              )}
-
-              ${dashboardItem(
-                "Username",
-                localStorage.getItem(
-                  "samajSaathiUsername"
-                )
-              )}
-
-              ${dashboardItem(
-                "Account Status",
-                "Active"
-              )}
-
-            </div>
-
-
-            <div style="
-              margin-top:20px;
-              padding:18px;
-              background:#fff8e6;
-              border-radius:12px;
-              color:#7a4d00;
-            ">
-
-              <strong>
-                🔐 Account Security
-              </strong>
-
-              <p style="
-                margin-bottom:0;
-              ">
-                Never share your password with anyone.
-              </p>
-
-            </div>
-
-
-            <div style="
-              margin-top:20px;
-            ">
-
-              <button
-                type="button"
-                class="btn primary"
-                onclick="
-                  logoutUser()
-                "
-              >
-                🚪 Logout
-              </button>
-
-            </div>
-
-          </section>
-
-
-        </div>
-
-      </div>
-
-    `;
-
-
-    document.body.appendChild(
-      dashboard
+    await createStatusNotification(
+      user.id,
+      interest.sender_id,
+      interestId,
+      "rejected"
     );
 
 
-    await loadProfilePhoto(
-      profile.profile_photo
-    );
+    await loadReceivedInterests();
+
+    await loadMyInterests();
+
+    await loadNotifications();
 
 
-    showDashboardSection(
-      "matches"
+    alert(
+      "Interest rejected."
     );
 
 
   } catch (error) {
 
     console.error(
-      "OPEN DASHBOARD ERROR:",
+      "REJECT INTEREST ERROR:",
       error
     );
 
-  } finally {
-
-    samajDashboardOpening =
-      false;
-
+    alert(
+      error.message ||
+      "Unable to reject interest."
+    );
   }
-
 }
 
 
 // ============================================================
-// DASHBOARD ITEM
+// STATUS NOTIFICATION
 // ============================================================
 
-function dashboardItem(
-  label,
-  value
+async function createStatusNotification(
+  senderId,
+  receiverId,
+  interestId,
+  status
 ) {
 
-  return `
+  if (!supabaseClient) {
+    return false;
+  }
 
-    <div
-      class="samaj-profile-detail"
-      style="
-        background:#fff;
-        border:1px solid #eee;
-        border-radius:14px;
-        padding:18px;
-      "
-    >
 
-      <small style="
-        display:block;
-        color:#777;
-        margin-bottom:7px;
-      ">
+  const title =
+    status === "accepted"
+      ? "Interest Accepted ❤️"
+      : "Interest Update";
 
-        ${escapeHtml(
-          label
-        )}
 
-      </small>
+  const message =
+    status === "accepted"
+      ? "Your interest has been accepted."
+      : "Your interest has been rejected.";
 
-      <strong>
 
-        ${escapeHtml(
-          value ||
-          "Not specified"
-        )}
+  try {
 
-      </strong>
+    const {
+      error
+    } =
+      await supabaseClient
+        .from("notifications")
+        .insert({
+          user_id: receiverId,
+          sender_id: senderId,
+          interest_id: interestId || null,
+          type: `interest_${status}`,
+          title,
+          message,
+          is_read: false
+        });
 
-    </div>
 
-  `;
+    if (error) {
+      console.warn(
+        "STATUS NOTIFICATION:",
+        error.message
+      );
+
+      return false;
+    }
+
+
+    return true;
+
+  } catch (error) {
+
+    console.warn(
+      "STATUS NOTIFICATION ERROR:",
+      error
+    );
+
+    return false;
+  }
 }
 
 
 // ============================================================
-// LOAD OWN PROFILE PHOTO
+// NOTIFICATIONS
 // ============================================================
 
-async function loadProfilePhoto(
-  photoPath
-) {
-
-  if (
-    !photoPath ||
-    !supabaseClient
-  ) {
-    return;
-  }
+async function loadNotifications() {
+  if (!supabaseClient) return [];
 
 
-  const result =
+  const user =
+    await getCurrentUser();
+
+  if (!user) return [];
+
+
+  const {
+    data,
+    error
+  } =
     await supabaseClient
-      .storage
-      .from("profile-photos")
-      .createSignedUrl(
-        photoPath,
-        3600
+      .from("notifications")
+      .select("*")
+      .eq(
+        "user_id",
+        user.id
+      )
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
       );
 
 
-  if (
-    result.error ||
-    !result.data?.signedUrl
-  ) {
+  if (error) {
 
     console.error(
-      "PHOTO PREVIEW ERROR:",
-      result.error
+      "LOAD NOTIFICATIONS ERROR:",
+      error
     );
 
-    return;
+    return [];
   }
 
 
-  const preview =
-    document.getElementById(
-      "dashboardProfilePhoto"
-    );
+  const notifications =
+    data || [];
 
 
-  if (!preview) {
-    return;
-  }
+  renderNotifications(
+    notifications
+  );
 
 
-  preview.innerHTML = `
+  updateNotificationBadge(
+    notifications
+  );
 
-    <img
-      src="${escapeHtml(
-        result.data.signedUrl
-      )}"
-      alt="Profile Photo"
-      style="
-        width:100%;
-        height:100%;
-        object-fit:cover;
-        display:block;
-      "
-    >
 
-  `;
+  return notifications;
 }
 
 
 // ============================================================
-// UPLOAD PROFILE PHOTO
+// RENDER NOTIFICATIONS
 // ============================================================
 
-async function uploadProfilePhoto() {
+function renderNotifications(
+  notifications
+) {
 
-  if (!isSupabaseReady()) {
+  const containers = [
+    document.getElementById(
+      "notifications"
+    ),
+    document.getElementById(
+      "notificationList"
+    ),
+    document.getElementById(
+      "notificationsList"
+    )
+  ].filter(Boolean);
+
+
+  if (!containers.length) {
     return;
   }
 
 
-  const input =
+  const html =
+    notifications
+      .map(notification => {
+
+        return `
+
+          <div
+            class="notification-item"
+            style="
+              padding:14px;
+              margin-bottom:8px;
+              border-radius:12px;
+              background:${
+                notification.is_read
+                  ? "#fff"
+                  : "#fff8e6"
+              };
+              border:1px solid #eee;
+            "
+          >
+
+            <strong>
+              ${escapeHtml(
+                notification.title ||
+                "Notification"
+              )}
+            </strong>
+
+            <div style="
+              margin-top:4px;
+            ">
+              ${escapeHtml(
+                notification.message ||
+                ""
+              )}
+            </div>
+
+            ${
+              notification.created_at
+                ? `
+                  <small style="
+                    display:block;
+                    margin-top:6px;
+                    opacity:.6;
+                  ">
+                    ${formatDate(
+                      notification.created_at
+                    )}
+                  </small>
+                `
+                : ""
+            }
+
+          </div>
+        `;
+      })
+      .join("");
+
+
+  containers.forEach(
+    container => {
+
+      container.innerHTML =
+        html ||
+        `
+          <div style="
+            padding:25px;
+            text-align:center;
+          ">
+            No new notifications.
+          </div>
+        `;
+    }
+  );
+}
+
+
+// ============================================================
+// NOTIFICATION BADGE
+// ============================================================
+
+function updateNotificationBadge(
+  notifications
+) {
+
+  const unread =
+    notifications.filter(
+      notification =>
+        !notification.is_read
+    ).length;
+
+
+  const badges = [
     document.getElementById(
-      "profilePhotoInput"
+      "notificationBadge"
+    ),
+    document.getElementById(
+      "notificationCount"
+    ),
+    document.querySelector(
+      ".notification-badge"
+    )
+  ].filter(Boolean);
+
+
+  badges.forEach(
+    badge => {
+
+      if (unread > 0) {
+
+        badge.textContent =
+          unread > 99
+            ? "99+"
+            : String(unread);
+
+        badge.style.display =
+          "inline-flex";
+
+      } else {
+
+        badge.textContent = "";
+
+        badge.style.display =
+          "none";
+      }
+    }
+  );
+}
+
+
+// ============================================================
+// MARK NOTIFICATIONS READ
+// ============================================================
+
+async function markNotificationsRead() {
+  if (!supabaseClient) return;
+
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) return;
+
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("notifications")
+      .update({
+        is_read: true
+      })
+      .eq(
+        "user_id",
+        user.id
+      )
+      .eq(
+        "is_read",
+        false
+      );
+
+
+  if (error) {
+    console.error(
+      "MARK READ ERROR:",
+      error
     );
 
-  const message =
-    document.getElementById(
-      "photoMessage"
+    return;
+  }
+
+
+  await loadNotifications();
+}
+
+
+// ============================================================
+// DATE FORMAT
+// ============================================================
+
+function formatDate(
+  value
+) {
+
+  if (!value) return "";
+
+  const date =
+    new Date(value);
+
+  if (
+    Number.isNaN(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+
+  return date.toLocaleString(
+    "en-IN",
+    {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit"
+    }
+  );
+}
+
+
+// ============================================================
+// PROFILE PHOTO UPLOAD
+// ============================================================
+
+async function uploadProfilePhoto(
+  file
+) {
+  if (!isSupabaseReady()) return null;
+
+
+  const user =
+    await getCurrentUser();
+
+  if (!user) {
+    openModal("login");
+    return null;
+  }
+
+
+  if (!file) {
+    alert(
+      "Please select a photo."
     );
+
+    return null;
+  }
 
 
   if (
-    !input ||
-    !input.files ||
-    !input.files.length
+    !file.type.startsWith(
+      "image/"
+    )
   ) {
-
-    showMessage(
-      message,
-      "Please choose a photo first.",
-      "error"
+    alert(
+      "Please select an image file."
     );
 
-    return;
+    return null;
   }
-
-
-  const file =
-    input.files[0];
 
 
   if (
     file.size >
     5 * 1024 * 1024
   ) {
-
-    showMessage(
-      message,
-      "Photo must be smaller than 5 MB.",
-      "error"
+    alert(
+      "Photo must be smaller than 5 MB."
     );
 
-    return;
+    return null;
   }
 
 
-  const allowedTypes = [
-    "image/jpeg",
-    "image/png",
-    "image/webp"
-  ];
+  try {
+
+    const extension =
+      file.name
+        .split(".")
+        .pop()
+        .toLowerCase();
 
 
-  if (
-    !allowedTypes.includes(
-      file.type
-    )
-  ) {
+    const filePath =
+      `${user.id}/profile-${Date.now()}.${extension}`;
 
-    showMessage(
-      message,
-      "Please select JPG, PNG or WEBP.",
-      "error"
+
+    const {
+      error: uploadError
+    } =
+      await supabaseClient
+        .storage
+        .from("profile-photos")
+        .upload(
+          filePath,
+          file,
+          {
+            upsert: true
+          }
+        );
+
+
+    if (uploadError) {
+      throw uploadError;
+    }
+
+
+    const {
+      error: profileError
+    } =
+      await supabaseClient
+        .from("profiles")
+        .update({
+          profile_photo:
+            filePath
+        })
+        .eq(
+          "id",
+          user.id
+        );
+
+
+    if (profileError) {
+      throw profileError;
+    }
+
+
+    if (currentProfile) {
+      currentProfile.profile_photo =
+        filePath;
+    }
+
+
+    alert(
+      "📸 Profile photo uploaded successfully."
     );
 
-    return;
-  }
 
+    return filePath;
 
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-
-    showMessage(
-      message,
-      "Please login first.",
-      "error"
-    );
-
-    return;
-  }
-
-
-  const userId =
-    session.user.id;
-
-
-  const extension =
-    file.name
-      .split(".")
-      .pop()
-      .toLowerCase();
-
-
-  const filePath =
-    userId +
-    "/profile." +
-    extension;
-
-
-  showMessage(
-    message,
-    "Uploading photo...",
-    "info"
-  );
-
-
-  const oldFiles = [
-
-    userId +
-    "/profile.jpg",
-
-    userId +
-    "/profile.jpeg",
-
-    userId +
-    "/profile.png",
-
-    userId +
-    "/profile.webp"
-
-  ];
-
-
-  const removeResult =
-    await supabaseClient
-      .storage
-      .from("profile-photos")
-      .remove(
-        oldFiles
-      );
-
-
-  if (removeResult.error) {
-
-    console.warn(
-      "OLD PHOTO REMOVE WARNING:",
-      removeResult.error
-    );
-
-  }
-
-
-  const uploadResult =
-    await supabaseClient
-      .storage
-      .from("profile-photos")
-      .upload(
-        filePath,
-        file,
-        {
-          upsert:
-            true,
-          contentType:
-            file.type
-        }
-      );
-
-
-  if (uploadResult.error) {
+  } catch (error) {
 
     console.error(
       "PHOTO UPLOAD ERROR:",
-      uploadResult.error
+      error
     );
 
-    showMessage(
-      message,
+    alert(
       "Photo upload failed: " +
-      uploadResult.error.message,
-      "error"
+      error.message
     );
 
-    return;
+    return null;
   }
-
-
-  const profileResult =
-    await supabaseClient
-      .from("profiles")
-      .update({
-
-        profile_photo:
-          filePath
-
-      })
-      .eq(
-        "id",
-        userId
-      );
-
-
-  if (profileResult.error) {
-
-    console.error(
-      "PROFILE PHOTO UPDATE ERROR:",
-      profileResult.error
-    );
-
-    showMessage(
-      message,
-      "Photo uploaded, but profile could not be updated: " +
-      profileResult.error.message,
-      "error"
-    );
-
-    return;
-  }
-
-
-  await loadProfilePhoto(
-    filePath
-  );
-
-
-  showMessage(
-    message,
-    "Profile photo uploaded successfully!",
-    "info"
-  );
-
-
-  input.value = "";
-
-
-  await loadProfiles();
-
-
-  await loadMatches();
-
-}
-
-
-// ============================================================
-// UPDATE PROFILE
-// ============================================================
-
-async function updateProfile() {
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  const message =
-    document.getElementById(
-      "updateProfileMessage"
-    );
-
-
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
-
-  if (!session) {
-
-    showMessage(
-      message,
-      "Please login first.",
-      "error"
-    );
-
-    return;
-  }
-
-
-  const userId =
-    session.user.id;
-
-
-  const fullName =
-    document.getElementById(
-      "editFullName"
-    )?.value.trim();
-
-
-  const gender =
-    document.getElementById(
-      "editGender"
-    )?.value;
-
-
-  const dob =
-    document.getElementById(
-      "editDob"
-    )?.value;
-
-
-  const community =
-    document.getElementById(
-      "editCommunity"
-    )?.value;
-
-
-  const surname =
-    document.getElementById(
-      "editSurname"
-    )?.value;
-
-
-  const kul =
-    document.getElementById(
-      "editKul"
-    )?.value;
-
-
-  const city =
-    document.getElementById(
-      "editCity"
-    )?.value.trim();
-
-
-  if (
-    !fullName ||
-    !city
-  ) {
-
-    showMessage(
-      message,
-      "Name and city are required.",
-      "error"
-    );
-
-    return;
-  }
-
-
-  if (
-    dob &&
-    calculateAge(dob) < 18
-  ) {
-
-    showMessage(
-      message,
-      "Profile owner must be 18 or above.",
-      "error"
-    );
-
-    return;
-  }
-
-
-  showMessage(
-    message,
-    "Saving changes...",
-    "info"
-  );
-
-
-  const result =
-    await supabaseClient
-      .from("profiles")
-      .update({
-
-        full_name:
-          fullName,
-
-        gender:
-          gender,
-
-        date_of_birth:
-          dob ||
-          null,
-
-        age:
-          calculateAge(dob),
-
-        community:
-          community,
-
-        surname:
-          surname,
-
-        kul:
-          kul,
-
-        city:
-          city
-
-      })
-      .eq(
-        "id",
-        userId
-      );
-
-
-  if (result.error) {
-
-    console.error(
-      "PROFILE UPDATE ERROR:",
-      result.error
-    );
-
-    showMessage(
-      message,
-      "Profile update failed: " +
-      result.error.message,
-      "error"
-    );
-
-    return;
-  }
-
-
-  showMessage(
-    message,
-    "Profile updated successfully!",
-    "info"
-  );
-
-
-  await loadProfiles();
-
-
-  setTimeout(
-    async function() {
-
-      await openDashboard();
-
-    },
-    600
-  );
-
-}
-
-
-// ============================================================
-// LOGOUT
-// ============================================================
-
-async function logoutUser() {
-
-  if (samajLoggingOut) {
-    return;
-  }
-
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  samajLoggingOut =
-    true;
-
-
-  try {
-
-    const result =
-      await supabaseClient
-        .auth
-        .signOut();
-
-
-    if (result.error) {
-
-      console.error(
-        "SUPABASE LOGOUT ERROR:",
-        result.error
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "LOGOUT ERROR:",
-      error
-    );
-
-  }
-
-
-  const dashboard =
-    document.getElementById(
-      "samajSaathiDashboard"
-    );
-
-
-  if (dashboard) {
-    dashboard.remove();
-  }
-
-
-  const viewer =
-    document.getElementById(
-      "samajProfileViewer"
-    );
-
-
-  if (viewer) {
-    viewer.remove();
-  }
-
-
-  localStorage.removeItem(
-    "samajSaathiUserId"
-  );
-
-  localStorage.removeItem(
-    "samajSaathiUsername"
-  );
-
-  localStorage.removeItem(
-    "samajSaathiPendingProfile"
-  );
-
-
-  window.scrollTo({
-
-    top:
-      0,
-
-    behavior:
-      "smooth"
-
-  });
-
-
-  await loadProfiles();
-
-
-  samajLoggingOut =
-    false;
-
-}
-
-
-// ============================================================
-// RESTORE LOGIN SESSION
-// ============================================================
-
-async function restoreLoginSession() {
-
-  if (
-    samajLoggingOut ||
-    !supabaseClient
-  ) {
-    return;
-  }
-
-
-  try {
-
-    const result =
-      await supabaseClient.auth
-        .getSession();
-
-
-    if (result.error) {
-
-      console.error(
-        "RESTORE SESSION ERROR:",
-        result.error
-      );
-
-      return;
-    }
-
-
-    const session =
-      result.data?.session;
-
-
-    if (!session) {
-
-      console.log(
-        "SamajSaathi: No active session."
-      );
-
-      return;
-    }
-
-
-    console.log(
-      "SamajSaathi: Active session restored."
-    );
-
-
-    await savePendingProfile();
-
-
-    const existingDashboard =
-      document.getElementById(
-        "samajSaathiDashboard"
-      );
-
-
-    if (!existingDashboard) {
-
-      await openDashboard();
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "SESSION RESTORE ERROR:",
-      error
-    );
-
-  }
-
 }
 
 
@@ -6445,286 +3361,133 @@ async function restoreLoginSession() {
 // AUTH STATE LISTENER
 // ============================================================
 
-function setupAuthListener() {
+if (supabaseClient) {
+
+  supabaseClient.auth.onAuthStateChange(
+    async (event, session) => {
+
+      console.log(
+        "AUTH EVENT:",
+        event
+      );
+
+
+      if (
+        session?.user
+      ) {
+
+        currentUser =
+          session.user;
+
+        setTimeout(
+          async () => {
+
+            await loadCurrentProfile();
+
+            await refreshInterestUI();
+
+            await loadNotifications();
+
+          },
+          0
+        );
+
+      } else {
+
+        currentUser = null;
+        currentProfile = null;
+      }
+
+    }
+  );
+}
+
+
+// ============================================================
+// INITIALISE APP
+// ============================================================
+
+async function initialiseSamajSaathi() {
 
   if (!supabaseClient) {
     return;
   }
 
 
-  supabaseClient.auth.onAuthStateChange(
-    async function(
-      event,
-      session
+  try {
+
+    const {
+      data
+    } =
+      await supabaseClient.auth
+        .getSession();
+
+
+    if (data?.session?.user) {
+
+      currentUser =
+        data.session.user;
+
+
+      await loadCurrentProfile();
+
+      await loadProfiles();
+
+      await refreshInterestUI();
+
+      await loadNotifications();
+
+    }
+
+  } catch (error) {
+
+    console.error(
+      "INITIALIZATION ERROR:",
+      error
+    );
+  }
+}
+
+
+// ============================================================
+// BACK BUTTON / SESSION PROTECTION
+// ============================================================
+
+window.addEventListener(
+  "popstate",
+  async () => {
+
+    const session =
+      await getCurrentUser();
+
+    if (
+      session &&
+      window.location.hash !==
+      "#logout"
     ) {
 
-      console.log(
-        "SamajSaathi Auth Event:",
-        event
-      );
+      await loadCurrentProfile();
 
+      await refreshInterestUI();
 
-      if (
-        event ===
-        "SIGNED_OUT"
-      ) {
-
-        if (!samajLoggingOut) {
-
-          const dashboard =
-            document.getElementById(
-              "samajSaathiDashboard"
-            );
-
-          if (dashboard) {
-            dashboard.remove();
-          }
-
-        }
-
-        return;
-      }
-
-
-      if (
-        event === "SIGNED_IN" ||
-        event === "TOKEN_REFRESHED" ||
-        event === "USER_UPDATED"
-      ) {
-
-        if (!session) {
-          return;
-        }
-
-
-        const existingDashboard =
-          document.getElementById(
-            "samajSaathiDashboard"
-          );
-
-
-        if (
-          !existingDashboard &&
-          !samajDashboardOpening &&
-          !samajLoggingOut
-        ) {
-
-          setTimeout(
-            function() {
-
-              restoreLoginSession();
-
-            },
-            100
-          );
-
-        }
-
-      }
-
+      await loadNotifications();
     }
-  );
-
-}
-
-
-// ============================================================
-// HASH / BROWSER NAVIGATION PROTECTION
-// ============================================================
-
-function setupNavigationProtection() {
-
-  window.addEventListener(
-    "hashchange",
-    function() {
-
-      console.log(
-        "SamajSaathi: Hash changed. Session remains active."
-      );
-
-
-      if (samajLoggingOut) {
-        return;
-      }
-
-
-      const dashboard =
-        document.getElementById(
-          "samajSaathiDashboard"
-        );
-
-
-      if (dashboard) {
-        return;
-      }
-
-
-      setTimeout(
-        function() {
-
-          restoreLoginSession();
-
-        },
-        100
-      );
-
-    }
-  );
-
-
-  window.addEventListener(
-    "popstate",
-    function() {
-
-      console.log(
-        "SamajSaathi: Browser navigation detected."
-      );
-
-
-      if (samajLoggingOut) {
-        return;
-      }
-
-
-      setTimeout(
-        function() {
-
-          restoreLoginSession();
-
-        },
-        100
-      );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// PAGE VISIBILITY
-// ============================================================
-
-function setupVisibilityProtection() {
-
-  document.addEventListener(
-    "visibilitychange",
-    function() {
-
-      if (
-        document.visibilityState !==
-        "visible"
-      ) {
-        return;
-      }
-
-
-      if (samajLoggingOut) {
-        return;
-      }
-
-
-      setTimeout(
-        function() {
-
-          restoreLoginSession();
-
-        },
-        150
-      );
-
-    }
-  );
-
-}
-
-
-// ============================================================
-// SCROLL
-// ============================================================
-
-function scrollToId(id) {
-
-  const element =
-    document.getElementById(
-      id
-    );
-
-
-  if (element) {
-
-    element.scrollIntoView({
-      behavior:
-        "smooth"
-    });
-
   }
-
-}
-
-
-// ============================================================
-// MODAL EVENTS
-// ============================================================
-
-function setupModalEvents() {
-
-  const modal =
-    document.getElementById(
-      "modal"
-    );
-
-
-  if (!modal) {
-    return;
-  }
-
-
-  modal.addEventListener(
-    "click",
-    function(event) {
-
-      if (
-        event.target ===
-        modal
-      ) {
-
-        closeModal();
-
-      }
-
-    }
-  );
-
-}
+);
 
 
 // ============================================================
-// KEYBOARD
+// ESC CLOSE MODAL
 // ============================================================
 
 document.addEventListener(
   "keydown",
-  function(event) {
+  event => {
 
     if (
-      event.key ===
-      "Escape"
+      event.key === "Escape"
     ) {
-
       closeModal();
-
-
-      const viewer =
-        document.getElementById(
-          "samajProfileViewer"
-        );
-
-
-      if (viewer) {
-        viewer.remove();
-      }
-
     }
 
   }
@@ -6732,9 +3495,7 @@ document.addEventListener(
 
 
 // ============================================================
-// EXPOSE FUNCTIONS TO HTML
-// ============================================================
-// IMPORTANT FIX
+// GLOBAL FUNCTIONS
 // ============================================================
 
 window.openModal =
@@ -6743,23 +3504,17 @@ window.openModal =
 window.closeModal =
   closeModal;
 
-window.loginUser =
-  loginUser;
-
 window.registerUser =
   registerUser;
 
-window.openDashboard =
-  openDashboard;
+window.loginUser =
+  loginUser;
 
 window.logoutUser =
   logoutUser;
 
-window.openFindMatches =
-  openFindMatches;
-
-window.loadMatches =
-  loadMatches;
+window.openDashboard =
+  openDashboard;
 
 window.loadProfiles =
   loadProfiles;
@@ -6770,139 +3525,52 @@ window.viewProfile =
 window.sendInterest =
   sendInterest;
 
-window.respondToInterest =
-  respondToInterest;
-
 window.loadMyInterests =
   loadMyInterests;
 
 window.loadReceivedInterests =
   loadReceivedInterests;
 
-window.showDashboardSection =
-  showDashboardSection;
+window.acceptInterest =
+  acceptInterest;
 
-window.updateProfile =
-  updateProfile;
+window.rejectInterest =
+  rejectInterest;
+
+window.loadNotifications =
+  loadNotifications;
+
+window.markNotificationsRead =
+  markNotificationsRead;
 
 window.uploadProfilePhoto =
   uploadProfilePhoto;
 
-window.scrollToId =
-  scrollToId;
+window.refreshInterestUI =
+  refreshInterestUI;
 
 
 // ============================================================
-// INITIALIZE
+// START
 // ============================================================
 
-document.addEventListener(
-  "DOMContentLoaded",
-  async function() {
+if (
+  document.readyState ===
+  "loading"
+) {
 
-    if (samajInitialised) {
-      return;
-    }
+  document.addEventListener(
+    "DOMContentLoaded",
+    initialiseSamajSaathi
+  );
 
+} else {
 
-    samajInitialised =
-      true;
+  initialiseSamajSaathi();
 
-
-    console.log(
-      "SamajSaathi app loading..."
-    );
-
-
-    if (!supabaseClient) {
-
-      console.error(
-        "SamajSaathi: Supabase is unavailable."
-      );
-
-      return;
-    }
-
-
-    setupAuthListener();
-
-
-    setupNavigationProtection();
-
-
-    setupVisibilityProtection();
-
-
-    setupModalEvents();
-
-
-    await loadProfiles();
-
-
-    await restoreLoginSession();
-
-
-    console.log(
-      "SamajSaathi app loaded successfully."
-    );
-
-  }
-);
+}
 
 
 // ============================================================
-// EARLY SESSION CHECK
+// END
 // ============================================================
-
-(async function() {
-
-  try {
-
-    if (!supabaseClient) {
-      return;
-    }
-
-
-    const result =
-      await supabaseClient
-        .auth
-        .getSession();
-
-
-    if (
-      result.data?.session
-    ) {
-
-      console.log(
-        "SamajSaathi: User session active and persisted."
-      );
-
-    }
-
-    else {
-
-      console.log(
-        "SamajSaathi: No saved session found."
-      );
-
-    }
-
-  } catch (error) {
-
-    console.error(
-      "SESSION CHECK ERROR:",
-      error
-    );
-
-  }
-
-})();
-
-
-// ============================================================
-// FINAL READY CHECK
-// ============================================================
-
-console.log(
-  "SamajSaathi app.js loaded."
-);
