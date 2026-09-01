@@ -4,19 +4,19 @@
 // COMPLETE APP.JS
 // ============================================================
 // FIXES:
-// âœ… Login button
-// âœ… Create Profile button
-// âœ… Supabase safe initialization
-// âœ… Global functions exposed to HTML onclick
-// âœ… Session persistence
-// âœ… Back button protection
-// âœ… Find Your Matches
-// âœ… View Profile
-// âœ… Send Interest
-// âœ… My Interests
-// âœ… Received Interests
-// âœ… Accept / Reject Interest
-// âœ… Profile photo upload
+// \u{2705} Login button
+// \u{2705} Create Profile button
+// \u{2705} Supabase safe initialization
+// \u{2705} Global functions exposed to HTML onclick
+// \u{2705} Session persistence
+// \u{2705} Back button protection
+// \u{2705} Find Your Matches
+// \u{2705} View Profile
+// \u{2705} Send Interest
+// \u{2705} My Interests
+// \u{2705} Received Interests
+// \u{2705} Accept / Reject Interest
+// \u{2705} Profile photo upload
 // ============================================================
 
 
@@ -647,7 +647,7 @@ function openModal(type) {
           class="btn primary"
           onclick="registerUser()"
         >
-          Create Account â†’
+          Create Account \u{2192}
         </button>
 
       </div>
@@ -1046,7 +1046,7 @@ function showRegistrationSuccess(user) {
         font-size:48px;
         margin-bottom:10px;
       ">
-        âœ“
+        \u{2713}
       </div>
 
       <span class="eyebrow">
@@ -1157,7 +1157,7 @@ function showRegistrationSuccess(user) {
           class="btn primary"
           onclick="openDashboard()"
         >
-          Go to My Dashboard â†’
+          Go to My Dashboard \u{2192}
         </button>
 
       </div>
@@ -1198,7 +1198,7 @@ function contentAfterSignup(
       <div style="
         font-size:48px;
       ">
-        âœ“
+        \u{2713}
       </div>
 
       <span class="eyebrow">
@@ -1715,11 +1715,11 @@ function createPublicProfileCard(
         justify-content:center;
         height:100%;
       ">
-        ðŸ‘¤
+        \u{1F464}
       </span>
 
       <span class="profile-tag">
-        âœ“ Verified
+        \u{2713} Verified
       </span>
 
     </div>
@@ -1751,12 +1751,12 @@ function createPublicProfileCard(
           onerror="
             this.style.display='none';
             this.parentElement.classList.remove('has-real-photo');
-            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>ðŸ‘¤</span><span class=&quot;profile-tag&quot;>âœ“ Verified</span>';
+            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>\u{1F464}</span><span class=&quot;profile-tag&quot;>\u{2713} Verified</span>';
           "
         >
 
         <span class="profile-tag">
-          âœ“ Verified
+          \u{2713} Verified
         </span>
 
       </div>
@@ -1807,7 +1807,7 @@ function createPublicProfileCard(
 
           ${
             profile.surname
-              ? " Â· " +
+              ? " \u{00B7} " +
                 escapeHtml(
                   profile.surname
                 )
@@ -1816,7 +1816,7 @@ function createPublicProfileCard(
 
           ${
             profile.kul
-              ? " Â· " +
+              ? " \u{00B7} " +
                 escapeHtml(
                   profile.kul
                 )
@@ -1871,7 +1871,7 @@ async function loadMatches() {
         font-size:35px;
         margin-bottom:10px;
       ">
-        ðŸ’•
+        \u{1F495}
       </div>
 
       Finding suitable profiles...
@@ -2117,7 +2117,7 @@ async function loadMatches() {
           <div style="
             font-size:42px;
           ">
-            âš ï¸
+            \u{26A0}\u{FE0F}
           </div>
 
           <h3>
@@ -2160,7 +2160,7 @@ async function loadMatches() {
             font-size:55px;
             margin-bottom:10px;
           ">
-            ðŸ’•
+            \u{1F495}
           </div>
 
           <h3>
@@ -2180,7 +2180,7 @@ async function loadMatches() {
             class="btn primary"
             onclick="loadMatches()"
           >
-            ðŸ”„ Refresh Matches
+            \u{1F504} Refresh Matches
           </button>
 
         </div>
@@ -2332,7 +2332,7 @@ function createMatchCard(
           sendInterest('${profile.id}')
         "
       >
-        â¤ï¸ Send Interest
+        \u{2764}\u{FE0F} Send Interest
       </button>
     `;
 
@@ -2354,7 +2354,7 @@ function createMatchCard(
             cursor:not-allowed;
           "
         >
-          âœ“ Interest Sent
+          \u{2713} Interest Sent
         </button>
       `;
 
@@ -2376,7 +2376,7 @@ function createMatchCard(
             cursor:default;
           "
         >
-          ðŸ’š Accepted
+          \u{1F49A} Accepted
         </button>
       `;
 
@@ -2395,7 +2395,7 @@ function createMatchCard(
             sendInterest('${profile.id}', true)
           "
         >
-          â¤ï¸ Send Again
+          \u{2764}\u{FE0F} Send Again
         </button>
       `;
 
@@ -2418,7 +2418,7 @@ function createMatchCard(
       <span style="
         font-size:75px;
       ">
-        ðŸ‘¤
+        \u{1F464}
       </span>
 
     </div>
@@ -2454,7 +2454,7 @@ function createMatchCard(
           "
           onerror="
             this.style.display='none';
-            this.parentElement.innerHTML='<div style=&quot;height:280px;display:flex;align-items:center;justify-content:center;font-size:75px;background:#f1e5e8;&quot;>ðŸ‘¤</div>';
+            this.parentElement.innerHTML='<div style=&quot;height:280px;display:flex;align-items:center;justify-content:center;font-size:75px;background:#f1e5e8;&quot;>\u{1F464}</div>';
           "
         >
 
@@ -2493,7 +2493,7 @@ function createMatchCard(
             z-index:2;
           "
         >
-          âœ“ Verified
+          \u{2713} Verified
         </span>
 
       </div>
@@ -2530,7 +2530,7 @@ function createMatchCard(
           margin-bottom:7px;
         ">
 
-          ðŸ“
+          \u{1F4CD}
 
           ${escapeHtml(
             location ||
@@ -2551,7 +2551,7 @@ function createMatchCard(
 
           ${
             profile.surname
-              ? " Â· " +
+              ? " \u{00B7} " +
                 escapeHtml(
                   profile.surname
                 )
@@ -2710,7 +2710,7 @@ async function viewProfile(
       margin:0 auto 20px;
       font-size:55px;
     ">
-      ðŸ‘¤
+      \u{1F464}
     </div>
 
   `;
@@ -2806,7 +2806,7 @@ async function viewProfile(
           font-size:20px;
         "
       >
-        Ã—
+        \u{00D7}
       </button>
 
       ${photoHtml}
@@ -2943,7 +2943,7 @@ async function viewProfile(
             sendInterest('${profile.id}')
           "
         >
-          â¤ï¸ Send Interest
+          \u{2764}\u{FE0F} Send Interest
         </button>
 
       </div>
@@ -3132,7 +3132,7 @@ async function sendInterest(
       );
 
       alert(
-        "â¤ï¸ You have already sent interest to this profile."
+        "\u{2764}\u{FE0F} You have already sent interest to this profile."
       );
 
       return;
@@ -3150,7 +3150,7 @@ async function sendInterest(
       );
 
       alert(
-        "ðŸ’š Your interest has already been accepted."
+        "\u{1F49A} Your interest has already been accepted."
       );
 
       return;
@@ -3308,7 +3308,7 @@ async function sendInterest(
 
 
     alert(
-      "â¤ï¸ Interest sent successfully!"
+      "\u{2764}\u{FE0F} Interest sent successfully!"
     );
 
 
@@ -3380,7 +3380,7 @@ function markInterestSentUI(
                 true;
 
               button.innerHTML =
-                "âœ“ Interest Sent";
+                "\u{2713} Interest Sent";
 
               button.style.opacity =
                 ".7";
@@ -3431,7 +3431,7 @@ function markInterestSentUI(
               true;
 
             button.innerHTML =
-              "âœ“ Interest Sent";
+              "\u{2713} Interest Sent";
 
             button.style.opacity =
               ".7";
@@ -3484,7 +3484,7 @@ function markInterestAcceptedUI(
                 true;
 
               button.innerHTML =
-                "ðŸ’š Accepted";
+                "\u{1F49A} Accepted";
 
             }
 
@@ -3561,7 +3561,7 @@ async function createInterestNotification(
             "interest",
 
           title:
-            "New Interest â¤ï¸",
+            "New Interest \u{2764}\u{FE0F}",
 
           message:
             senderName +
@@ -3665,7 +3665,7 @@ async function createInterestResponseNotification(
 
           title:
             accepted
-              ? "Interest Accepted ðŸ’š"
+              ? "Interest Accepted \u{1F49A}"
               : "Interest Update",
 
           message:
@@ -3835,7 +3835,7 @@ async function loadNotifications() {
         <div class="samaj-coming-soon">
 
           <div class="samaj-coming-soon-icon">
-            ðŸ””
+            \u{1F514}
           </div>
 
           <h3>
@@ -3893,7 +3893,7 @@ async function loadNotifications() {
                     flex-shrink:0;
                     font-size:22px;
                   ">
-                    ðŸ””
+                    \u{1F514}
                   </div>
 
                   <div style="
@@ -4242,7 +4242,7 @@ async function loadMyInterests() {
         <div class="samaj-coming-soon">
 
           <div class="samaj-coming-soon-icon">
-            â¤ï¸
+            \u{2764}\u{FE0F}
           </div>
 
           <h3>
@@ -4343,7 +4343,7 @@ async function loadMyInterests() {
                   color:#7a4d00;
                   font-size:12px;
                 ">
-                  â³ Pending
+                  \u{23F3} Pending
                 </span>
               `;
 
@@ -4363,7 +4363,7 @@ async function loadMyInterests() {
                     color:#18794e;
                     font-size:12px;
                   ">
-                    ðŸ’š Accepted
+                    \u{1F49A} Accepted
                   </span>
                 `;
 
@@ -4385,7 +4385,7 @@ async function loadMyInterests() {
                     color:#b42318;
                     font-size:12px;
                   ">
-                    âŒ Rejected
+                    \u{274C} Rejected
                   </span>
                 `;
 
@@ -4433,7 +4433,7 @@ async function loadMyInterests() {
                         <span style="
                           font-size:30px;
                         ">
-                          ðŸ‘¤
+                          \u{1F464}
                         </span>
                       `
                   }
@@ -4469,7 +4469,7 @@ async function loadMyInterests() {
                     margin-bottom:8px;
                   ">
 
-                    ðŸ“
+                    \u{1F4CD}
 
                     ${escapeHtml(
                       [
@@ -4635,7 +4635,7 @@ async function loadReceivedInterests() {
         <div class="samaj-coming-soon">
 
           <div class="samaj-coming-soon-icon">
-            ðŸ’Œ
+            \u{1F48C}
           </div>
 
           <h3>
@@ -4729,7 +4729,7 @@ async function loadReceivedInterests() {
                   color:#7a4d00;
                   font-size:12px;
                 ">
-                  â³ Pending
+                  \u{23F3} Pending
                 </span>
               `;
 
@@ -4749,7 +4749,7 @@ async function loadReceivedInterests() {
                     color:#18794e;
                     font-size:12px;
                   ">
-                    ðŸ’š Accepted
+                    \u{1F49A} Accepted
                   </span>
                 `;
 
@@ -4771,7 +4771,7 @@ async function loadReceivedInterests() {
                     color:#b42318;
                     font-size:12px;
                   ">
-                    âŒ Rejected
+                    \u{274C} Rejected
                   </span>
                 `;
 
@@ -4799,7 +4799,7 @@ async function loadReceivedInterests() {
                         )
                       "
                     >
-                      ðŸ’š Accept
+                      \u{1F49A} Accept
                     </button>
 
                     <button
@@ -4812,7 +4812,7 @@ async function loadReceivedInterests() {
                         )
                       "
                     >
-                      âŒ Reject
+                      \u{274C} Reject
                     </button>
 
                     <button
@@ -4894,7 +4894,7 @@ async function loadReceivedInterests() {
                           <span style="
                             font-size:30px;
                           ">
-                            ðŸ‘¤
+                            \u{1F464}
                           </span>
                         `
                     }
@@ -4930,7 +4930,7 @@ async function loadReceivedInterests() {
                       margin-bottom:6px;
                     ">
 
-                      ðŸ“
+                      \u{1F4CD}
 
                       ${escapeHtml(
                         [
@@ -4956,7 +4956,7 @@ async function loadReceivedInterests() {
 
                       ${
                         profile.surname
-                          ? " Â· " +
+                          ? " \u{00B7} " +
                             escapeHtml(
                               profile.surname
                             )
@@ -5156,7 +5156,7 @@ async function respondToInterest(
 
     alert(
       status === "accepted"
-        ? "ðŸ’š Interest accepted!"
+        ? "\u{1F49A} Interest accepted!"
         : "Interest rejected."
     );
 
@@ -5225,6 +5225,123 @@ async function openFindMatches() {
     300
   );
 
+}
+
+
+
+// ============================================================
+// PREMIUM DASHBOARD MENU STYLES
+// ============================================================
+
+function ensureSamajSaathiPremiumStyles() {
+
+  if (document.getElementById("samajSaathiPremiumStyles")) {
+    return;
+  }
+
+  const style = document.createElement("style");
+  style.id = "samajSaathiPremiumStyles";
+
+  style.textContent = `
+    .samaj-dashboard-menu {
+      display:grid !important;
+      grid-template-columns:repeat(auto-fit,minmax(155px,1fr)) !important;
+      gap:12px !important;
+      margin:0 0 28px !important;
+    }
+
+    .samaj-dashboard-menu-btn {
+      appearance:none !important;
+      -webkit-appearance:none !important;
+      width:100% !important;
+      min-height:94px !important;
+      padding:16px 12px !important;
+      border:1px solid rgba(124,58,237,.14) !important;
+      border-radius:18px !important;
+      background:linear-gradient(145deg,#ffffff,#fbf7ff) !important;
+      color:#24152f !important;
+      box-shadow:0 7px 22px rgba(76,29,149,.08) !important;
+      cursor:pointer !important;
+      display:flex !important;
+      flex-direction:column !important;
+      align-items:center !important;
+      justify-content:center !important;
+      gap:6px !important;
+      text-align:center !important;
+      font-family:inherit !important;
+      transition:transform .2s ease,box-shadow .2s ease,border-color .2s ease,background .2s ease !important;
+    }
+
+    .samaj-dashboard-menu-btn:hover {
+      transform:translateY(-3px) !important;
+      border-color:rgba(124,58,237,.35) !important;
+      box-shadow:0 13px 30px rgba(76,29,149,.14) !important;
+      background:linear-gradient(145deg,#ffffff,#f6efff) !important;
+    }
+
+    .samaj-dashboard-menu-btn:active {
+      transform:translateY(-1px) !important;
+    }
+
+    .samaj-dashboard-menu-btn.active {
+      border-color:#7c3aed !important;
+      background:linear-gradient(145deg,#7c3aed,#5b21b6) !important;
+      color:#ffffff !important;
+      box-shadow:0 12px 30px rgba(91,33,182,.28) !important;
+    }
+
+    .samaj-menu-icon {
+      width:38px !important;
+      height:38px !important;
+      border-radius:12px !important;
+      display:flex !important;
+      align-items:center !important;
+      justify-content:center !important;
+      font-size:21px !important;
+      line-height:1 !important;
+      background:rgba(124,58,237,.09) !important;
+    }
+
+    .samaj-dashboard-menu-btn.active .samaj-menu-icon {
+      background:rgba(255,255,255,.18) !important;
+    }
+
+    .samaj-menu-title {
+      display:block !important;
+      font-size:13px !important;
+      font-weight:800 !important;
+      line-height:1.2 !important;
+      letter-spacing:-.1px !important;
+    }
+
+    .samaj-menu-description {
+      display:block !important;
+      font-size:10px !important;
+      line-height:1.2 !important;
+      opacity:.66 !important;
+      font-weight:600 !important;
+    }
+
+    .samaj-dashboard-menu-btn.active .samaj-menu-description {
+      opacity:.88 !important;
+    }
+
+    @media (max-width:700px) {
+      .samaj-dashboard-menu {
+        grid-template-columns:repeat(2,minmax(0,1fr)) !important;
+        gap:10px !important;
+      }
+      .samaj-dashboard-menu-btn {
+        min-height:88px !important;
+        border-radius:16px !important;
+        padding:12px 8px !important;
+      }
+      .samaj-menu-title { font-size:12px !important; }
+      .samaj-menu-description { font-size:9px !important; }
+    }
+  `;
+
+  document.head.appendChild(style);
 }
 
 
@@ -5420,6 +5537,8 @@ function showDashboardSection(
 
 async function openDashboard() {
 
+  ensureSamajSaathiPremiumStyles();
+
   if (
     samajDashboardOpening
   ) {
@@ -5568,7 +5687,7 @@ async function openDashboard() {
             <small
               class="samaj-dashboard-brand-sub"
             >
-              SC Matrimony â€¢ Your journey starts here
+              SC Matrimony \u{2022} Your journey starts here
             </small>
 
           </div>
@@ -5594,7 +5713,7 @@ async function openDashboard() {
                 cursor:pointer;
               "
             >
-              ðŸ’• Find Matches
+              \u{1F495} Find Matches
             </button>
 
             <button
@@ -5685,7 +5804,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ðŸ‘¤
+                \u{1F464}
               </span>
 
               <span class="samaj-menu-title">
@@ -5709,7 +5828,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                âœï¸
+                \u{270F}\u{FE0F}
               </span>
 
               <span class="samaj-menu-title">
@@ -5733,7 +5852,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ðŸ’•
+                \u{1F495}
               </span>
 
               <span class="samaj-menu-title">
@@ -5757,7 +5876,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                â¤ï¸
+                \u{2764}\u{FE0F}
               </span>
 
               <span class="samaj-menu-title">
@@ -5781,7 +5900,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ðŸ’Œ
+                \u{1F48C}
               </span>
 
               <span class="samaj-menu-title">
@@ -5805,7 +5924,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                ðŸ””
+                \u{1F514}
               </span>
 
               <span class="samaj-menu-title">
@@ -5829,7 +5948,7 @@ async function openDashboard() {
             >
 
               <span class="samaj-menu-icon">
-                âš™ï¸
+                \u{2699}\u{FE0F}
               </span>
 
               <span class="samaj-menu-title">
@@ -5902,7 +6021,7 @@ async function openDashboard() {
                   font-size:55px;
                   color:#aaa;
                 ">
-                  ðŸ‘¤
+                  \u{1F464}
                 </span>
 
               </div>
@@ -5925,7 +6044,7 @@ async function openDashboard() {
                   uploadProfilePhoto()
                 "
               >
-                ðŸ“· Upload / Change Photo
+                \u{1F4F7} Upload / Change Photo
               </button>
 
               <div
@@ -6013,7 +6132,7 @@ async function openDashboard() {
                   showDashboardSection('matches')
                 "
               >
-                ðŸ’• Find Your Matches
+                \u{1F495} Find Your Matches
               </button>
 
             </div>
@@ -6041,7 +6160,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              âœï¸ Edit Profile
+              \u{270F}\u{FE0F} Edit Profile
             </h2>
 
             <div class="form-grid">
@@ -6301,7 +6420,7 @@ async function openDashboard() {
                   updateProfile()
                 "
               >
-                ðŸ’¾ Save Profile Changes
+                \u{1F4BE} Save Profile Changes
               </button>
 
             </div>
@@ -6336,7 +6455,7 @@ async function openDashboard() {
               </span>
 
               <h2>
-                ðŸ’• Find Your Matches
+                \u{1F495} Find Your Matches
               </h2>
 
               <p>
@@ -6391,7 +6510,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              â¤ï¸ My Interests
+              \u{2764}\u{FE0F} My Interests
             </h2>
 
             <div
@@ -6401,7 +6520,7 @@ async function openDashboard() {
               <div class="samaj-coming-soon">
 
                 <div class="samaj-coming-soon-icon">
-                  â¤ï¸
+                  \u{2764}\u{FE0F}
                 </div>
 
                 <h3>
@@ -6439,7 +6558,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              ðŸ’Œ Received Interests
+              \u{1F48C} Received Interests
             </h2>
 
             <div
@@ -6449,7 +6568,7 @@ async function openDashboard() {
               <div class="samaj-coming-soon">
 
                 <div class="samaj-coming-soon-icon">
-                  ðŸ’Œ
+                  \u{1F48C}
                 </div>
 
                 <h3>
@@ -6487,7 +6606,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              ðŸ”” Notifications
+              \u{1F514} Notifications
             </h2>
 
             <div
@@ -6497,7 +6616,7 @@ async function openDashboard() {
               <div class="samaj-coming-soon">
 
                 <div class="samaj-coming-soon-icon">
-                  ðŸ””
+                  \u{1F514}
                 </div>
 
                 <h3>
@@ -6522,7 +6641,7 @@ async function openDashboard() {
                 class="btn"
                 onclick="markNotificationsRead()"
               >
-                âœ“ Mark All as Read
+                \u{2713} Mark All as Read
               </button>
 
             </div>
@@ -6550,7 +6669,7 @@ async function openDashboard() {
             </span>
 
             <h2>
-              âš™ï¸ Account
+              \u{2699}\u{FE0F} Account
             </h2>
 
 
@@ -6600,7 +6719,7 @@ async function openDashboard() {
             ">
 
               <strong>
-                ðŸ” Account Security
+                \u{1F510} Account Security
               </strong>
 
               <p style="
@@ -6623,7 +6742,7 @@ async function openDashboard() {
                   logoutUser()
                 "
               >
-                ðŸšª Logout
+                \u{1F6AA} Logout
               </button>
 
             </div>
