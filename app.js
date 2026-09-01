@@ -7374,6 +7374,137 @@ async function updateProfile() {
 
 
 // ============================================================
+// LOGGED-IN USER UI ON PUBLIC HOMEPAGE
+// ============================================================
+
+function isPublicHomeRoute() {
+  const hash = String(window.location.hash || "").toLowerCase();
+  return hash === "#home" || hash === "#" || hash === "";
+}
+
+async function updateHomepageUserUI() {
+
+  if (!supabaseClient) {
+    return;
+  }
+
+  try {
+
+    const sessionResult = await supabaseClient.auth.getSession();
+    const session = sessionResult.data?.session;
+    const oldChip = document.getElementById("samajHomepageUserChip");
+
+    if (!session) {
+      if (oldChip) oldChip.remove();
+      return;
+    }
+
+    const userId = session.user.id;
+
+    const profileResult = await supabaseClient
+      .from("profiles")
+      .select("id, full_name, profile_photo, first_name")
+      .eq("id", userId)
+      .maybeSingle();
+
+    if (profileResult.error) {
+      console.error("HOMEPAGE PROFILE UI ERROR:", profileResult.error);
+      return;
+    }
+
+    const profile = profileResult.data || {};
+    const name = profile.full_name || profile.first_name || "My Profile";
+    const photoUrl = getProfilePhotoUrl(profile.profile_photo);
+
+    if (oldChip) oldChip.remove();
+
+    const chip = document.createElement("div");
+    chip.id = "samajHomepageUserChip";
+    chip.innerHTML = `
+      <button type="button" onclick="openDashboard()" aria-label="Open My Dashboard" style="
+        display:flex;
+        align-items:center;
+        gap:10px;
+        border:1px solid rgba(111,16,37,.12);
+        background:rgba(255,255,255,.97);
+        color:#24151a;
+        padding:6px 12px 6px 7px;
+        border-radius:999px;
+        cursor:pointer;
+        box-shadow:0 8px 28px rgba(52,19,30,.14);
+        font-family:inherit;
+        transition:transform .2s ease, box-shadow .2s ease;
+      "
+      onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 12px 32px rgba(52,19,30,.20)'"
+      onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 8px 28px rgba(52,19,30,.14)'">
+        <span style="
+          width:40px;
+          height:40px;
+          border-radius:50%;
+          overflow:hidden;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          background:linear-gradient(135deg,#f7e9ee,#ead0da);
+          flex:none;
+          border:2px solid #fff;
+          box-shadow:0 2px 8px rgba(0,0,0,.12);
+        ">
+          ${photoUrl
+            ? `<img src="${escapeHtml(photoUrl)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
+            : `<span style="font-size:20px;">ðŸ‘¤</span>`}
+        </span>
+        <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;max-width:150px;">
+          <strong style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">${escapeHtml(name)}</strong>
+          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile â–¾</small>
+        </span>
+      </button>
+    `;
+
+    // Prefer an existing navigation action area.
+    const target =
+      document.querySelector(".nav-actions") ||
+      document.querySelector(".navbar-actions") ||
+      document.querySelector(".header-actions") ||
+      document.querySelector("header nav") ||
+      document.querySelector("nav");
+
+    if (target) {
+      target.appendChild(chip);
+      chip.style.position = "relative";
+      chip.style.zIndex = "20";
+    } else {
+      chip.style.position = "fixed";
+      chip.style.top = "14px";
+      chip.style.right = "20px";
+      chip.style.zIndex = "9990";
+      document.body.appendChild(chip);
+    }
+
+  } catch (error) {
+    console.error("UPDATE HOMEPAGE USER UI ERROR:", error);
+  }
+}
+
+function hideLoggedOutHomepageButtons() {
+  if (!isPublicHomeRoute()) return;
+
+  const selectors = [
+    "a", "button"
+  ];
+
+  document.querySelectorAll(selectors.join(",")).forEach(function(el) {
+    if (el.id === "samajHomepageUserChip" || el.closest("#samajHomepageUserChip")) return;
+
+    const text = String(el.textContent || "").trim().toLowerCase();
+    if (text === "login" || text === "create profile" || text === "create account") {
+      el.dataset.samajLoggedInHidden = "true";
+      el.style.display = "none";
+    }
+  });
+}
+
+// ============================================================
 // GO TO HOME PAGE FROM DASHBOARD
 // Keeps the user logged in.
 // ============================================================
@@ -7538,6 +7669,7 @@ async function restoreLoginSession() {
   if (
     samajLoggingOut ||
     samajNavigatingHome ||
+    isPublicHomeRoute() ||
     !supabaseClient
   ) {
     return;
@@ -7716,7 +7848,8 @@ function setupNavigationProtection() {
 
       if (
         samajLoggingOut ||
-        samajNavigatingHome
+        samajNavigatingHome ||
+        isPublicHomeRoute()
       ) {
         return;
       }
@@ -7755,7 +7888,7 @@ function setupNavigationProtection() {
       );
 
 
-      if (samajLoggingOut) {
+      if (samajLoggingOut || isPublicHomeRoute()) {
         return;
       }
 
@@ -7793,7 +7926,7 @@ function setupVisibilityProtection() {
       }
 
 
-      if (samajLoggingOut) {
+      if (samajLoggingOut || isPublicHomeRoute()) {
         return;
       }
 
@@ -7926,6 +8059,12 @@ window.registerUser =
 window.openDashboard =
   openDashboard;
 
+window.goHomeFromDashboard =
+  goHomeFromDashboard;
+
+window.updateHomepageUserUI =
+  updateHomepageUserUI;
+
 window.logoutUser =
   logoutUser;
 
@@ -8022,7 +8161,16 @@ document.addEventListener(
     await restoreLoginSession();
 
 
+    await updateHomepageUserUI();
+    hideLoggedOutHomepageButtons();
+
+
     await loadNotifications();
+
+    setTimeout(function() {
+      updateHomepageUserUI();
+      hideLoggedOutHomepageButtons();
+    }, 500);
 
 
     console.log(
