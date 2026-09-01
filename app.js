@@ -5154,6 +5154,11 @@ async function respondToInterest(
 
     await loadNotifications();
 
+    if (status === "accepted") {
+      await updateHomepageUserUI();
+      await loadHomepageMatches();
+    }
+
 
     alert(
       status === "accepted"
@@ -7504,6 +7509,324 @@ function hideLoggedOutHomepageButtons() {
   });
 }
 
+
+// ============================================================
+// HOMEPAGE MATCHES
+// An accepted interest becomes a confirmed SamajSaathi match.
+// ============================================================
+
+async function loadHomepageMatches() {
+
+  if (!supabaseClient) return;
+
+  const old = document.getElementById("samajHomepageMatches");
+  if (old) old.remove();
+
+  const sessionResult = await supabaseClient.auth.getSession();
+  const session = sessionResult.data?.session;
+  if (!session || !isPublicHomeRoute()) return;
+
+  try {
+    // Any accepted interest involving the logged-in user is a confirmed match.
+    const result = await supabaseClient
+      .from("interests")
+      .select("id, sender_id, receiver_id, status, updated_at")
+      .eq("status", "accepted")
+      .or(
+        "sender_id.eq." + session.user.id +
+        ",receiver_id.eq." + session.user.id
+      )
+      .order("updated_at", { ascending: false });
+
+    if (result.error) {
+      console.error("HOMEPAGE MATCHES ERROR:", result.error);
+      return;
+    }
+
+    const rows = result.data || [];
+    const otherIds = [...new Set(
+      rows.map(row =>
+        row.sender_id === session.user.id
+          ? row.receiver_id
+          : row.sender_id
+      ).filter(Boolean)
+    )];
+
+    let profiles = [];
+
+    if (otherIds.length) {
+      const profileResult = await supabaseClient
+        .from("profiles")
+        .select(`
+          id,
+          full_name,
+          first_name,
+          age,
+          city,
+          state,
+          profile_photo,
+          photo_url,
+          gender,
+          surname
+        `)
+        .in("id", otherIds)
+        .eq("is_active", true);
+
+      if (profileResult.error) {
+        console.error("HOMEPAGE MATCH PROFILE ERROR:", profileResult.error);
+        return;
+      }
+
+      profiles = profileResult.data || [];
+    }
+
+    const profileMap = new Map(
+      profiles.map(profile => [profile.id, profile])
+    );
+
+    const matches = rows
+      .map(row => {
+        const otherId =
+          row.sender_id === session.user.id
+            ? row.receiver_id
+            : row.sender_id;
+
+        return {
+          interest: row,
+          profile: profileMap.get(otherId)
+        };
+      })
+      .filter(item => item.profile);
+
+    const section = document.createElement("section");
+    section.id = "samajHomepageMatches";
+    section.style.cssText = `
+      max-width:1180px;
+      margin:28px auto 36px;
+      padding:0 20px;
+    `;
+
+    const cards = matches.length
+      ? matches.slice(0, 6).map(item => {
+          const profile = item.profile;
+          const photo = getProfilePhotoUrl(
+            profile.profile_photo || profile.photo_url
+          );
+          const name =
+            profile.full_name ||
+            profile.first_name ||
+            "SamajSaathi Member";
+
+          const location = [
+            profile.city,
+            profile.state
+          ].filter(Boolean).join(", ");
+
+          return `
+            <article style="
+              background:#fff;
+              border:1px solid rgba(111,16,37,.10);
+              border-radius:20px;
+              padding:14px;
+              box-shadow:0 10px 28px rgba(52,19,30,.08);
+              display:flex;
+              align-items:center;
+              gap:13px;
+              min-width:0;
+            ">
+              <div style="
+                width:64px;
+                height:64px;
+                border-radius:50%;
+                overflow:hidden;
+                flex:none;
+                display:flex;
+                align-items:center;
+                justify-content:center;
+                background:linear-gradient(135deg,#f7e9ee,#ead0da);
+                border:2px solid #fff;
+                box-shadow:0 3px 12px rgba(0,0,0,.10);
+              ">
+                ${
+                  photo
+                    ? `<img src="${escapeHtml(photo)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
+                    : `<span style="font-size:28px;">ðŸ‘¤</span>`
+                }
+              </div>
+
+              <div style="flex:1;min-width:0;">
+                <div style="
+                  font-weight:800;
+                  font-size:15px;
+                  color:#24151a;
+                  white-space:nowrap;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                ">
+                  ${escapeHtml(name)}
+                </div>
+
+                <div style="
+                  margin-top:4px;
+                  color:#7b626a;
+                  font-size:12px;
+                  white-space:nowrap;
+                  overflow:hidden;
+                  text-overflow:ellipsis;
+                ">
+                  ${escapeHtml(location || "Location not specified")}
+                </div>
+
+                <div style="
+                  display:inline-flex;
+                  margin-top:7px;
+                  padding:4px 9px;
+                  border-radius:999px;
+                  background:#e9f8ef;
+                  color:#18794e;
+                  font-size:11px;
+                  font-weight:800;
+                ">
+                  ðŸ’š Matched
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onclick="viewProfile('${profile.id}')"
+                style="
+                  border:0;
+                  background:linear-gradient(135deg,#7c3aed,#5b21b6);
+                  color:#fff;
+                  border-radius:10px;
+                  padding:9px 12px;
+                  font-weight:800;
+                  cursor:pointer;
+                  white-space:nowrap;
+                "
+              >
+                View
+              </button>
+            </article>
+          `;
+        }).join("")
+      : `
+        <div style="
+          background:linear-gradient(135deg,#fff,#fbf6f8);
+          border:1px solid rgba(111,16,37,.10);
+          border-radius:20px;
+          padding:24px;
+          text-align:center;
+          box-shadow:0 8px 24px rgba(52,19,30,.06);
+        ">
+          <div style="font-size:32px;margin-bottom:8px;">ðŸ’•</div>
+          <h3 style="margin:0 0 6px;color:#24151a;">
+            Your Matches Will Appear Here
+          </h3>
+          <p style="margin:0;color:#7b626a;font-size:13px;">
+            When someone accepts your interest, the two of you become a confirmed match and it will appear here.
+          </p>
+          <button
+            type="button"
+            onclick="openFindMatches()"
+            style="
+              margin-top:14px;
+              border:0;
+              background:linear-gradient(135deg,#7c3aed,#5b21b6);
+              color:#fff;
+              border-radius:12px;
+              padding:10px 16px;
+              font-weight:800;
+              cursor:pointer;
+            "
+          >
+            Find Matches
+          </button>
+        </div>
+      `;
+
+    section.innerHTML = `
+      <div style="
+        display:flex;
+        align-items:end;
+        justify-content:space-between;
+        gap:15px;
+        margin-bottom:14px;
+      ">
+        <div>
+          <div style="
+            font-size:12px;
+            color:#7c3aed;
+            font-weight:900;
+            letter-spacing:.08em;
+            text-transform:uppercase;
+          ">
+            SamajSaathi
+          </div>
+          <h2 style="
+            margin:3px 0 0;
+            color:#24151a;
+            font-size:25px;
+          ">
+            ðŸ’š Your Matches
+          </h2>
+          <p style="
+            margin:5px 0 0;
+            color:#7b626a;
+            font-size:13px;
+          ">
+            People where interest has been accepted.
+          </p>
+        </div>
+
+        ${
+          matches.length
+            ? `<button type="button" onclick="openFindMatches()" style="
+                border:1px solid rgba(124,58,237,.22);
+                background:#fff;
+                color:#5b21b6;
+                border-radius:10px;
+                padding:9px 13px;
+                font-weight:800;
+                cursor:pointer;
+              ">View All</button>`
+            : ""
+        }
+      </div>
+
+      <div style="
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+        gap:13px;
+      ">
+        ${cards}
+      </div>
+    `;
+
+    const footer =
+      document.querySelector("footer");
+
+    if (footer && footer.parentNode) {
+      footer.parentNode.insertBefore(section, footer);
+    } else {
+      const main =
+        document.querySelector("main") ||
+        document.body;
+      main.appendChild(section);
+    }
+
+  } catch (error) {
+    console.error("LOAD HOMEPAGE MATCHES ERROR:", error);
+  }
+}
+
+function refreshHomepageLoggedInUI() {
+  if (!isPublicHomeRoute()) return;
+
+  updateHomepageUserUI();
+  loadHomepageMatches();
+}
+
 // ============================================================
 // GO TO HOME PAGE FROM DASHBOARD
 // Keeps the user logged in.
@@ -7535,6 +7858,8 @@ async function goHomeFromDashboard() {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     await loadProfiles();
+    await updateHomepageUserUI();
+    await loadHomepageMatches();
 
   } catch (error) {
 
