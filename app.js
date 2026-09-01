@@ -7408,7 +7408,7 @@ async function updateHomepageUserUI() {
 
     const profileResult = await supabaseClient
       .from("profiles")
-      .select("id, full_name, profile_photo, first_name")
+      .select("id, full_name, profile_photo, photo_url, first_name")
       .eq("id", userId)
       .maybeSingle();
 
@@ -7419,13 +7419,27 @@ async function updateHomepageUserUI() {
 
     const profile = profileResult.data || {};
     const name = profile.full_name || profile.first_name || "My Profile";
-    const photoUrl = getProfilePhotoUrl(profile.profile_photo);
+    const photoUrl = getProfilePhotoUrl(profile.profile_photo || profile.photo_url);
 
     if (oldChip) oldChip.remove();
 
     const chip = document.createElement("div");
     chip.id = "samajHomepageUserChip";
     chip.innerHTML = `
+      <div style="
+        position:absolute;
+        right:12px;
+        top:-7px;
+        background:#16834b;
+        color:#fff;
+        font-size:9px;
+        font-weight:900;
+        padding:3px 7px;
+        border-radius:999px;
+        letter-spacing:.04em;
+        box-shadow:0 3px 8px rgba(0,0,0,.15);
+        pointer-events:none;
+      ">â— LOGGED IN</div>
       <button type="button" onclick="openDashboard()" aria-label="Open My Dashboard" style="
         display:flex;
         align-items:center;
@@ -7466,25 +7480,14 @@ async function updateHomepageUserUI() {
       </button>
     `;
 
-    // Prefer an existing navigation action area.
-    const target =
-      document.querySelector(".nav-actions") ||
-      document.querySelector(".navbar-actions") ||
-      document.querySelector(".header-actions") ||
-      document.querySelector("header nav") ||
-      document.querySelector("nav");
-
-    if (target) {
-      target.appendChild(chip);
-      chip.style.position = "relative";
-      chip.style.zIndex = "20";
-    } else {
-      chip.style.position = "fixed";
-      chip.style.top = "14px";
-      chip.style.right = "20px";
-      chip.style.zIndex = "9990";
-      document.body.appendChild(chip);
-    }
+    // Keep the logged-in identity clearly visible on the public homepage.
+    // A fixed chip avoids depending on unknown navbar class names in index.html.
+    chip.style.position = "fixed";
+    chip.style.top = "14px";
+    chip.style.right = "20px";
+    chip.style.zIndex = "99999";
+    chip.style.display = "block";
+    document.body.appendChild(chip);
 
   } catch (error) {
     console.error("UPDATE HOMEPAGE USER UI ERROR:", error);
@@ -7502,7 +7505,15 @@ function hideLoggedOutHomepageButtons() {
     if (el.id === "samajHomepageUserChip" || el.closest("#samajHomepageUserChip")) return;
 
     const text = String(el.textContent || "").trim().toLowerCase();
-    if (text === "login" || text === "create profile" || text === "create account") {
+    const isLoginButton =
+      text === "login" ||
+      text === "login / register" ||
+      text === "login/register" ||
+      text.includes("login") && text.includes("register") ||
+      text === "create profile" ||
+      text === "create account";
+
+    if (isLoginButton) {
       el.dataset.samajLoggedInHidden = "true";
       el.style.display = "none";
     }
@@ -7858,8 +7869,20 @@ async function goHomeFromDashboard() {
 
     window.scrollTo({ top: 0, behavior: "smooth" });
     await loadProfiles();
+
+    // Render the public homepage identity after the homepage is visible.
     await updateHomepageUserUI();
+    hideLoggedOutHomepageButtons();
     await loadHomepageMatches();
+
+    // Final repaint catches nav/content that index.html may render asynchronously.
+    setTimeout(async function() {
+      if (!samajNavigatingHome && isPublicHomeRoute()) {
+        await updateHomepageUserUI();
+        hideLoggedOutHomepageButtons();
+        await loadHomepageMatches();
+      }
+    }, 300);
 
   } catch (error) {
 
@@ -8171,11 +8194,14 @@ function setupNavigationProtection() {
       );
 
 
-      if (
-        samajLoggingOut ||
-        samajNavigatingHome ||
-        isPublicHomeRoute()
-      ) {
+      if (samajLoggingOut || samajNavigatingHome) {
+        return;
+      }
+
+      if (isPublicHomeRoute()) {
+        updateHomepageUserUI();
+        hideLoggedOutHomepageButtons();
+        loadHomepageMatches();
         return;
       }
 
@@ -8488,6 +8514,7 @@ document.addEventListener(
 
     await updateHomepageUserUI();
     hideLoggedOutHomepageButtons();
+    await loadHomepageMatches();
 
 
     await loadNotifications();
