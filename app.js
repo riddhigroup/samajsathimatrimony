@@ -3022,6 +3022,322 @@ function profileViewerItem(
 }
 
 
+
+// ============================================================
+// CONFIRMED MATCH HELPERS
+// A match exists ONLY when BOTH directions of interest are accepted.
+// ============================================================
+
+function normalizeMatchPair(userA, userB) {
+  if (!userA || !userB || userA === userB) return null;
+  return String(userA) < String(userB)
+    ? { user1_id: userA, user2_id: userB }
+    : { user1_id: userB, user2_id: userA };
+}
+
+async function ensureConfirmedMatch(userA, userB) {
+  if (!supabaseClient || !userA || !userB || userA === userB) {
+    return { matched: false, error: null };
+  }
+
+  try {
+    const pair = normalizeMatchPair(userA, userB);
+
+    const [forwardResult, reverseResult] = await Promise.all([
+      supabaseClient
+        .from("interests")
+        .select("id,status")
+        .eq("sender_id", userA)
+        .eq("receiver_id", userB)
+        .eq("status", "accepted")
+        .maybeSingle(),
+
+      supabaseClient
+        .from("interests")
+        .select("id,status")
+        .eq("sender_id", userB)
+        .eq("receiver_id", userA)
+        .eq("status", "accepted")
+        .maybeSingle()
+    ]);
+
+    if (forwardResult.error) throw forwardResult.error;
+    if (reverseResult.error) throw reverseResult.error;
+
+    // BOTH directions must be accepted.
+    if (!forwardResult.data || !reverseResult.data) {
+      return { matched: false, error: null };
+    }
+
+    // Check whether the normalized pair already exists.
+    const existingResult = await supabaseClient
+      .from("matches")
+      .select("id,user1_id,user2_id,match_score,created_at")
+      .eq("user1_id", pair.user1_id)
+      .eq("user2_id", pair.user2_id)
+      .maybeSingle();
+
+    if (existingResult.error) throw existingResult.error;
+
+    if (existingResult.data) {
+      return { matched: true, match: existingResult.data, created: false };
+    }
+
+    // Insert exactly one normalized pair.
+    const insertResult = await supabaseClient
+      .from("matches")
+      .insert({
+        user1_id: pair.user1_id,
+        user2_id: pair.user2_id,
+        match_score: 100
+      })
+      .select("id,user1_id,user2_id,match_score,created_at")
+      .single();
+
+    if (insertResult.error) {
+      // A duplicate caused by a simultaneous request is harmless.
+      if (insertResult.error.code === "23505") {
+        const retry = await supabaseClient
+          .from("matches")
+          .select("id,user1_id,user2_id,match_score,created_at")
+          .eq("user1_id", pair.user1_id)
+          .eq("user2_id", pair.user2_id)
+          .maybeSingle();
+
+        if (!retry.error && retry.data) {
+          return { matched: true, match: retry.data, created: false };
+        }
+      }
+      throw insertResult.error;
+    }
+
+    return { matched: true, match: insertResult.data, created: true };
+
+  } catch (error) {
+    console.error("ENSURE CONFIRMED MATCH ERROR:", error);
+    return { matched: false, error };
+  }
+}
+
+async function getConfirmedMatchesForUser(userId) {
+  if (!supabaseClient || !userId) return { matches: [], error: null };
+
+  const result = await supabaseClient
+    .from("matches")
+    .select("id,user1_id,user2_id,match_score,created_at")
+    .or("user1_id.eq." + userId + ",user2_id.eq." + userId)
+    .order("created_at", { ascending: false });
+
+  if (result.error) {
+    console.error("LOAD CONFIRMED MATCHES ERROR:", result.error);
+    return { matches: [], error: result.error };
+  }
+
+  return { matches: result.data || [], error: null };
+}
+
+async function createMatchNotification(userId, otherUserId) {
+  if (!supabaseClient || !userId || !otherUserId) return false;
+
+  try {
+    const profileResult = await supabaseClient
+      .from("profiles")
+      .select("full_name")
+      .eq("id", otherUserId)
+      .maybeSingle();
+
+    const otherName =
+      profileResult.data?.full_name || "your SamajSaathi connection";
+
+    const result = await supabaseClient
+      .from("notifications")
+      .insert({
+        user_id: userId,
+        sender_id: otherUserId,
+        type: "match",
+        title: "Match Confirmed â¤ï¸",
+        message: "You and " + otherName + " are now a confirmed SamajSaathi match.",
+        is_read: false
+      });
+
+    if (result.error) {
+      console.warn("MATCH NOTIFICATION WARNING:", result.error);
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.warn("MATCH NOTIFICATION ERROR:", error);
+    return false;
+  }
+}
+
+// ============================================================
+// DASHBOARD / HOME CONFIRMED MATCH LOADER
+// ============================================================
+
+async function loadConfirmedMatchesForDashboard() {
+  const container =
+    document.getElementById("confirmedMatchesContainer") ||
+    document.getElementById("matchesContainer");
+
+  if (!container || !supabaseClient) return;
+
+  const sessionResult = await supabaseClient.auth.getSession();
+  const session = sessionResult.data?.session;
+  if (!session) return;
+
+  const result = await getConfirmedMatchesForUser(session.user.id);
+
+  if (result.error) {
+    container.innerHTML = `
+      <div class="samaj-coming-soon">
+        <h3>Unable to load confirmed matches</h3>
+        <p>${escapeHtml(result.error.message)}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const matchRows = result.matches;
+
+  if (!matchRows.length) {
+    container.innerHTML = `
+      <div class="samaj-coming-soon">
+        <div class="samaj-coming-soon-icon">â¤ï¸</div>
+        <h3>No confirmed matches yet</h3>
+        <p>A match appears only after both people accept each other's interest.</p>
+        <button type="button" class="btn primary" onclick="showDashboardSection('matches')">
+          Find Matches
+        </button>
+      </div>
+    `;
+    return;
+  }
+
+  const otherIds = matchRows.map(row =>
+    row.user1_id === session.user.id ? row.user2_id : row.user1_id
+  );
+
+  const profilesResult = await supabaseClient
+    .from("profiles")
+    .select(`
+      id,
+      full_name,
+      first_name,
+      age,
+      city,
+      state,
+      community,
+      surname,
+      kul,
+      profile_photo,
+      photo_url,
+      gender
+    `)
+    .in("id", otherIds)
+    .eq("is_active", true);
+
+  if (profilesResult.error) {
+    container.innerHTML = `
+      <div class="samaj-coming-soon">
+        <h3>Unable to load matched profiles</h3>
+        <p>${escapeHtml(profilesResult.error.message)}</p>
+      </div>
+    `;
+    return;
+  }
+
+  const profileMap = new Map(
+    (profilesResult.data || []).map(profile => [profile.id, profile])
+  );
+
+  container.innerHTML = matchRows.map(row => {
+    const otherId =
+      row.user1_id === session.user.id ? row.user2_id : row.user1_id;
+    const profile = profileMap.get(otherId);
+
+    if (!profile) return "";
+
+    const photo = getProfilePhotoUrl(
+      profile.profile_photo || profile.photo_url
+    );
+
+    const location = [
+      profile.city,
+      profile.state
+    ].filter(Boolean).join(", ");
+
+    return `
+      <article style="
+        background:#fff;
+        border:1px solid #ead9dd;
+        border-radius:16px;
+        padding:15px;
+        display:flex;
+        align-items:center;
+        gap:14px;
+        margin-bottom:12px;
+      ">
+        <div style="
+          width:72px;
+          height:72px;
+          border-radius:50%;
+          overflow:hidden;
+          background:#f1e5e8;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex-shrink:0;
+        ">
+          ${
+            photo
+              ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(profile.full_name || "Profile")}"
+                    style="width:100%;height:100%;object-fit:cover;display:block;"
+                    onerror="this.style.display='none';">`
+              : `<span style="font-size:30px;">ðŸ‘¤</span>`
+          }
+        </div>
+
+        <div style="flex:1;min-width:0;">
+          <h3 style="margin:0 0 5px;">
+            ${escapeHtml(profile.full_name || profile.first_name || "Member")}
+            ${profile.age ? ", " + escapeHtml(profile.age) : ""}
+          </h3>
+
+          <small style="display:block;margin-bottom:5px;">
+            ðŸ“ ${escapeHtml(location || "Location not specified")}
+          </small>
+
+          <small style="display:block;margin-bottom:8px;">
+            ${escapeHtml(profile.community || "")}
+            ${profile.surname ? " Â· " + escapeHtml(profile.surname) : ""}
+          </small>
+
+          <span style="
+            display:inline-block;
+            padding:5px 9px;
+            border-radius:20px;
+            background:#e7f7ed;
+            color:#18794e;
+            font-size:12px;
+            font-weight:700;
+          ">â¤ï¸ Matched</span>
+        </div>
+
+        <button
+          type="button"
+          class="samaj-view-profile-btn"
+          onclick="viewProfile('${profile.id}')"
+        >
+          View
+        </button>
+      </article>
+    `;
+  }).join("");
+}
+
+
 // ============================================================
 // SEND INTEREST
 // ============================================================
@@ -5018,126 +5334,59 @@ async function respondToInterest(
   interestId,
   status
 ) {
+  if (!interestId) return;
 
-  if (!interestId) {
-    return;
-  }
+  if (status !== "accepted" && status !== "rejected") return;
 
+  if (!isSupabaseReady()) return;
 
-  if (
-    status !== "accepted" &&
-    status !== "rejected"
-  ) {
-    return;
-  }
-
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  const sessionResult =
-    await supabaseClient.auth
-      .getSession();
-
-
-  const session =
-    sessionResult.data?.session;
-
+  const sessionResult = await supabaseClient.auth.getSession();
+  const session = sessionResult.data?.session;
 
   if (!session) {
-
-    openModal(
-      "login"
-    );
-
+    openModal("login");
     return;
   }
 
-
   try {
-
-    // Get the interest first so we know the sender.
-    const interestResult =
-      await supabaseClient
-        .from("interests")
-        .select(`
-          id,
-          sender_id,
-          receiver_id,
-          status
-        `)
-        .eq(
-          "id",
-          interestId
-        )
-        .eq(
-          "receiver_id",
-          session.user.id
-        )
-        .maybeSingle();
-
+    const interestResult = await supabaseClient
+      .from("interests")
+      .select(`
+        id,
+        sender_id,
+        receiver_id,
+        status
+      `)
+      .eq("id", interestId)
+      .eq("receiver_id", session.user.id)
+      .maybeSingle();
 
     if (interestResult.error) {
-
-      alert(
-        "Could not load interest: " +
-        interestResult.error.message
-      );
-
+      alert("Could not load interest: " + interestResult.error.message);
       return;
     }
 
-
-    const interest =
-      interestResult.data;
-
+    const interest = interestResult.data;
 
     if (!interest) {
-
-      alert(
-        "Interest not found."
-      );
-
+      alert("Interest not found.");
       return;
     }
 
-
-    const result =
-      await supabaseClient
-        .from("interests")
-        .update({
-
-          status:
-            status,
-
-          updated_at:
-            new Date().toISOString()
-
-        })
-        .eq(
-          "id",
-          interestId
-        )
-        .eq(
-          "receiver_id",
-          session.user.id
-        );
-
+    const result = await supabaseClient
+      .from("interests")
+      .update({
+        status: status,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", interestId)
+      .eq("receiver_id", session.user.id);
 
     if (result.error) {
-
-      alert(
-        "Could not update interest: " +
-        result.error.message
-      );
-
+      alert("Could not update interest: " + result.error.message);
       return;
     }
 
-
-    // Notify the original sender.
     await createInterestResponseNotification(
       session.user.id,
       interest.sender_id,
@@ -5145,43 +5394,67 @@ async function respondToInterest(
       status
     );
 
+    let confirmedMatch = false;
+
+    if (status === "accepted") {
+      const matchResult = await ensureConfirmedMatch(
+        interest.sender_id,
+        interest.receiver_id
+      );
+
+      if (matchResult.error) {
+        console.error("MATCH CREATION ERROR:", matchResult.error);
+        alert(
+          "Interest accepted, but the confirmed match could not be created: " +
+          matchResult.error.message
+        );
+      } else if (matchResult.matched) {
+        confirmedMatch = true;
+
+        if (matchResult.created) {
+          // Notify both users. Notification failure does not undo the match.
+          await createMatchNotification(
+            session.user.id,
+            interest.sender_id
+          );
+
+          await createMatchNotification(
+            interest.sender_id,
+            session.user.id
+          );
+        }
+      }
+    }
 
     await loadReceivedInterests();
-
     await loadMyInterests();
-
     await loadMatches();
-
     await loadNotifications();
 
     if (status === "accepted") {
       await updateHomepageUserUI();
       await loadHomepageMatches();
+
+      if (typeof loadConfirmedMatchesForDashboard === "function") {
+        await loadConfirmedMatchesForDashboard();
+      }
     }
 
-
-    alert(
-      status === "accepted"
-        ? "\u{1F49A} Interest accepted!"
-        : "Interest rejected."
-    );
-
+    if (status === "accepted") {
+      if (confirmedMatch) {
+        alert("â¤ï¸ Match confirmed! Both of you have accepted the interest.");
+      } else {
+        alert("ðŸ’š Interest accepted. A match will be confirmed when both sides accept.");
+      }
+    } else {
+      alert("âŒ Interest rejected.");
+    }
 
   } catch (error) {
-
-    console.error(
-      "RESPOND INTEREST ERROR:",
-      error
-    );
-
-    alert(
-      "Something went wrong: " +
-      error.message
-    );
-
+    console.error("RESPOND INTEREST ERROR:", error);
+    alert("Something went wrong: " + error.message);
   }
 }
-
 
 // ============================================================
 // OPEN FIND MATCHES
@@ -7457,11 +7730,11 @@ async function updateHomepageUserUI() {
         ">
           ${photoUrl
             ? `<img src="${escapeHtml(photoUrl)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
-            : `<span style="font-size:20px;">ðŸ‘¤</span>`}
+            : `<span style="font-size:20px;">Ã°Å¸â€˜Â¤</span>`}
         </span>
         <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;max-width:150px;">
           <strong style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">${escapeHtml(name)}</strong>
-          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile â–¾</small>
+          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile Ã¢â€“Â¾</small>
         </span>
       </button>
     `;
@@ -7516,7 +7789,6 @@ function hideLoggedOutHomepageButtons() {
 // ============================================================
 
 async function loadHomepageMatches() {
-
   if (!supabaseClient) return;
 
   const old = document.getElementById("samajHomepageMatches");
@@ -7524,33 +7796,22 @@ async function loadHomepageMatches() {
 
   const sessionResult = await supabaseClient.auth.getSession();
   const session = sessionResult.data?.session;
+
   if (!session || !isPublicHomeRoute()) return;
 
   try {
-    // Any accepted interest involving the logged-in user is a confirmed match.
-    const result = await supabaseClient
-      .from("interests")
-      .select("id, sender_id, receiver_id, status, updated_at")
-      .eq("status", "accepted")
-      .or(
-        "sender_id.eq." + session.user.id +
-        ",receiver_id.eq." + session.user.id
-      )
-      .order("updated_at", { ascending: false });
+    const matchResult = await getConfirmedMatchesForUser(session.user.id);
 
-    if (result.error) {
-      console.error("HOMEPAGE MATCHES ERROR:", result.error);
+    if (matchResult.error) {
+      console.error("HOMEPAGE CONFIRMED MATCHES ERROR:", matchResult.error);
       return;
     }
 
-    const rows = result.data || [];
-    const otherIds = [...new Set(
-      rows.map(row =>
-        row.sender_id === session.user.id
-          ? row.receiver_id
-          : row.sender_id
-      ).filter(Boolean)
-    )];
+    const rows = matchResult.matches || [];
+
+    const otherIds = rows.map(row =>
+      row.user1_id === session.user.id ? row.user2_id : row.user1_id
+    );
 
     let profiles = [];
 
@@ -7587,12 +7848,12 @@ async function loadHomepageMatches() {
     const matches = rows
       .map(row => {
         const otherId =
-          row.sender_id === session.user.id
-            ? row.receiver_id
-            : row.sender_id;
+          row.user1_id === session.user.id
+            ? row.user2_id
+            : row.user1_id;
 
         return {
-          interest: row,
+          match: row,
           profile: profileMap.get(otherId)
         };
       })
@@ -7612,6 +7873,7 @@ async function loadHomepageMatches() {
           const photo = getProfilePhotoUrl(
             profile.profile_photo || profile.photo_url
           );
+
           const name =
             profile.full_name ||
             profile.first_name ||
@@ -7649,61 +7911,52 @@ async function loadHomepageMatches() {
               ">
                 ${
                   photo
-                    ? `<img src="${escapeHtml(photo)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
+                    ? `<img
+                        src="${escapeHtml(photo)}"
+                        alt="${escapeHtml(name)}"
+                        style="width:100%;height:100%;object-fit:cover;display:block;"
+                        onerror="this.style.display='none';"
+                      >`
                     : `<span style="font-size:28px;">ðŸ‘¤</span>`
                 }
               </div>
 
-              <div style="flex:1;min-width:0;">
+              <div style="min-width:0;flex:1;">
                 <div style="
-                  font-weight:800;
-                  font-size:15px;
+                  font-weight:900;
                   color:#24151a;
-                  white-space:nowrap;
-                  overflow:hidden;
-                  text-overflow:ellipsis;
+                  font-size:15px;
+                  margin-bottom:4px;
                 ">
                   ${escapeHtml(name)}
+                  ${profile.age ? ", " + escapeHtml(profile.age) : ""}
                 </div>
 
                 <div style="
-                  margin-top:4px;
                   color:#7b626a;
                   font-size:12px;
-                  white-space:nowrap;
-                  overflow:hidden;
-                  text-overflow:ellipsis;
+                  margin-bottom:6px;
                 ">
-                  ${escapeHtml(location || "Location not specified")}
+                  ðŸ“ ${escapeHtml(location || "Location not specified")}
                 </div>
 
-                <div style="
-                  display:inline-flex;
-                  margin-top:7px;
-                  padding:4px 9px;
-                  border-radius:999px;
-                  background:#e9f8ef;
+                <span style="
+                  display:inline-block;
+                  padding:5px 9px;
+                  border-radius:20px;
+                  background:#e7f7ed;
                   color:#18794e;
                   font-size:11px;
                   font-weight:800;
                 ">
-                  ðŸ’š Matched
-                </div>
+                  â¤ï¸ Matched
+                </span>
               </div>
 
               <button
                 type="button"
+                class="samaj-view-profile-btn"
                 onclick="viewProfile('${profile.id}')"
-                style="
-                  border:0;
-                  background:linear-gradient(135deg,#7c3aed,#5b21b6);
-                  color:#fff;
-                  border-radius:10px;
-                  padding:9px 12px;
-                  font-weight:800;
-                  cursor:pointer;
-                  white-space:nowrap;
-                "
               >
                 View
               </button>
@@ -7712,19 +7965,21 @@ async function loadHomepageMatches() {
         }).join("")
       : `
         <div style="
-          background:linear-gradient(135deg,#fff,#fbf6f8);
+          background:#fff;
           border:1px solid rgba(111,16,37,.10);
           border-radius:20px;
-          padding:24px;
+          padding:28px;
           text-align:center;
           box-shadow:0 8px 24px rgba(52,19,30,.06);
         ">
-          <div style="font-size:32px;margin-bottom:8px;">ðŸ’•</div>
+          <div style="font-size:32px;margin-bottom:8px;">ðŸ’•
+
+          </div>
           <h3 style="margin:0 0 6px;color:#24151a;">
             Your Matches Will Appear Here
           </h3>
           <p style="margin:0;color:#7b626a;font-size:13px;">
-            When someone accepts your interest, the two of you become a confirmed match and it will appear here.
+            A confirmed match appears only after both people accept each other's interest.
           </p>
           <button
             type="button"
@@ -7763,6 +8018,7 @@ async function loadHomepageMatches() {
           ">
             SamajSaathi
           </div>
+
           <h2 style="
             margin:3px 0 0;
             color:#24151a;
@@ -7770,12 +8026,13 @@ async function loadHomepageMatches() {
           ">
             ðŸ’š Your Matches
           </h2>
+
           <p style="
             margin:5px 0 0;
             color:#7b626a;
             font-size:13px;
           ">
-            People where interest has been accepted.
+            Confirmed matches where both people have accepted.
           </p>
         </div>
 
@@ -7803,8 +8060,7 @@ async function loadHomepageMatches() {
       </div>
     `;
 
-    const footer =
-      document.querySelector("footer");
+    const footer = document.querySelector("footer");
 
     if (footer && footer.parentNode) {
       footer.parentNode.insertBefore(section, footer);
