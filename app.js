@@ -9037,3 +9037,196 @@ if (typeof originalShowDashboardSectionForChat === "function") {
   };
 }
 
+
+// ============================================================
+// SAMAJSAATHI FINAL UI PATCH
+// Login visibility + Chat button inside Find Your Matches/Profile
+// ============================================================
+
+// Keep Login/Create Profile visible when logged out.
+// Hide them only after a real Supabase session is confirmed.
+function hideLoggedOutHomepageButtons() {
+  if (!isPublicHomeRoute()) return;
+
+  let hasSession = false;
+  try {
+    hasSession = !!localStorage.getItem("sb-" + SUPABASE_URL.replace(/https?:\/\//, "").replace(/\./g, "-") + "-auth-token");
+  } catch (e) {}
+
+  document.querySelectorAll(".actions a, .actions button, .nav-actions a, .nav-actions button, .navbar-actions a, .navbar-actions button, header nav a, header nav button").forEach(function(el) {
+    if (el.id === "samajHomepageUserChip" || el.closest("#samajHomepageUserChip")) return;
+
+    const text = String(el.textContent || "").trim().toLowerCase();
+    if (text === "login" || text === "create profile" || text === "create account") {
+      el.dataset.samajLoggedOutControl = "true";
+      el.style.display = hasSession ? "none" : "";
+    }
+  });
+}
+
+// More reliable async version: check the actual Supabase session.
+async function refreshHomepageAuthControls() {
+  if (!isPublicHomeRoute() || !supabaseClient) return;
+
+  try {
+    const result = await supabaseClient.auth.getSession();
+    const hasSession = !!result.data?.session;
+
+    document.querySelectorAll("a, button").forEach(function(el) {
+      if (el.id === "samajHomepageUserChip" || el.closest("#samajHomepageUserChip")) return;
+
+      const text = String(el.textContent || "").trim().toLowerCase();
+      if (text === "login" || text === "create profile" || text === "create account") {
+        el.dataset.samajLoggedOutControl = "true";
+        el.style.display = hasSession ? "none" : "";
+      }
+    });
+  } catch (error) {
+    console.warn("AUTH CONTROL REFRESH ERROR:", error);
+  }
+}
+
+// Prepare confirmed-match IDs before the existing Find Matches renderer
+// creates its cards.
+const samajOriginalLoadMatchesFinalPatch = loadMatches;
+
+async function loadMatches() {
+  window.__samajConfirmedMatchIds = new Set();
+
+  try {
+    const sessionResult = await supabaseClient.auth.getSession();
+    const session = sessionResult.data?.session;
+
+    if (session) {
+      const result = await supabaseClient
+        .from("matches")
+        .select("user1_id,user2_id")
+        .or("user1_id.eq." + session.user.id + ",user2_id.eq." + session.user.id);
+
+      if (!result.error) {
+        (result.data || []).forEach(function(row) {
+          const otherId = row.user1_id === session.user.id ? row.user2_id : row.user1_id;
+          if (otherId) window.__samajConfirmedMatchIds.add(otherId);
+        });
+      }
+    }
+  } catch (error) {
+    console.warn("CONFIRMED MATCH IDS ERROR:", error);
+  }
+
+  return await samajOriginalLoadMatchesFinalPatch();
+}
+
+// Add Chat to the existing Find Your Matches card only for confirmed matches.
+const samajOriginalCreateMatchCardFinalPatch = createMatchCard;
+
+function createMatchCard(profile, interestRows) {
+  const html = samajOriginalCreateMatchCardFinalPatch(profile, interestRows);
+  const confirmedIds = window.__samajConfirmedMatchIds || new Set();
+
+  if (!confirmedIds.has(profile.id)) {
+    return html;
+  }
+
+  const chatButton = `
+    <button
+      type="button"
+      onclick="openChat('${profile.id}')"
+      style="
+        flex:1;
+        min-width:120px;
+        border:0;
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        color:#fff;
+        border-radius:10px;
+        padding:11px 12px;
+        font-weight:800;
+        cursor:pointer;
+      "
+    >
+      ðŸ’¬ Chat
+    </button>
+  `;
+
+  // Insert into the existing action row before its closing div.
+  return html.replace(
+    /<\/div>\s*<\/div>\s*<\/article>\s*$/,
+    function() {
+      return chatButton + "</div>\n\n      </div>\n\n    </article>";
+    }
+  );
+}
+
+// Add Chat to the existing profile viewer when this person is a confirmed match.
+const samajOriginalViewProfileFinalPatch = viewProfile;
+
+async function viewProfile(profileId) {
+  await samajOriginalViewProfileFinalPatch(profileId);
+
+  if (!supabaseClient || !profileId) return;
+
+  try {
+    const sessionResult = await supabaseClient.auth.getSession();
+    const session = sessionResult.data?.session;
+    if (!session || session.user.id === profileId) return;
+
+    const result = await supabaseClient
+      .from("matches")
+      .select("id")
+      .or(
+        "and(user1_id.eq." + session.user.id + ",user2_id.eq." + profileId + ")," +
+        "and(user1_id.eq." + profileId + ",user2_id.eq." + session.user.id + ")"
+      )
+      .maybeSingle();
+
+    if (result.error || !result.data) return;
+
+    const viewer = document.getElementById("samajProfileViewer");
+    if (!viewer) return;
+
+    const actions = viewer.querySelector(".samaj-interest-btn")?.parentElement;
+    if (!actions || actions.querySelector(".samaj-chat-profile-btn")) return;
+
+    const chat = document.createElement("button");
+    chat.type = "button";
+    chat.className = "samaj-chat-profile-btn";
+    chat.textContent = "ðŸ’¬ Chat";
+    chat.style.cssText = "margin-left:8px;border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer;";
+    chat.addEventListener("click", function() {
+      viewer.remove();
+      openChat(profileId);
+    });
+
+    actions.appendChild(chat);
+  } catch (error) {
+    console.warn("PROFILE CHAT BUTTON ERROR:", error);
+  }
+}
+
+// Re-expose final patched functions.
+window.loadMatches = loadMatches;
+window.createMatchCard = createMatchCard;
+window.viewProfile = viewProfile;
+window.hideLoggedOutHomepageButtons = hideLoggedOutHomepageButtons;
+window.refreshHomepageAuthControls = refreshHomepageAuthControls;
+
+// Make sure the Login button is restored after logout and hidden only for a
+// genuinely logged-in session.
+window.addEventListener("load", function() {
+  setTimeout(refreshHomepageAuthControls, 250);
+});
+
+
+// Restore public Login/Create Profile controls immediately after logout.
+const samajOriginalLogoutUserFinalPatch = logoutUser;
+async function logoutUser() {
+  await samajOriginalLogoutUserFinalPatch();
+  try {
+    await updateHomepageUserUI();
+    await loadHomepageMatches();
+    await refreshHomepageAuthControls();
+  } catch (error) {
+    console.warn("POST LOGOUT UI REFRESH ERROR:", error);
+  }
+}
+window.logoutUser = logoutUser;
