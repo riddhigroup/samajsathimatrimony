@@ -1,3 +1,4 @@
+// SAMAJSAATHI DEPLOY BUILD: 2026-09-04-chat-ui-fix-v2
 // ============================================================
 // SAMAJ SAATHI MATRIMONY
 // SUPABASE CONNECTED APP
@@ -7457,11 +7458,11 @@ async function updateHomepageUserUI() {
         ">
           ${photoUrl
             ? `<img src="${escapeHtml(photoUrl)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
-            : `<span style="font-size:20px;">Ã°Å¸â€˜Â¤</span>`}
+            : `<span style="font-size:20px;">&#128100;</span>`}
         </span>
         <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;max-width:150px;">
           <strong style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">${escapeHtml(name)}</strong>
-          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile Ã¢â€“Â¾</small>
+          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile â–¾</small>
         </span>
       </button>
     `;
@@ -7649,7 +7650,7 @@ async function loadHomepageMatches() {
                 ${
                   photo
                     ? `<img src="${escapeHtml(photo)}" alt="Profile photo" style="width:100%;height:100%;object-fit:cover;">`
-                    : `<span style="font-size:28px;">Ã°Å¸â€˜Â¤</span>`
+                    : `<span style="font-size:28px;">&#128100;</span>`
                 }
               </div>
 
@@ -7686,7 +7687,7 @@ async function loadHomepageMatches() {
                   font-size:11px;
                   font-weight:800;
                 ">
-                  Ã°Å¸â€™Å¡ Matched
+                  &#128155; Matched
                 </div>
               </div>
 
@@ -7718,7 +7719,7 @@ async function loadHomepageMatches() {
           text-align:center;
           box-shadow:0 8px 24px rgba(52,19,30,.06);
         ">
-          <div style="font-size:32px;margin-bottom:8px;">Ã°Å¸â€™â€¢</div>
+          <div style="font-size:32px;margin-bottom:8px;">&#128149;</div>
           <h3 style="margin:0 0 6px;color:#24151a;">
             Your Matches Will Appear Here
           </h3>
@@ -7767,7 +7768,7 @@ async function loadHomepageMatches() {
             color:#24151a;
             font-size:25px;
           ">
-            Ã°Å¸â€™Å¡ Your Matches
+            &#128155; Your Matches
           </h2>
           <p style="
             margin:5px 0 0;
