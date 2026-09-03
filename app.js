@@ -8913,46 +8913,78 @@ async function ssOpenChat(otherUserId) {
         <div style="text-align:center;color:#8a788f;padding:25px;">Loading messages...</div>
       </div>
 
-      <form id="ssChatForm"
-        style="display:flex;gap:8px;padding:12px;border-top:1px solid #eee;background:#fff;">
+      <div id="ssChatComposer"
+        style="display:flex!important;flex-direction:row!important;align-items:center!important;
+        gap:8px!important;padding:12px!important;border-top:1px solid #eee!important;
+        background:#fff!important;width:100%!important;box-sizing:border-box!important;">
         <input id="ssChatInput" maxlength="1000" autocomplete="off"
           placeholder="Type a message..."
-          style="flex:1;border:1px solid #ddd;border-radius:12px;padding:12px;outline:none;">
-        <button type="submit"
-          style="border:0;background:#7c3aed;color:#fff;border-radius:12px;
-          padding:0 17px;font-weight:800;cursor:pointer;">Send</button>
-      </form>
+          style="display:block!important;flex:1 1 auto!important;min-width:0!important;
+          width:auto!important;height:44px!important;box-sizing:border-box!important;
+          border:1px solid #ddd!important;border-radius:12px!important;padding:12px!important;
+          outline:none!important;background:#fff!important;color:#24151a!important;">
+        <button type="button" id="ssChatSendBtn"
+          style="display:block!important;flex:0 0 auto!important;width:82px!important;
+          height:44px!important;border:0!important;background:#7c3aed!important;
+          color:#fff!important;border-radius:12px!important;padding:0 14px!important;
+          font-weight:800!important;cursor:pointer!important;visibility:visible!important;
+          opacity:1!important;">Send</button>
+      </div>
     </div>`;
 
   document.body.appendChild(modal);
 
   document.getElementById("ssChatClose").onclick = () => modal.remove();
 
-  document.getElementById("ssChatForm").onsubmit = async e => {
-    e.preventDefault();
-
+  const sendChatMessage = async () => {
     const input = document.getElementById("ssChatInput");
-    const body = String(input.value || "").trim();
+    const sendBtn = document.getElementById("ssChatSendBtn");
+    const body = String(input?.value || "").trim();
 
     if (!body) return;
 
-    const send = await supabaseClient
-      .from("messages")
-      .insert({
-        sender_id: session.user.id,
-        receiver_id: otherUserId,
-        body
-      });
-
-    if (send.error) {
-      console.error("SEND MESSAGE:", send.error);
-      alert("Message could not be sent: " + send.error.message);
-      return;
+    if (sendBtn) {
+      sendBtn.disabled = true;
+      sendBtn.textContent = "Sending...";
+      sendBtn.style.opacity = "0.7";
     }
 
-    input.value = "";
-    await ssLoadChat(session.user.id, otherUserId);
-    input.focus();
+    try {
+      const send = await supabaseClient
+        .from("messages")
+        .insert({
+          sender_id: session.user.id,
+          receiver_id: otherUserId,
+          message: body,
+          body: body
+        });
+
+      if (send.error) {
+        console.error("SEND MESSAGE:", send.error);
+        alert("Message could not be sent: " + send.error.message);
+        return;
+      }
+
+      input.value = "";
+      await ssLoadChat(session.user.id, otherUserId);
+      input.focus();
+
+    } finally {
+      if (sendBtn) {
+        sendBtn.disabled = false;
+        sendBtn.textContent = "Send";
+        sendBtn.style.opacity = "1";
+      }
+    }
+  };
+
+  document.getElementById("ssChatSendBtn").onclick = sendChatMessage;
+
+  document.getElementById("ssChatInput").onkeydown = e => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sendChatMessage();
+    }
   };
 
   modal.addEventListener("click", e => {
@@ -8999,7 +9031,7 @@ async function ssLoadChat(currentUserId, otherUserId) {
             color:${mine ? "#fff" : "#24151a"};padding:9px 12px;border-radius:15px;
             box-shadow:0 2px 8px rgba(0,0,0,.06);">
             <div style="white-space:pre-wrap;word-break:break-word;font-size:14px;">
-              ${escapeHtml(m.body)}
+              ${escapeHtml(m.body ?? m.message ?? "")}
             </div>
             <div style="font-size:9px;opacity:.7;margin-top:4px;text-align:right;">
               ${escapeHtml(time)}
