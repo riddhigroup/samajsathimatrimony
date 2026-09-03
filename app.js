@@ -9230,3 +9230,421 @@ async function logoutUser() {
   }
 }
 window.logoutUser = logoutUser;
+
+
+// ============================================================
+// FINAL CHAT VISIBILITY + VIEW PROFILE FIX
+// This patch intentionally works on top of the existing app.js
+// without changing the existing Find Matches structure.
+// ============================================================
+
+async function samajGetConfirmedOtherIds(userId) {
+  if (!supabaseClient || !userId) return new Set();
+
+  try {
+    const result = await supabaseClient
+      .from("matches")
+      .select("user1_id,user2_id")
+      .or(
+        "user1_id.eq." + userId + ",user2_id.eq." + userId
+      );
+
+    if (result.error) {
+      console.error("CHAT MATCH LOOKUP ERROR:", result.error);
+      return new Set();
+    }
+
+    const ids = new Set();
+
+    (result.data || []).forEach(function(row) {
+      const other =
+        row.user1_id === userId
+          ? row.user2_id
+          : row.user1_id;
+
+      if (other) ids.add(other);
+    });
+
+    return ids;
+
+  } catch (error) {
+    console.error("CHAT MATCH LOOKUP ERROR:", error);
+    return new Set();
+  }
+}
+
+
+function samajExtractProfileIdFromCard(card) {
+
+  if (!card) return null;
+
+  const buttons = card.querySelectorAll("button");
+
+  for (const button of buttons) {
+
+    const onclick =
+      button.getAttribute("onclick") || "";
+
+    const match =
+      onclick.match(
+        /(?:viewProfile|sendInterest)\(['"]([^'"]+)['"]/
+      );
+
+    if (match && match[1]) {
+      return match[1];
+    }
+  }
+
+  return null;
+}
+
+
+function samajAddChatButtonToCard(card, profileId) {
+
+  if (!card || !profileId) return;
+
+  if (
+    card.querySelector(
+      ".samaj-confirmed-chat-button"
+    )
+  ) {
+    return;
+  }
+
+  const actionCandidates = [
+    card.querySelector(".samaj-card-actions"),
+    card.querySelector(".modal-actions"),
+    card.querySelector(".samaj-interest-btn")?.parentElement,
+    card.querySelector("button")?.parentElement
+  ];
+
+  let actions =
+    actionCandidates.find(Boolean);
+
+  if (!actions) return;
+
+  const button =
+    document.createElement("button");
+
+  button.type = "button";
+
+  button.className =
+    "samaj-confirmed-chat-button";
+
+  button.textContent =
+    "ðŸ’¬ Chat";
+
+  button.style.cssText =
+    [
+      "border:0",
+      "background:linear-gradient(135deg,#7c3aed,#5b21b6)",
+      "color:#fff",
+      "border-radius:10px",
+      "padding:10px 14px",
+      "font-weight:800",
+      "cursor:pointer",
+      "margin-left:8px",
+      "white-space:nowrap"
+    ].join(";");
+
+  button.addEventListener(
+    "click",
+    function(event) {
+
+      event.preventDefault();
+      event.stopPropagation();
+
+      openChat(profileId);
+
+    }
+  );
+
+  actions.appendChild(button);
+}
+
+
+async function samajAddChatButtonsToFindMatches() {
+
+  if (!supabaseClient) return;
+
+  const sessionResult =
+    await supabaseClient.auth.getSession();
+
+  const session =
+    sessionResult.data?.session;
+
+  if (!session) return;
+
+  const confirmedIds =
+    await samajGetConfirmedOtherIds(
+      session.user.id
+    );
+
+  const cards =
+    document.querySelectorAll(
+      "#matchesGrid .samaj-match-card"
+    );
+
+  cards.forEach(function(card) {
+
+    const profileId =
+      samajExtractProfileIdFromCard(card);
+
+    if (
+      profileId &&
+      confirmedIds.has(profileId)
+    ) {
+      samajAddChatButtonToCard(
+        card,
+        profileId
+      );
+    }
+
+  });
+}
+
+
+// Wrap the existing Find Matches loader.
+// The original profile rendering stays untouched.
+const samajPreviousLoadMatchesForChat =
+  window.loadMatches;
+
+window.loadMatches =
+  async function() {
+
+    const result =
+      await samajPreviousLoadMatchesForChat();
+
+    // Wait one tick so the existing renderer has
+    // completed its DOM update.
+    await new Promise(function(resolve) {
+      setTimeout(resolve, 50);
+    });
+
+    await samajAddChatButtonsToFindMatches();
+
+    return result;
+  };
+
+
+// ============================================================
+// PROFILE VIEWER CHAT BUTTON
+// ============================================================
+
+async function samajAddChatButtonToProfileViewer(profileId) {
+
+  if (!supabaseClient || !profileId) return;
+
+  const sessionResult =
+    await supabaseClient.auth.getSession();
+
+  const session =
+    sessionResult.data?.session;
+
+  if (
+    !session ||
+    session.user.id === profileId
+  ) {
+    return;
+  }
+
+  const confirmedIds =
+    await samajGetConfirmedOtherIds(
+      session.user.id
+    );
+
+  if (!confirmedIds.has(profileId)) {
+    return;
+  }
+
+  const viewer =
+    document.getElementById(
+      "samajProfileViewer"
+    );
+
+  if (!viewer) return;
+
+  if (
+    viewer.querySelector(
+      ".samaj-confirmed-chat-button"
+    )
+  ) {
+    return;
+  }
+
+  let actions =
+    viewer.querySelector(
+      ".modal-actions"
+    );
+
+  if (!actions) {
+
+    const interestButton =
+      viewer.querySelector(
+        ".samaj-interest-btn"
+      );
+
+    if (interestButton) {
+      actions =
+        interestButton.parentElement;
+    }
+  }
+
+  if (!actions) {
+
+    const buttons =
+      viewer.querySelectorAll(
+        "button"
+      );
+
+    if (buttons.length) {
+      actions =
+        buttons[buttons.length - 1]
+          .parentElement;
+    }
+  }
+
+  if (!actions) return;
+
+  const button =
+    document.createElement("button");
+
+  button.type = "button";
+
+  button.className =
+    "samaj-confirmed-chat-button";
+
+  button.textContent =
+    "ðŸ’¬ Chat";
+
+  button.style.cssText =
+    [
+      "border:0",
+      "background:linear-gradient(135deg,#7c3aed,#5b21b6)",
+      "color:#fff",
+      "border-radius:10px",
+      "padding:10px 16px",
+      "font-weight:800",
+      "cursor:pointer",
+      "margin-left:8px"
+    ].join(";");
+
+  button.addEventListener(
+    "click",
+    function() {
+
+      const viewerElement =
+        document.getElementById(
+          "samajProfileViewer"
+        );
+
+      if (viewerElement) {
+        viewerElement.remove();
+      }
+
+      openChat(profileId);
+
+    }
+  );
+
+  actions.appendChild(button);
+}
+
+
+const samajPreviousViewProfileForChat =
+  window.viewProfile;
+
+window.viewProfile =
+  async function(profileId) {
+
+    await samajPreviousViewProfileForChat(
+      profileId
+    );
+
+    await new Promise(function(resolve) {
+      setTimeout(resolve, 80);
+    });
+
+    await samajAddChatButtonToProfileViewer(
+      profileId
+    );
+  };
+
+
+// ============================================================
+// CHAT OPEN: If both interests are already accepted but the
+// matches row was not created because of an earlier UI issue,
+// create the confirmed match before opening chat.
+// ============================================================
+
+const samajPreviousOpenChat =
+  window.openChat;
+
+window.openChat =
+  async function(otherUserId) {
+
+    if (
+      supabaseClient &&
+      otherUserId
+    ) {
+
+      try {
+
+        const sessionResult =
+          await supabaseClient.auth.getSession();
+
+        const session =
+          sessionResult.data?.session;
+
+        if (session) {
+
+          const currentUserId =
+            session.user.id;
+
+          const confirmedIds =
+            await samajGetConfirmedOtherIds(
+              currentUserId
+            );
+
+          if (!confirmedIds.has(otherUserId)) {
+
+            // Repair an older confirmed relationship
+            // where both interests are accepted but
+            // the matches row was never inserted.
+            const repaired =
+              await ensureConfirmedMatch(
+                currentUserId,
+                otherUserId
+              );
+
+            if (repaired) {
+
+              await samajPreviousOpenChat(
+                otherUserId
+              );
+
+              return;
+            }
+          }
+        }
+
+      } catch (error) {
+
+        console.error(
+          "CHAT MATCH REPAIR ERROR:",
+          error
+        );
+      }
+    }
+
+    return samajPreviousOpenChat(
+      otherUserId
+    );
+  };
+
+
+// Re-expose the final functions.
+window.loadMatches = window.loadMatches;
+window.viewProfile = window.viewProfile;
+window.openChat = window.openChat;
+
