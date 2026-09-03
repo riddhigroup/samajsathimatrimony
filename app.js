@@ -8913,78 +8913,46 @@ async function ssOpenChat(otherUserId) {
         <div style="text-align:center;color:#8a788f;padding:25px;">Loading messages...</div>
       </div>
 
-      <div id="ssChatComposer"
-        style="display:flex!important;flex-direction:row!important;align-items:center!important;
-        gap:8px!important;padding:12px!important;border-top:1px solid #eee!important;
-        background:#fff!important;width:100%!important;box-sizing:border-box!important;">
+      <form id="ssChatForm"
+        style="display:flex;gap:8px;padding:12px;border-top:1px solid #eee;background:#fff;">
         <input id="ssChatInput" maxlength="1000" autocomplete="off"
           placeholder="Type a message..."
-          style="display:block!important;flex:1 1 auto!important;min-width:0!important;
-          width:auto!important;height:44px!important;box-sizing:border-box!important;
-          border:1px solid #ddd!important;border-radius:12px!important;padding:12px!important;
-          outline:none!important;background:#fff!important;color:#24151a!important;">
-        <button type="button" id="ssChatSendBtn"
-          style="display:block!important;flex:0 0 auto!important;width:82px!important;
-          height:44px!important;border:0!important;background:#7c3aed!important;
-          color:#fff!important;border-radius:12px!important;padding:0 14px!important;
-          font-weight:800!important;cursor:pointer!important;visibility:visible!important;
-          opacity:1!important;">Send</button>
-      </div>
+          style="flex:1;border:1px solid #ddd;border-radius:12px;padding:12px;outline:none;">
+        <button type="submit"
+          style="border:0;background:#7c3aed;color:#fff;border-radius:12px;
+          padding:0 17px;font-weight:800;cursor:pointer;">Send</button>
+      </form>
     </div>`;
 
   document.body.appendChild(modal);
 
   document.getElementById("ssChatClose").onclick = () => modal.remove();
 
-  const sendChatMessage = async () => {
+  document.getElementById("ssChatForm").onsubmit = async e => {
+    e.preventDefault();
+
     const input = document.getElementById("ssChatInput");
-    const sendBtn = document.getElementById("ssChatSendBtn");
-    const body = String(input?.value || "").trim();
+    const body = String(input.value || "").trim();
 
     if (!body) return;
 
-    if (sendBtn) {
-      sendBtn.disabled = true;
-      sendBtn.textContent = "Sending...";
-      sendBtn.style.opacity = "0.7";
+    const send = await supabaseClient
+      .from("messages")
+      .insert({
+        sender_id: session.user.id,
+        receiver_id: otherUserId,
+        body
+      });
+
+    if (send.error) {
+      console.error("SEND MESSAGE:", send.error);
+      alert("Message could not be sent: " + send.error.message);
+      return;
     }
 
-    try {
-      const send = await supabaseClient
-        .from("messages")
-        .insert({
-          sender_id: session.user.id,
-          receiver_id: otherUserId,
-          message: body,
-          body: body
-        });
-
-      if (send.error) {
-        console.error("SEND MESSAGE:", send.error);
-        alert("Message could not be sent: " + send.error.message);
-        return;
-      }
-
-      input.value = "";
-      await ssLoadChat(session.user.id, otherUserId);
-      input.focus();
-
-    } finally {
-      if (sendBtn) {
-        sendBtn.disabled = false;
-        sendBtn.textContent = "Send";
-        sendBtn.style.opacity = "1";
-      }
-    }
-  };
-
-  document.getElementById("ssChatSendBtn").onclick = sendChatMessage;
-
-  document.getElementById("ssChatInput").onkeydown = e => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      sendChatMessage();
-    }
+    input.value = "";
+    await ssLoadChat(session.user.id, otherUserId);
+    input.focus();
   };
 
   modal.addEventListener("click", e => {
@@ -9031,7 +8999,7 @@ async function ssLoadChat(currentUserId, otherUserId) {
             color:${mine ? "#fff" : "#24151a"};padding:9px 12px;border-radius:15px;
             box-shadow:0 2px 8px rgba(0,0,0,.06);">
             <div style="white-space:pre-wrap;word-break:break-word;font-size:14px;">
-              ${escapeHtml(m.body ?? m.message ?? "")}
+              ${escapeHtml(m.body)}
             </div>
             <div style="font-size:9px;opacity:.7;margin-top:4px;text-align:right;">
               ${escapeHtml(time)}
@@ -9319,3 +9287,483 @@ window.ensureConfirmedMatch = ssCreateConfirmedMatch;
    navigation system is introduced. */
 
 console.log("SamajSaathi: clean match/view/chat fix loaded.");
+
+
+/* ============================================================
+   SAMAJSAATHI PREMIUM CHAT UPGRADE
+   - WhatsApp-style message bubbles
+   - Real-time incoming messages
+   - Online/offline presence
+   - Emoji picker
+   - Message timestamps
+   - Auto-scroll
+   - Enter to send / Shift+Enter newline
+   - Safe handling of existing `message` + `body` columns
+   ============================================================ */
+
+let ssPremiumChatChannel = null;
+let ssPremiumPresenceChannel = null;
+let ssPremiumChatUserId = null;
+let ssPremiumChatOtherId = null;
+
+function ssChatTime(iso) {
+  if (!iso) return "";
+  try {
+    return new Date(iso).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  } catch (_) {
+    return "";
+  }
+}
+
+function ssEscapeChat(value) {
+  return escapeHtml(String(value ?? ""));
+}
+
+function ssChatMessageText(row) {
+  return row?.body ?? row?.message ?? "";
+}
+
+async function ssPremiumLoadMessages(currentUserId, otherUserId) {
+  const box = document.getElementById("ssPremiumChatMessages");
+  if (!box) return;
+
+  const r = await supabaseClient
+    .from("messages")
+    .select("id,sender_id,receiver_id,message,body,created_at")
+    .or(
+      "and(sender_id.eq." + currentUserId + ",receiver_id.eq." + otherUserId + ")," +
+      "and(sender_id.eq." + otherUserId + ",receiver_id.eq." + currentUserId + ")"
+    )
+    .order("created_at", { ascending: true });
+
+  if (r.error) {
+    console.error("PREMIUM CHAT LOAD:", r.error);
+    box.innerHTML = `
+      <div style="margin:auto;text-align:center;color:#b42318;padding:25px;">
+        Unable to load messages.<br>
+        <small>${ssEscapeChat(r.error.message)}</small>
+      </div>`;
+    return;
+  }
+
+  const rows = r.data || [];
+
+  if (!rows.length) {
+    box.innerHTML = `
+      <div id="ssPremiumEmptyChat"
+        style="margin:auto;text-align:center;color:#8b7b91;padding:35px 20px;">
+        <div style="font-size:42px;margin-bottom:8px;">ðŸ’¬</div>
+        <strong style="color:#4a354f;">Start your conversation</strong>
+        <div style="font-size:12px;margin-top:5px;">Say hello ðŸ‘‹</div>
+      </div>`;
+    return;
+  }
+
+  box.innerHTML = rows.map(m => {
+    const mine = m.sender_id === currentUserId;
+    const text = ssChatMessageText(m);
+
+    return `
+      <div class="ss-premium-msg-row"
+        data-message-id="${ssEscapeChat(m.id)}"
+        style="display:flex;justify-content:${mine ? "flex-end" : "flex-start"};
+        margin:3px 0;">
+        <div style="max-width:min(78%,420px);">
+          <div class="ss-premium-bubble"
+            style="background:${mine ? "linear-gradient(135deg,#7c3aed,#5b21b6)" : "#fff"};
+            color:${mine ? "#fff" : "#24151a"};
+            padding:10px 13px;border-radius:${mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
+            box-shadow:0 2px 10px rgba(44,20,55,.08);
+            border:${mine ? "0" : "1px solid #eee7f1"};
+            word-break:break-word;white-space:pre-wrap;font-size:14px;line-height:1.45;">
+            ${ssEscapeChat(text)}
+          </div>
+          <div style="font-size:9px;color:#9a8da0;margin:4px 6px;
+            text-align:${mine ? "right" : "left"};">
+            ${ssEscapeChat(ssChatTime(m.created_at))}
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  box.scrollTop = box.scrollHeight;
+}
+
+function ssPremiumAppendIncomingMessage(row, currentUserId) {
+  const box = document.getElementById("ssPremiumChatMessages");
+  if (!box || !row) return;
+
+  if (box.querySelector(`[data-message-id="${CSS.escape(String(row.id))}"]`)) {
+    return;
+  }
+
+  const empty = document.getElementById("ssPremiumEmptyChat");
+  if (empty) empty.remove();
+
+  const mine = row.sender_id === currentUserId;
+  const text = ssChatMessageText(row);
+
+  const rowEl = document.createElement("div");
+  rowEl.className = "ss-premium-msg-row";
+  rowEl.dataset.messageId = row.id;
+  rowEl.style.cssText =
+    `display:flex;justify-content:${mine ? "flex-end" : "flex-start"};margin:3px 0;`;
+
+  rowEl.innerHTML = `
+    <div style="max-width:min(78%,420px);">
+      <div style="background:${mine ? "linear-gradient(135deg,#7c3aed,#5b21b6)" : "#fff"};
+        color:${mine ? "#fff" : "#24151a"};padding:10px 13px;
+        border-radius:${mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
+        box-shadow:0 2px 10px rgba(44,20,55,.08);
+        border:${mine ? "0" : "1px solid #eee7f1"};
+        word-break:break-word;white-space:pre-wrap;font-size:14px;line-height:1.45;">
+        ${ssEscapeChat(text)}
+      </div>
+      <div style="font-size:9px;color:#9a8da0;margin:4px 6px;text-align:${mine ? "right" : "left"};">
+        ${ssEscapeChat(ssChatTime(row.created_at))}
+      </div>
+    </div>`;
+
+  box.appendChild(rowEl);
+  box.scrollTop = box.scrollHeight;
+}
+
+async function ssPremiumSendMessage() {
+  const input = document.getElementById("ssPremiumChatInput");
+  const button = document.getElementById("ssPremiumChatSend");
+  const body = String(input?.value || "").trim();
+
+  if (!body || !ssPremiumChatUserId || !ssPremiumChatOtherId) return;
+
+  if (button) {
+    button.disabled = true;
+    button.innerHTML = "â€¢â€¢â€¢";
+  }
+
+  try {
+    const r = await supabaseClient
+      .from("messages")
+      .insert({
+        sender_id: ssPremiumChatUserId,
+        receiver_id: ssPremiumChatOtherId,
+        message: body,
+        body: body
+      })
+      .select("id,sender_id,receiver_id,message,body,created_at")
+      .single();
+
+    if (r.error) {
+      console.error("PREMIUM CHAT SEND:", r.error);
+      alert("Message could not be sent: " + r.error.message);
+      return;
+    }
+
+    input.value = "";
+    ssPremiumAppendIncomingMessage(r.data, ssPremiumChatUserId);
+    input.focus();
+
+  } finally {
+    if (button) {
+      button.disabled = false;
+      button.innerHTML = "âž¤";
+    }
+  }
+}
+
+function ssPremiumStartRealtime() {
+  if (!supabaseClient || !ssPremiumChatUserId || !ssPremiumChatOtherId) return;
+
+  if (ssPremiumChatChannel) {
+    try { supabaseClient.removeChannel(ssPremiumChatChannel); } catch (_) {}
+    ssPremiumChatChannel = null;
+  }
+
+  ssPremiumChatChannel = supabaseClient
+    .channel(
+      "ss-chat-" +
+      ssPremiumChatUserId +
+      "-" +
+      ssPremiumChatOtherId +
+      "-" +
+      Date.now()
+    )
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: "messages",
+        filter: "receiver_id=eq." + ssPremiumChatUserId
+      },
+      payload => {
+        const row = payload.new;
+        if (
+          row &&
+          row.sender_id === ssPremiumChatOtherId &&
+          row.receiver_id === ssPremiumChatUserId
+        ) {
+          ssPremiumAppendIncomingMessage(row, ssPremiumChatUserId);
+        }
+      }
+    )
+    .subscribe(status => {
+      const live = document.getElementById("ssPremiumLiveStatus");
+      if (!live) return;
+
+      if (status === "SUBSCRIBED") {
+        live.textContent = "â— Live chat";
+        live.style.opacity = "1";
+      } else {
+        live.textContent = "â—‹ Connecting...";
+        live.style.opacity = ".75";
+      }
+    });
+}
+
+function ssPremiumStartPresence() {
+  if (!supabaseClient || !ssPremiumChatUserId || !ssPremiumChatOtherId) return;
+
+  if (ssPremiumPresenceChannel) {
+    try { supabaseClient.removeChannel(ssPremiumPresenceChannel); } catch (_) {}
+    ssPremiumPresenceChannel = null;
+  }
+
+  const ids = [ssPremiumChatUserId, ssPremiumChatOtherId].sort().join("-");
+
+  ssPremiumPresenceChannel = supabaseClient
+    .channel("ss-presence-" + ids, {
+      config: { presence: { key: ssPremiumChatUserId } }
+    })
+    .on("presence", { event: "sync" }, () => {
+      const state = ssPremiumPresenceChannel.presenceState();
+      const online = Object.prototype.hasOwnProperty.call(
+        state,
+        ssPremiumChatOtherId
+      );
+
+      const status = document.getElementById("ssPremiumOnlineStatus");
+      if (!status) return;
+
+      status.textContent = online ? "â— Online" : "â—‹ Offline";
+      status.style.color = online ? "#bbf7d0" : "rgba(255,255,255,.72)";
+    })
+    .subscribe(async status => {
+      if (status === "SUBSCRIBED") {
+        try {
+          await ssPremiumPresenceChannel.track({
+            online_at: new Date().toISOString()
+          });
+        } catch (e) {
+          console.warn("Presence tracking:", e);
+        }
+      }
+    });
+}
+
+async function ssPremiumOpenChat(otherUserId) {
+  const session = await ssSession();
+
+  if (!session) {
+    openModal("login");
+    return;
+  }
+
+  const confirmed = await ssConfirmed(session.user.id, otherUserId);
+
+  if (!confirmed) {
+    alert("ðŸ’¬ Chat is available only after both people accept each other's interest.");
+    return;
+  }
+
+  const pr = await supabaseClient
+    .from("profiles")
+    .select("id,full_name,profile_photo,photo_url,city,state")
+    .eq("id", otherUserId)
+    .maybeSingle();
+
+  if (pr.error || !pr.data) {
+    alert("Could not load this profile.");
+    return;
+  }
+
+  const p = pr.data;
+  const name = p.full_name || "SamajSaathi Member";
+  const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
+
+  ssPremiumChatUserId = session.user.id;
+  ssPremiumChatOtherId = otherUserId;
+
+  document.getElementById("ssPremiumChatModal")?.remove();
+
+  const modal = document.createElement("div");
+  modal.id = "ssPremiumChatModal";
+  modal.style.cssText =
+    "position:fixed;inset:0;z-index:10050;background:rgba(18,9,25,.72);" +
+    "display:flex;align-items:center;justify-content:center;padding:12px;";
+
+  modal.innerHTML = `
+    <div style="width:min(560px,100%);height:min(760px,94vh);background:#fff;
+      border-radius:24px;overflow:hidden;display:flex;flex-direction:column;
+      box-shadow:0 30px 100px rgba(0,0,0,.32);">
+
+      <header style="flex:none;padding:14px 16px;
+        background:linear-gradient(135deg,#7c3aed,#5b21b6);
+        color:#fff;display:flex;align-items:center;gap:12px;">
+
+        <div style="width:44px;height:44px;border-radius:50%;overflow:hidden;
+          background:rgba(255,255,255,.2);display:flex;align-items:center;
+          justify-content:center;flex:none;">
+          ${photo
+            ? `<img src="${ssEscapeChat(photo)}" alt=""
+                style="width:100%;height:100%;object-fit:cover;">`
+            : `<span style="font-size:23px;">ðŸ‘¤</span>`}
+        </div>
+
+        <div style="min-width:0;flex:1;">
+          <div style="font-weight:900;font-size:16px;white-space:nowrap;
+            overflow:hidden;text-overflow:ellipsis;">
+            ${ssEscapeChat(name)}
+          </div>
+          <div id="ssPremiumOnlineStatus"
+            style="font-size:10px;color:rgba(255,255,255,.72);margin-top:2px;">
+            â—‹ Offline
+          </div>
+          <div id="ssPremiumLiveStatus"
+            style="font-size:9px;opacity:.75;margin-top:1px;">
+            â—‹ Connecting...
+          </div>
+        </div>
+
+        <button type="button" id="ssPremiumChatClose"
+          aria-label="Close chat"
+          style="border:0;background:rgba(255,255,255,.16);color:#fff;
+          width:38px;height:38px;border-radius:50%;font-size:22px;cursor:pointer;">
+          Ã—
+        </button>
+      </header>
+
+      <div id="ssPremiumChatMessages"
+        style="flex:1;min-height:0;overflow-y:auto;padding:18px;
+        background:linear-gradient(180deg,#faf7ff 0%,#f7f3fa 100%);
+        display:flex;flex-direction:column;">
+        <div style="margin:auto;color:#8b7b91;">Loading...</div>
+      </div>
+
+      <div style="flex:none;padding:8px 10px 0;background:#fff;border-top:1px solid #eee7f1;">
+        <div id="ssEmojiBar"
+          style="display:none;gap:5px;flex-wrap:wrap;padding:5px 2px 8px;">
+          ${["ðŸ˜Š","â¤ï¸","ðŸ˜‚","ðŸ˜","ðŸ‘","ðŸ™","ðŸ¥°","ðŸ˜˜","ðŸŒ¹","âœ¨","ðŸ‘‹","ðŸ¤","ðŸ’","ðŸ˜‰","ðŸ˜„","ðŸŽ‰"]
+            .map(e => `
+              <button type="button" class="ss-emoji"
+                style="border:0;background:#f5f0f8;border-radius:9px;
+                width:35px;height:32px;font-size:18px;cursor:pointer;">${e}</button>`
+            ).join("")}
+        </div>
+
+        <div style="display:flex;align-items:flex-end;gap:7px;padding-bottom:10px;">
+          <button type="button" id="ssEmojiToggle"
+            title="Emoji"
+            style="flex:0 0 42px;width:42px;height:44px;border:1px solid #e4dce8;
+            background:#fff;border-radius:13px;font-size:20px;cursor:pointer;">
+            ðŸ˜Š
+          </button>
+
+          <textarea id="ssPremiumChatInput" maxlength="1000"
+            rows="1" placeholder="Type a message..."
+            style="flex:1;min-width:0;resize:none;border:1px solid #ded5e4;
+            border-radius:14px;padding:12px 13px;outline:none;font-family:inherit;
+            font-size:14px;line-height:20px;max-height:110px;background:#fff;"></textarea>
+
+          <button type="button" id="ssPremiumChatSend"
+            title="Send"
+            style="flex:0 0 46px;width:46px;height:44px;border:0;
+            background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;
+            border-radius:13px;font-size:20px;font-weight:900;cursor:pointer;">
+            âž¤
+          </button>
+        </div>
+
+        <div style="text-align:center;color:#aa9dac;font-size:8px;padding-bottom:7px;">
+          ðŸ”’ Your conversation is only available to this confirmed match.
+        </div>
+      </div>
+    </div>`;
+
+  document.body.appendChild(modal);
+
+  document.getElementById("ssPremiumChatClose").onclick = () => {
+    ssPremiumCloseChat();
+  };
+
+  document.getElementById("ssPremiumChatSend").onclick =
+    ssPremiumSendMessage;
+
+  const input = document.getElementById("ssPremiumChatInput");
+
+  input.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      ssPremiumSendMessage();
+    }
+  });
+
+  input.addEventListener("input", () => {
+    input.style.height = "44px";
+    input.style.height =
+      Math.min(input.scrollHeight, 110) + "px";
+  });
+
+  document.getElementById("ssEmojiToggle").onclick = () => {
+    const bar = document.getElementById("ssEmojiBar");
+    if (!bar) return;
+    bar.style.display =
+      bar.style.display === "flex" ? "none" : "flex";
+  };
+
+  modal.querySelectorAll(".ss-emoji").forEach(btn => {
+    btn.onclick = () => {
+      input.value += btn.textContent;
+      input.focus();
+      input.dispatchEvent(new Event("input"));
+    };
+  });
+
+  modal.addEventListener("click", e => {
+    if (e.target === modal) ssPremiumCloseChat();
+  });
+
+  await ssPremiumLoadMessages(
+    ssPremiumChatUserId,
+    ssPremiumChatOtherId
+  );
+
+  ssPremiumStartRealtime();
+  ssPremiumStartPresence();
+
+  input.focus();
+}
+
+function ssPremiumCloseChat() {
+  if (ssPremiumChatChannel) {
+    try { supabaseClient.removeChannel(ssPremiumChatChannel); } catch (_) {}
+    ssPremiumChatChannel = null;
+  }
+
+  if (ssPremiumPresenceChannel) {
+    try { supabaseClient.removeChannel(ssPremiumPresenceChannel); } catch (_) {}
+    ssPremiumPresenceChannel = null;
+  }
+
+  document.getElementById("ssPremiumChatModal")?.remove();
+
+  ssPremiumChatUserId = null;
+  ssPremiumChatOtherId = null;
+}
+
+window.openChat = ssPremiumOpenChat;
+window.closeChat = ssPremiumCloseChat;
+
+console.log("SamajSaathi: Premium real-time chat loaded.");
