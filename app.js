@@ -8617,7 +8617,13 @@ async function ssConfirmed(a, b) {
     console.error("CONFIRMED MATCH CHECK:", r.error);
     return false;
   }
-  return !!r.data;
+
+  if (r.data) return true;
+
+  // If both users have accepted each other but the match row was not
+  // created earlier, create it now. This keeps Chat/Profile actions
+  // consistent with the real reciprocal-interest state.
+  return await ssCreateConfirmedMatch(a, b);
 }
 
 async function ssCreateConfirmedMatch(a, b) {
