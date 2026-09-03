@@ -7560,8 +7560,7 @@ async function loadHomepageMatches() {
         .select(`
           id,
           full_name,
-          first_name,
-          age,
+            age,
           city,
           state,
           profile_photo,
@@ -8699,7 +8698,6 @@ async function ssViewProfile(profileId) {
       .select(`
         id,
         full_name,
-        first_name,
         gender,
         date_of_birth,
         age,
@@ -8731,7 +8729,7 @@ async function ssViewProfile(profileId) {
     }
 
     const p = r.data;
-    const name = p.full_name || p.first_name || "SamajSaathi Member";
+    const name = p.full_name || "SamajSaathi Member";
     const location = [p.city, p.state].filter(Boolean).join(", ");
     const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
 
@@ -8873,7 +8871,7 @@ async function ssOpenChat(otherUserId) {
 
   const pr = await supabaseClient
     .from("profiles")
-    .select("id,full_name,first_name,profile_photo,photo_url")
+    .select("id,full_name,profile_photo,photo_url")
     .eq("id", otherUserId)
     .maybeSingle();
 
@@ -8883,7 +8881,7 @@ async function ssOpenChat(otherUserId) {
   }
 
   const p = pr.data;
-  const name = p.full_name || p.first_name || "SamajSaathi Member";
+  const name = p.full_name || "SamajSaathi Member";
 
   document.getElementById("ssChatModal")?.remove();
 
@@ -9178,7 +9176,7 @@ async function ssLoadHomepageMatches() {
     if (ids.length) {
       const pr = await supabaseClient
         .from("profiles")
-        .select("id,full_name,first_name,age,city,state,profile_photo,photo_url,surname")
+        .select("id,full_name,age,city,state,profile_photo,photo_url,surname")
         .in("id", ids)
         .eq("is_active", true);
 
@@ -9197,7 +9195,7 @@ async function ssLoadHomepageMatches() {
       const p = map.get(id);
       if (!p) return "";
 
-      const name = p.full_name || p.first_name || "SamajSaathi Member";
+      const name = p.full_name || "SamajSaathi Member";
       const location = [p.city,p.state].filter(Boolean).join(", ");
       const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
 
