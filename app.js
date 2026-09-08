@@ -7685,7 +7685,7 @@ async function updateHomepageUserUI() {
         </span>
         <span style="display:flex;flex-direction:column;align-items:flex-start;line-height:1.15;max-width:150px;">
           <strong style="font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px;">${escapeHtml(name)}</strong>
-          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile â–¾</small>
+          <small style="font-size:11px;color:#7b626a;margin-top:3px;">My Profile \u{25BE}</small>
         </span>
       </button>
     `;
@@ -8835,7 +8835,7 @@ console.log(
 
 
 /* ============================================================
-   SAMAJSAATHI â€” CLEAN MATCH / VIEW PROFILE / CHAT FIX
+   SAMAJSAATHI \u{2014} CLEAN MATCH / VIEW PROFILE / CHAT FIX
    Added as a final runtime layer. Existing app structure kept.
    ============================================================ */
 
@@ -9010,7 +9010,7 @@ async function ssViewProfile(profileId) {
            onerror="this.style.display='none';">`
       : `<div style="width:150px;height:150px;border-radius:50%;background:#f1e5e8;
            display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
-           font-size:55px;">ðŸ‘¤</div>`;
+           font-size:55px;">\u{1F464}</div>`;
 
     const item = (label, value) => `
       <div style="background:#faf7f8;border:1px solid #eee0e4;border-radius:12px;padding:12px;">
@@ -9028,14 +9028,14 @@ async function ssViewProfile(profileId) {
           <button type="button" id="ssProfileChatBtn"
             style="border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);
             color:#fff;border-radius:10px;padding:11px 18px;font-weight:800;cursor:pointer;">
-            ðŸ’¬ Chat
+            \u{1F4AC} Chat
           </button>`;
       } else {
         actionHtml = `
           <button type="button" id="ssProfileInterestBtn"
             style="border:0;background:#6f1025;color:#fff;border-radius:10px;
             padding:11px 18px;font-weight:800;cursor:pointer;">
-            â¤ï¸ Send Interest
+            \u{2764}\u{FE0F} Send Interest
           </button>`;
       }
     }
@@ -9045,7 +9045,7 @@ async function ssViewProfile(profileId) {
         border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
         <button type="button" id="ssProfileClose"
           style="position:absolute;top:15px;right:15px;width:38px;height:38px;
-          border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ã—</button>
+          border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">\u{00D7}</button>
 
         ${photoHtml}
 
@@ -9121,7 +9121,7 @@ async function ssOpenChat(otherUserId) {
 
   const confirmed = await ssConfirmed(session.user.id, otherUserId);
   if (!confirmed) {
-    alert("ðŸ’¬ Chat is available only after both people accept each other's interest.");
+    alert("\u{1F4AC} Chat is available only after both people accept each other's interest.");
     return;
   }
 
@@ -9155,12 +9155,12 @@ async function ssOpenChat(otherUserId) {
       <header style="padding:15px 17px;background:linear-gradient(135deg,#7c3aed,#5b21b6);
         color:#fff;display:flex;align-items:center;justify-content:space-between;">
         <div>
-          <div style="font-weight:900;font-size:17px;">ðŸ’¬ ${escapeHtml(name)}</div>
+          <div style="font-weight:900;font-size:17px;">\u{1F4AC} ${escapeHtml(name)}</div>
           <div style="font-size:11px;opacity:.85;">Confirmed Match</div>
         </div>
         <button type="button" id="ssChatClose"
           style="border:0;background:rgba(255,255,255,.18);color:#fff;
-          width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;">Ã—</button>
+          width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;">\u{00D7}</button>
       </header>
 
       <div id="ssChatMessages"
@@ -9263,7 +9263,7 @@ async function ssLoadChat(currentUserId, otherUserId) {
           </div>`;
       }).join("")
     : `<div style="margin:auto;text-align:center;color:#8a788f;font-size:13px;">
-         No messages yet.<br>Say hello ðŸ‘‹
+         No messages yet.<br>Say hello \u{1F44B}
        </div>`;
 
   box.scrollTop = box.scrollHeight;
@@ -9326,11 +9326,11 @@ async function ssRespondToInterest(interestId, status) {
     if (status === "accepted") {
       alert(
         matched
-          ? "â¤ï¸ Match confirmed! Both of you accepted. Chat is now available."
-          : "ðŸ’š Interest accepted. Waiting for the other person's acceptance."
+          ? "\u{2764}\u{FE0F} Match confirmed! Both of you accepted. Chat is now available."
+          : "\u{1F49A} Interest accepted. Waiting for the other person's acceptance."
       );
     } else {
-      alert("âŒ Interest rejected.");
+      alert("\u{274C} Interest rejected.");
     }
 
   } catch (e) {
@@ -9391,7 +9391,7 @@ async function ssLoadMatchesFixed() {
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "ss-card-chat-btn";
-    btn.textContent = "ðŸ’¬ Chat";
+    btn.textContent = "\u{1F4AC} Chat";
     btn.style.cssText =
       "border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);" +
       "color:#fff;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;";
@@ -9464,7 +9464,7 @@ async function ssLoadHomepageMatches() {
               ${photo
                 ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(name)}"
                     style="width:100%;height:100%;object-fit:cover;">`
-                : `<span style="font-size:28px;">ðŸ‘¤</span>`}
+                : `<span style="font-size:28px;">\u{1F464}</span>`}
             </div>
             <div style="flex:1;min-width:0;">
               <div style="font-weight:800;color:#24151a;">${escapeHtml(name)}</div>
@@ -9473,7 +9473,7 @@ async function ssLoadHomepageMatches() {
               </div>
               <div style="display:inline-block;margin-top:7px;padding:4px 9px;
                 border-radius:999px;background:#e9f8ef;color:#18794e;font-size:11px;font-weight:800;">
-                â¤ï¸ Matched
+                \u{2764}\u{FE0F} Matched
               </div>
             </div>
           </div>
@@ -9486,7 +9486,7 @@ async function ssLoadHomepageMatches() {
             <button type="button" onclick="openChat('${id}')"
               style="flex:1;border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);
               color:#fff;border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer;">
-              ðŸ’¬ Chat
+              \u{1F4AC} Chat
             </button>
           </div>
         </article>`;
@@ -9500,7 +9500,7 @@ async function ssLoadHomepageMatches() {
       <div style="margin-bottom:14px;">
         <div style="font-size:12px;color:#7c3aed;font-weight:900;
           letter-spacing:.08em;text-transform:uppercase;">SamajSaathi</div>
-        <h2 style="margin:3px 0;color:#24151a;font-size:25px;">â¤ï¸ Your Matches</h2>
+        <h2 style="margin:3px 0;color:#24151a;font-size:25px;">\u{2764}\u{FE0F} Your Matches</h2>
         <p style="margin:5px 0;color:#7b626a;font-size:13px;">
           Confirmed matches can chat with each other.
         </p>
@@ -9509,7 +9509,7 @@ async function ssLoadHomepageMatches() {
         ${cards || `
           <div style="grid-column:1/-1;background:#fff;border:1px solid rgba(111,16,37,.10);
             border-radius:20px;padding:25px;text-align:center;">
-            <div style="font-size:36px;">ðŸ’¬</div>
+            <div style="font-size:36px;">\u{1F4AC}</div>
             <h3 style="margin:8px 0 6px;color:#24151a;">No confirmed matches yet</h3>
             <p style="margin:0;color:#7b626a;font-size:13px;">
               A match appears only after both people accept each other's interest.
@@ -9704,7 +9704,7 @@ async function ssFinalSendMessage() {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = "âž¤";
+      btn.textContent = "\u{27A4}";
     }
   }
 }
@@ -9740,7 +9740,7 @@ function ssFinalStartRealtime() {
     .subscribe(status => {
       const el = document.getElementById("ssFinalLiveStatus");
       if (!el) return;
-      el.textContent = status === "SUBSCRIBED" ? "â— Live chat" : "â—‹ Connecting...";
+      el.textContent = status === "SUBSCRIBED" ? "\u{25CF} Live chat" : "\u{25CB} Connecting...";
     });
 }
 
@@ -9761,7 +9761,7 @@ function ssFinalStartPresence() {
       const state = ssPresenceChannelFinal.presenceState();
       const online = !!state[ssChatOtherUserFinal];
       const el = document.getElementById("ssFinalOnlineStatus");
-      if (el) el.textContent = online ? "â— Online" : "â—‹ Offline";
+      if (el) el.textContent = online ? "\u{25CF} Online" : "\u{25CB} Offline";
     })
     .subscribe(async status => {
       if (status === "SUBSCRIBED") {
@@ -9783,7 +9783,7 @@ async function ssFinalOpenChat(otherUserId) {
 
   const confirmed = await ssConfirmed(session.user.id, otherUserId);
   if (!confirmed) {
-    alert("ðŸ’¬ Chat is available only after both people accept each other's interest.");
+    alert("\u{1F4AC} Chat is available only after both people accept each other's interest.");
     return;
   }
 
@@ -9840,11 +9840,11 @@ async function ssFinalOpenChat(otherUserId) {
           </div>
           <div id="ssFinalOnlineStatus"
             style="font-size:10px;color:rgba(255,255,255,.75);margin-top:2px;">
-            â—‹ Offline
+            \u{25CB} Offline
           </div>
           <div id="ssFinalLiveStatus"
             style="font-size:9px;opacity:.75;margin-top:1px;">
-            â—‹ Connecting...
+            \u{25CB} Connecting...
           </div>
         </div>
 
@@ -9852,7 +9852,7 @@ async function ssFinalOpenChat(otherUserId) {
           style="border:0!important;background:rgba(255,255,255,.16)!important;
           color:#fff!important;width:38px!important;height:38px!important;
           border-radius:50%!important;font-size:22px!important;cursor:pointer!important;">
-          Ã—
+          \u{00D7}
         </button>
       </header>
 
@@ -9868,7 +9868,7 @@ async function ssFinalOpenChat(otherUserId) {
 
         <div id="ssFinalEmojiBar"
           style="display:none;flex-wrap:wrap;gap:5px;padding:4px 0 8px;">
-          ${["ðŸ˜Š","â¤ï¸","ðŸ˜‚","ðŸ˜","ðŸ‘","ðŸ™","ðŸ¥°","ðŸ˜˜","ðŸŒ¹","âœ¨","ðŸ‘‹","ðŸ¤","ðŸ’","ðŸ˜‰","ðŸ˜„","ðŸŽ‰"]
+          ${["\u{1F60A}","\u{2764}\u{FE0F}","\u{1F602}","\u{1F60D}","\u{1F44D}","\u{1F64F}","\u{1F970}","\u{1F618}","\u{1F339}","\u{2728}","\u{1F44B}","\u{1F91D}","\u{1F490}","\u{1F609}","\u{1F604}","\u{1F389}"]
             .map(e => `<button type="button" class="ss-final-emoji"
               style="display:inline-flex!important;align-items:center!important;
               justify-content:center!important;border:0!important;background:#f5f0f8!important;
@@ -9888,7 +9888,7 @@ async function ssFinalOpenChat(otherUserId) {
             height:44px!important;border:1px solid #ded5e4!important;
             background:#fff!important;color:#24151a!important;border-radius:13px!important;
             font-size:20px!important;cursor:pointer!important;">
-            ðŸ˜Š
+            \u{1F60A}
           </button>
 
           <textarea id="ssFinalChatInput" maxlength="1000" rows="1"
@@ -9910,7 +9910,7 @@ async function ssFinalOpenChat(otherUserId) {
             background:linear-gradient(135deg,#7c3aed,#5b21b6)!important;
             color:#fff!important;border-radius:13px!important;font-size:20px!important;
             font-weight:900!important;cursor:pointer!important;">
-            âž¤
+            \u{27A4}
           </button>
         </div>
 
