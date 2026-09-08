@@ -1809,6 +1809,92 @@ async function loadProfiles() {
 
 
 // ============================================================
+// HOMEPAGE HERO â€” REAL COMMUNITY PROFILES
+// Replaces demo names/photos such as Rahul & Ananya with active
+// profiles from the public profiles list.
+// ============================================================
+
+async function loadHeroFeaturedProfiles() {
+  const photoBox = document.getElementById("heroFeaturedPhoto");
+  const infoBox = document.getElementById("heroFeaturedInfo");
+  const secondBox = document.getElementById("heroSecondProfile");
+
+  if (!photoBox || !infoBox || !supabaseClient) return;
+
+  try {
+    const result = await supabaseClient
+      .from("profiles")
+      .select("id, full_name, gender, age, city, state, community, surname, profile_photo, photo_url, is_active, created_at")
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(2);
+
+    if (result.error) {
+      console.error("HERO PROFILES ERROR:", result.error);
+      return;
+    }
+
+    const profiles = result.data || [];
+
+    if (!profiles.length) {
+      photoBox.innerHTML = '<div class="photo-overlay"></div><span class="verified">&#10003; Community</span>';
+      infoBox.innerHTML = '<div><b>SamajSaathi Members</b><small>New profiles are joining</small></div><span class="heart">&#9829;</span>';
+      if (secondBox) secondBox.style.display = "none";
+      return;
+    }
+
+    const first = profiles[0];
+    const second = profiles[1] || null;
+    const firstPhoto = getProfilePhotoUrl(first.profile_photo || first.photo_url);
+    const secondPhoto = second ? getProfilePhotoUrl(second.profile_photo || second.photo_url) : null;
+
+    const firstName = escapeHtml(first.full_name || "SamajSaathi Member");
+    const firstMeta = escapeHtml(
+      [first.age ? first.age + " yrs" : "", first.city || first.state || ""]
+        .filter(Boolean)
+        .join(" Â· ") || "Community member"
+    );
+
+    photoBox.innerHTML = `
+      <div class="photo-overlay"></div>
+      ${firstPhoto ? `<img src="${escapeHtml(firstPhoto)}" alt="${firstName}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;" onerror="this.style.display='none';">` : `<span style="font-size:74px;display:grid;place-items:center;width:100%;height:100%;position:relative;">&#128100;</span>`}
+      <span class="verified">&#10003; Verified</span>
+    `;
+
+    infoBox.innerHTML = `
+      <div>
+        <b>${firstName}</b>
+        <small>${firstMeta}</small>
+      </div>
+      <span class="heart">&#9829;</span>
+    `;
+
+    if (!secondBox) return;
+
+    if (!second) {
+      secondBox.style.display = "none";
+      return;
+    }
+
+    secondBox.style.display = "flex";
+    const secondName = escapeHtml(second.full_name || "New Member");
+    const secondMeta = escapeHtml(
+      [second.age ? second.age + " yrs" : "", second.city || second.state || ""]
+        .filter(Boolean)
+        .join(" Â· ") || "SamajSaathi member"
+    );
+
+    secondBox.innerHTML = `
+      ${secondPhoto ? `<span style="width:38px;height:38px;border-radius:12px;overflow:hidden;display:block;flex:0 0 38px;background:#f4e9e4;"><img src="${escapeHtml(secondPhoto)}" alt="${secondName}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';"></span>` : '<span class="mini-icon">&#9829;</span>'}
+      <div><b>${secondName}</b><small>${secondMeta}</small></div>
+    `;
+
+  } catch (error) {
+    console.error("LOAD HERO PROFILES ERROR:", error);
+  }
+}
+
+// ============================================================
 // PUBLIC PROFILE CARD
 // ============================================================
 
@@ -8438,6 +8524,7 @@ function setupNavigationProtection() {
           updateHomepageUserUI();
           loadHomepageMatches();
           loadProfiles();
+          loadHeroFeaturedProfiles();
           hideLoggedOutHomepageButtons();
         }, 0);
         return;
@@ -8745,6 +8832,7 @@ document.addEventListener(
 
 
     await loadProfiles();
+    await loadHeroFeaturedProfiles();
 
     if (isPublicHomeRoute()) {
       await updateHomepageUserUI();
