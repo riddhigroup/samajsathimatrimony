@@ -624,7 +624,21 @@ function openModal(type) {
 
         </div>
 
-        <div class="field full">
+        <div class="field">
+
+          <label>
+            State / Province
+          </label>
+
+          <input
+            id="state"
+            placeholder="e.g. West Bengal"
+            autocomplete="address-level1"
+          >
+
+        </div>
+
+        <div class="field">
 
           <label>
             Current City *
@@ -635,6 +649,75 @@ function openModal(type) {
             placeholder="e.g. Siliguri"
             autocomplete="address-level2"
           >
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Marital Status
+          </label>
+
+          <select id="maritalStatus">
+            <option value="">Select</option>
+            <option value="Never Married">Never Married</option>
+            <option value="Divorced">Divorced</option>
+            <option value="Widowed">Widowed</option>
+            <option value="Separated">Separated</option>
+          </select>
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Height
+          </label>
+
+          <input
+            id="height"
+            placeholder="e.g. 5 ft 6 in"
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Education
+          </label>
+
+          <input
+            id="education"
+            placeholder="e.g. Graduate / Post Graduate"
+          >
+
+        </div>
+
+        <div class="field">
+
+          <label>
+            Occupation / Profession
+          </label>
+
+          <input
+            id="occupation"
+            placeholder="e.g. Business / Teacher / Private Job"
+          >
+
+        </div>
+
+        <div class="field full">
+
+          <label>
+            About You
+          </label>
+
+          <textarea
+            id="bio"
+            rows="4"
+            placeholder="Tell a little about yourself, your family, interests and what you are looking for..."
+          ></textarea>
 
         </div>
 
@@ -756,6 +839,36 @@ async function registerUser() {
   const city =
     document.getElementById(
       "city"
+    )?.value.trim();
+
+  const state =
+    document.getElementById(
+      "state"
+    )?.value.trim();
+
+  const maritalStatus =
+    document.getElementById(
+      "maritalStatus"
+    )?.value;
+
+  const height =
+    document.getElementById(
+      "height"
+    )?.value.trim();
+
+  const education =
+    document.getElementById(
+      "education"
+    )?.value.trim();
+
+  const occupation =
+    document.getElementById(
+      "occupation"
+    )?.value.trim();
+
+  const bio =
+    document.getElementById(
+      "bio"
     )?.value.trim();
 
   const message =
@@ -922,6 +1035,9 @@ async function registerUser() {
       city:
         city,
 
+      state:
+        state || null,
+
       community:
         community,
 
@@ -930,6 +1046,21 @@ async function registerUser() {
 
       kul:
         kul,
+
+      marital_status:
+        maritalStatus || null,
+
+      height:
+        height || null,
+
+      education:
+        education || null,
+
+      occupation:
+        occupation || null,
+
+      bio:
+        bio || null,
 
       is_active:
         true
@@ -6407,7 +6538,20 @@ async function openDashboard() {
               </div>
 
 
-              <div class="field full">
+              <div class="field">
+
+                <label>
+                  State / Province
+                </label>
+
+                <input
+                  id="editState"
+                  value="${escapeHtml(profile.state || "")}"
+                >
+
+              </div>
+
+              <div class="field">
 
                 <label>
                   Current City
@@ -6421,6 +6565,37 @@ async function openDashboard() {
                   )}"
                 >
 
+              </div>
+
+              <div class="field">
+                <label>Marital Status</label>
+                <select id="editMaritalStatus">
+                  <option value="">Select</option>
+                  <option value="Never Married" ${profile.marital_status === "Never Married" ? "selected" : ""}>Never Married</option>
+                  <option value="Divorced" ${profile.marital_status === "Divorced" ? "selected" : ""}>Divorced</option>
+                  <option value="Widowed" ${profile.marital_status === "Widowed" ? "selected" : ""}>Widowed</option>
+                  <option value="Separated" ${profile.marital_status === "Separated" ? "selected" : ""}>Separated</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Height</label>
+                <input id="editHeight" value="${escapeHtml(profile.height || "")}" placeholder="e.g. 5 ft 6 in">
+              </div>
+
+              <div class="field">
+                <label>Education</label>
+                <input id="editEducation" value="${escapeHtml(profile.education || "")}" placeholder="e.g. Graduate">
+              </div>
+
+              <div class="field">
+                <label>Occupation / Profession</label>
+                <input id="editOccupation" value="${escapeHtml(profile.occupation || "")}" placeholder="e.g. Business / Teacher">
+              </div>
+
+              <div class="field full">
+                <label>About You</label>
+                <textarea id="editBio" rows="4" placeholder="Tell a little about yourself...">${escapeHtml(profile.bio || "")}</textarea>
               </div>
 
             </div>
@@ -7264,6 +7439,36 @@ async function updateProfile() {
       "editCity"
     )?.value.trim();
 
+  const state =
+    document.getElementById(
+      "editState"
+    )?.value.trim();
+
+  const maritalStatus =
+    document.getElementById(
+      "editMaritalStatus"
+    )?.value || null;
+
+  const height =
+    document.getElementById(
+      "editHeight"
+    )?.value.trim() || null;
+
+  const education =
+    document.getElementById(
+      "editEducation"
+    )?.value.trim() || null;
+
+  const occupation =
+    document.getElementById(
+      "editOccupation"
+    )?.value.trim() || null;
+
+  const bio =
+    document.getElementById(
+      "editBio"
+    )?.value.trim() || null;
+
 
   if (
     !fullName ||
@@ -7330,7 +7535,25 @@ async function updateProfile() {
           kul,
 
         city:
-          city
+          city,
+
+        state:
+          state || null,
+
+        marital_status:
+          maritalStatus,
+
+        height:
+          height,
+
+        education:
+          education,
+
+        occupation:
+          occupation,
+
+        bio:
+          bio
 
       })
       .eq(
