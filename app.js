@@ -7632,7 +7632,7 @@ async function updateHomepageUserUI() {
 
     const profileResult = await supabaseClient
       .from("profiles")
-      .select("id, full_name, profile_photo, first_name")
+      .select("id, full_name, profile_photo, photo_url")
       .eq("id", userId)
       .maybeSingle();
 
@@ -7642,7 +7642,7 @@ async function updateHomepageUserUI() {
     }
 
     const profile = profileResult.data || {};
-    const name = profile.full_name || profile.first_name || "My Profile";
+    const name = profile.full_name || "My Profile";
     const photoUrl = getProfilePhotoUrl(profile.profile_photo);
 
     if (oldChip) oldChip.remove();
@@ -7692,6 +7692,7 @@ async function updateHomepageUserUI() {
 
     // Prefer an existing navigation action area.
     const target =
+      document.querySelector(".actions") ||
       document.querySelector(".nav-actions") ||
       document.querySelector(".navbar-actions") ||
       document.querySelector(".header-actions") ||
@@ -8409,11 +8410,26 @@ function setupNavigationProtection() {
       );
 
 
-      if (
-        samajLoggingOut ||
-        samajNavigatingHome ||
-        isPublicHomeRoute()
-      ) {
+      if (samajLoggingOut || samajNavigatingHome) {
+        return;
+      }
+
+      // When the browser Back button returns to Home, remove the
+      // dashboard overlay and refresh the logged-in homepage UI.
+      if (isPublicHomeRoute()) {
+        const dashboard = document.getElementById("samajSaathiDashboard");
+        if (dashboard) dashboard.remove();
+
+        const viewer = document.getElementById("samajProfileViewer");
+        if (viewer) viewer.remove();
+
+        closeModal();
+        setTimeout(function() {
+          updateHomepageUserUI();
+          loadHomepageMatches();
+          loadProfiles();
+          hideLoggedOutHomepageButtons();
+        }, 0);
         return;
       }
 
