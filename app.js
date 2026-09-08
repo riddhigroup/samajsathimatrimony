@@ -1824,7 +1824,7 @@ async function loadHeroFeaturedProfiles() {
   try {
     const result = await supabaseClient
       .from("profiles")
-      .select("id, full_name, gender, age, city, state, community, surname, profile_photo, photo_url, is_active, created_at")
+      .select("id, full_name, gender, date_of_birth, age, city, state, community, surname, profile_photo, photo_url, is_active, created_at")
       .eq("is_active", true)
       .order("created_at", { ascending: false })
       .limit(2);
@@ -1834,7 +1834,10 @@ async function loadHeroFeaturedProfiles() {
       return;
     }
 
-    const profiles = result.data || [];
+    const profiles = (result.data || []).filter(function(p) {
+      const derivedAge = p.date_of_birth ? calculateAge(p.date_of_birth) : Number(p.age);
+      return Number.isFinite(derivedAge) && derivedAge >= 18;
+    });
 
     if (!profiles.length) {
       photoBox.innerHTML = '<div class="photo-overlay"></div><span class="verified">&#10003; Community</span>';
@@ -1850,7 +1853,7 @@ async function loadHeroFeaturedProfiles() {
 
     const firstName = escapeHtml(first.full_name || "SamajSaathi Member");
     const firstMeta = escapeHtml(
-      [first.age ? first.age + " yrs" : "", first.city || first.state || ""]
+      [first.date_of_birth ? calculateAge(first.date_of_birth) + " yrs" : (Number(first.age) >= 18 ? Number(first.age) + " yrs" : ""), first.city || first.state || ""]
         .filter(Boolean)
         .join(" Â· ") || "Community member"
     );
@@ -1879,7 +1882,7 @@ async function loadHeroFeaturedProfiles() {
     secondBox.style.display = "flex";
     const secondName = escapeHtml(second.full_name || "New Member");
     const secondMeta = escapeHtml(
-      [second.age ? second.age + " yrs" : "", second.city || second.state || ""]
+      [second.date_of_birth ? calculateAge(second.date_of_birth) + " yrs" : (Number(second.age) >= 18 ? Number(second.age) + " yrs" : ""), second.city || second.state || ""]
         .filter(Boolean)
         .join(" Â· ") || "SamajSaathi member"
     );
