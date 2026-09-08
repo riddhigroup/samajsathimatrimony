@@ -7716,20 +7716,30 @@ async function updateHomepageUserUI() {
   }
 }
 
-function hideLoggedOutHomepageButtons() {
-  if (!isPublicHomeRoute()) return;
+async function hideLoggedOutHomepageButtons() {
+  if (!isPublicHomeRoute() || !supabaseClient) return;
 
-  const selectors = [
-    "a", "button"
-  ];
+  let session = null;
+  try {
+    const result = await supabaseClient.auth.getSession();
+    session = result.data?.session || null;
+  } catch (e) {
+    console.error("HOMEPAGE AUTH UI ERROR:", e);
+    return;
+  }
 
-  document.querySelectorAll(selectors.join(",")).forEach(function(el) {
+  document.querySelectorAll("a, button").forEach(function(el) {
     if (el.id === "samajHomepageUserChip" || el.closest("#samajHomepageUserChip")) return;
 
     const text = String(el.textContent || "").trim().toLowerCase();
-    if (text === "login" || text === "create profile" || text === "create account") {
+    if (text !== "login" && text !== "create profile" && text !== "create account") return;
+
+    if (session) {
       el.dataset.samajLoggedInHidden = "true";
       el.style.display = "none";
+    } else if (el.dataset.samajLoggedInHidden === "true") {
+      delete el.dataset.samajLoggedInHidden;
+      el.style.removeProperty("display");
     }
   });
 }
