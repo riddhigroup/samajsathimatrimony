@@ -952,6 +952,9 @@ async function registerUser() {
 
         options: {
 
+          emailRedirectTo:
+            "https://riddhigroup.github.io/samajsathimatrimony/",
+
           data: {
 
             first_name:
@@ -1063,7 +1066,7 @@ async function registerUser() {
         bio || null,
 
       is_active:
-        true
+        Boolean(data.session)
 
     };
 
@@ -1125,13 +1128,18 @@ async function registerUser() {
         )
       );
 
-
-      contentAfterSignup(
-        firstName,
-        displayUserId,
-        username,
-        password
-      );
+      showEmailVerificationPending({
+        firstName:
+          firstName,
+        email:
+          email,
+        userId:
+          displayUserId,
+        username:
+          username,
+        password:
+          password
+      });
 
     }
 
@@ -1297,6 +1305,48 @@ function showRegistrationSuccess(user) {
 
     </div>
 
+  `;
+}
+
+
+// ============================================================
+// EMAIL CONFIRMATION
+// ============================================================
+
+function showEmailVerificationPending(user) {
+
+  const content =
+    document.getElementById(
+      "modalContent"
+    );
+
+  if (!content) {
+    return;
+  }
+
+  content.innerHTML = `
+    <div style="text-align:center;">
+      <div style="font-size:48px;margin-bottom:10px;">\u{1F4E7}</div>
+      <span class="eyebrow">VERIFY YOUR EMAIL</span>
+      <h2>Almost there, ${escapeHtml(user.firstName)}!</h2>
+      <p>We have sent a verification link to <strong>${escapeHtml(user.email)}</strong>.</p>
+      <div style="margin:20px 0;padding:18px;border-radius:14px;background:#f8f1f3;text-align:left;">
+        <strong>Email verification is required.</strong><br><br>
+        Open your email and click the verification link. Your SamajSaathi profile becomes active only after the email is verified.
+      </div>
+      <div style="padding:12px;border-radius:10px;background:#fff8e6;color:#7a4d00;font-size:13px;margin-bottom:18px;">
+        Until verification, your profile will not appear in Find Matches and matrimonial features will remain locked.
+      </div>
+      <div style="padding:12px;border-radius:10px;background:#f6f2fb;color:#4b3b63;font-size:13px;margin-bottom:18px;text-align:left;">
+        <strong>Keep these details safe</strong><br>
+        User ID: ${escapeHtml(user.userId)}<br>
+        Username: ${escapeHtml(user.username)}<br>
+        Temporary Password: ${escapeHtml(user.password)}
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn primary" onclick="closeModal()">I Will Verify My Email</button>
+      </div>
+    </div>
   `;
 }
 
@@ -1523,11 +1573,27 @@ async function loginUser() {
     }
 
 
-    if (!result.data?.user) {
+    const loggedInUser =
+      result.data?.user;
+
+    if (!loggedInUser) {
 
       showMessage(
         message,
         "Login failed.",
+        "error"
+      );
+
+      return;
+    }
+
+    if (!loggedInUser.email_confirmed_at) {
+
+      await supabaseClient.auth.signOut();
+
+      showMessage(
+        message,
+        "Please verify your email address before logging in. Check your inbox for the verification link.",
         "error"
       );
 
@@ -1613,9 +1679,16 @@ async function savePendingProfile() {
     return;
   }
 
+  if (!session.user?.email_confirmed_at) {
+    return;
+  }
+
 
   profileData.id =
     session.user.id;
+
+  profileData.is_active =
+    true;
 
 
   const result =
@@ -1928,6 +2001,14 @@ async function loadMatches() {
 
     const session =
       sessionResult.data?.session;
+
+    if (session && !session.user?.email_confirmed_at) {
+      await supabaseClient.auth.signOut();
+      openModal("login");
+      const loginMessage = document.getElementById("loginMessage");
+      showMessage(loginMessage, "Please verify your email address before accessing your account.", "error");
+      return;
+    }
 
 
     if (!session) {
@@ -7794,6 +7875,11 @@ async function restoreLoginSession() {
     const session =
       result.data?.session;
 
+    if (session && !session.user?.email_confirmed_at) {
+      await supabaseClient.auth.signOut();
+      return;
+    }
+
 
     if (!session) {
 
@@ -7901,6 +7987,10 @@ function setupAuthListener() {
         }
 
         if (!session) {
+          return;
+        }
+
+        if (!session.user?.email_confirmed_at) {
           return;
         }
 
