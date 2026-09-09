@@ -1705,6 +1705,7 @@ async function loadProfiles() {
           id,
           full_name,
           gender,
+          date_of_birth,
           age,
           city,
           state,
@@ -1761,8 +1762,10 @@ async function loadProfiles() {
     }
 
 
-    const profiles =
-      result.data || [];
+    const profiles = (result.data || []).filter(function(profile) {
+      const derivedAge = profile.date_of_birth ? calculateAge(profile.date_of_birth) : Number(profile.age);
+      return Number.isFinite(derivedAge) && derivedAge >= 18;
+    });
 
 
     if (!profiles.length) {
@@ -1818,243 +1821,59 @@ async function loadHeroFeaturedProfiles() {
   const photoBox = document.getElementById("heroFeaturedPhoto");
   const infoBox = document.getElementById("heroFeaturedInfo");
   const secondBox = document.getElementById("heroSecondProfile");
-
   if (!photoBox || !infoBox || !supabaseClient) return;
 
   try {
-    const result = await supabaseClient
-      .from("profiles")
-      .select("id, full_name, gender, date_of_birth, age, city, state, community, surname, profile_photo, photo_url, is_active, created_at")
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(2);
+    const result = await supabaseClient.from("profiles")
+      .select("id,full_name,gender,date_of_birth,age,city,state,community,surname,profile_photo,photo_url,is_active,created_at")
+      .eq("is_active", true).order("created_at", {ascending:false}).limit(12);
+    if (result.error) { console.error("HERO PROFILES ERROR:", result.error); return; }
 
-    if (result.error) {
-      console.error("HERO PROFILES ERROR:", result.error);
-      return;
-    }
-
-    const profiles = (result.data || []).filter(function(p) {
-      const derivedAge = p.date_of_birth ? calculateAge(p.date_of_birth) : Number(p.age);
-      return Number.isFinite(derivedAge) && derivedAge >= 18;
+    const profiles = (result.data || []).filter(p => {
+      const age = p.date_of_birth ? calculateAge(p.date_of_birth) : Number(p.age);
+      return Number.isFinite(age) && age >= 18;
     });
-
     if (!profiles.length) {
-      photoBox.innerHTML = '<div class="photo-overlay"></div><span class="verified">&#10003; Community</span>';
-      infoBox.innerHTML = '<div><b>SamajSaathi Members</b><small>New profiles are joining</small></div><span class="heart">&#9829;</span>';
-      if (secondBox) secondBox.style.display = "none";
+      photoBox.innerHTML='<div class="ss-photo-fallback" style="display:grid">&#128100;</div><span class="verified">âœ“ Verified</span>';
+      infoBox.innerHTML='<div><b>SamajSaathi Members</b><small>New profiles are joining</small></div><span class="heart">â™¡</span>';
+      if (secondBox) secondBox.style.display="none";
       return;
     }
 
-    const first = profiles[0];
-    const second = profiles[1] || null;
-    const firstPhoto = getProfilePhotoUrl(first.profile_photo || first.photo_url);
-    const secondPhoto = second ? getProfilePhotoUrl(second.profile_photo || second.photo_url) : null;
+    const first=profiles[0], second=profiles[1]||null;
+    const firstAge=first.date_of_birth?calculateAge(first.date_of_birth):Number(first.age);
+    const secondAge=second?(second.date_of_birth?calculateAge(second.date_of_birth):Number(second.age)):null;
+    const firstPhoto=getProfilePhotoUrl(first.profile_photo||first.photo_url);
+    const secondPhoto=second?getProfilePhotoUrl(second.profile_photo||second.photo_url):null;
+    const firstName=escapeHtml(first.full_name||"SamajSaathi Member");
+    const secondName=escapeHtml(second?.full_name||"New Member");
+    const firstMeta=escapeHtml([Number.isFinite(firstAge)?firstAge+" yrs":"",[first.city,first.state].filter(Boolean).join(", ")].filter(Boolean).join(" Â· ")||"Community member");
+    const secondMeta=escapeHtml([Number.isFinite(secondAge)?secondAge+" yrs":"",[second?.city,second?.state].filter(Boolean).join(", ")].filter(Boolean).join(" Â· ")||"Community member");
 
-    const firstName = escapeHtml(first.full_name || "SamajSaathi Member");
-    const firstMeta = escapeHtml(
-      [first.date_of_birth ? calculateAge(first.date_of_birth) + " yrs" : (Number(first.age) >= 18 ? Number(first.age) + " yrs" : ""), first.city || first.state || ""]
-        .filter(Boolean)
-        .join(" Â· ") || "Community member"
-    );
-
-    photoBox.innerHTML = `
-      <div class="photo-overlay"></div>
-      ${firstPhoto ? `<img src="${escapeHtml(firstPhoto)}" alt="${firstName}" style="width:100%;height:100%;object-fit:cover;display:block;position:absolute;inset:0;" onerror="this.style.display='none';">` : `<span style="font-size:74px;display:grid;place-items:center;width:100%;height:100%;position:relative;">&#128100;</span>`}
-      <span class="verified">&#10003; Verified</span>
-    `;
-
-    infoBox.innerHTML = `
-      <div>
-        <b>${firstName}</b>
-        <small>${firstMeta}</small>
-      </div>
-      <span class="heart">&#9829;</span>
-    `;
+    photoBox.innerHTML=`${firstPhoto?`<img src="${escapeHtml(firstPhoto)}" alt="${firstName}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${firstPhoto?"none":"grid"}">&#128100;</div><span class="verified">âœ“ Verified</span>`;
+    infoBox.innerHTML=`<div><b>${firstName}</b><small>${firstMeta}</small></div><button type="button" class="heart" onclick="viewProfile('${escapeHtml(first.id)}')" aria-label="View profile">â™¡</button>`;
 
     if (!secondBox) return;
-
-    if (!second) {
-      secondBox.style.display = "none";
-      return;
-    }
-
-    secondBox.style.display = "flex";
-    const secondName = escapeHtml(second.full_name || "New Member");
-    const secondMeta = escapeHtml(
-      [second.date_of_birth ? calculateAge(second.date_of_birth) + " yrs" : (Number(second.age) >= 18 ? Number(second.age) + " yrs" : ""), second.city || second.state || ""]
-        .filter(Boolean)
-        .join(" Â· ") || "SamajSaathi member"
-    );
-
-    secondBox.innerHTML = `
-      ${secondPhoto ? `<span style="width:38px;height:38px;border-radius:12px;overflow:hidden;display:block;flex:0 0 38px;background:#f4e9e4;"><img src="${escapeHtml(secondPhoto)}" alt="${secondName}" style="width:100%;height:100%;object-fit:cover;display:block;" onerror="this.style.display='none';"></span>` : '<span class="mini-icon">&#9829;</span>'}
-      <div><b>${secondName}</b><small>${secondMeta}</small></div>
-    `;
-
-  } catch (error) {
-    console.error("LOAD HERO PROFILES ERROR:", error);
-  }
+    if (!second) { secondBox.style.display="none"; return; }
+    secondBox.style.display="flex";
+    secondBox.innerHTML=`${secondPhoto?`<span class="ss-float-photo"><img src="${escapeHtml(secondPhoto)}" alt="${secondName}"></span>`:'<span class="mini-icon">â™¡</span>'}<div><b>${secondName}</b><small>${secondMeta}</small></div>`;
+  } catch(error) { console.error("LOAD HERO PROFILES ERROR:",error); }
 }
 
 // ============================================================
 // PUBLIC PROFILE CARD
 // ============================================================
 
-function createPublicProfileCard(
-  profile
-) {
-
-  const location =
-    [
-      profile.city,
-      profile.state
-    ]
-      .filter(Boolean)
-      .join(", ");
-
-
-  const photoPath =
-    profile.profile_photo ||
-    profile.photo_url ||
-    null;
-
-
-  const photoUrl =
-    getProfilePhotoUrl(
-      photoPath
-    );
-
-
-  let photoHtml = `
-
-    <div class="profile-img">
-
-      <span style="
-        font-size:55px;
-        display:flex;
-        align-items:center;
-        justify-content:center;
-        height:100%;
-      ">
-        \u{1F464}
-      </span>
-
-      <span class="profile-tag">
-        \u{2713} Verified
-      </span>
-
-    </div>
-
-  `;
-
-
-  if (photoUrl) {
-
-    photoHtml = `
-
-      <div class="profile-img has-real-photo">
-
-        <img
-          src="${escapeHtml(
-            photoUrl
-          )}"
-          alt="${escapeHtml(
-            profile.full_name ||
-            "Profile"
-          )}"
-          loading="lazy"
-          style="
-            width:100%;
-            height:100%;
-            object-fit:cover;
-            display:block;
-          "
-          onerror="
-            this.style.display='none';
-            this.parentElement.classList.remove('has-real-photo');
-            this.parentElement.innerHTML='<span style=&quot;font-size:55px;display:flex;align-items:center;justify-content:center;height:100%;&quot;>\u{1F464}</span><span class=&quot;profile-tag&quot;>\u{2713} Verified</span>';
-          "
-        >
-
-        <span class="profile-tag">
-          \u{2713} Verified
-        </span>
-
-      </div>
-
-    `;
-
-  }
-
-
-  return `
-
-    <article class="profile">
-
-      ${photoHtml}
-
-      <div class="profile-body">
-
-        <b>
-          ${escapeHtml(
-            profile.full_name ||
-            "Member"
-          )}
-
-          ${
-            (profile.date_of_birth ? calculateAge(profile.date_of_birth) : Number(profile.age)) >= 18
-              ? ", " + escapeHtml(profile.date_of_birth ? calculateAge(profile.date_of_birth) : Number(profile.age))
-              : ""
-          }
-
-        </b>
-
-        <small>
-          ${escapeHtml(
-            location ||
-            "Location not specified"
-          )}
-        </small>
-
-        <small>
-
-          ${escapeHtml(
-            profile.community ||
-            ""
-          )}
-
-          ${
-            profile.surname
-              ? " \u{00B7} " +
-                escapeHtml(
-                  profile.surname
-                )
-              : ""
-          }
-
-          ${
-            profile.kul
-              ? " \u{00B7} " +
-                escapeHtml(
-                  profile.kul
-                )
-              : ""
-          }
-
-        </small>
-
-        <small class="match">
-          SamajSaathi Member
-        </small>
-
-      </div>
-
-    </article>
-
-  `;
+function createPublicProfileCard(profile) {
+  const location=[profile.city,profile.state].filter(Boolean).join(", ");
+  const photoUrl=getProfilePhotoUrl(profile.profile_photo||profile.photo_url);
+  const age=profile.date_of_birth?calculateAge(profile.date_of_birth):Number(profile.age);
+  const safeAge=Number.isFinite(age)&&age>=18?age:null;
+  const name=escapeHtml(profile.full_name||"SamajSaathi Member");
+  const meta=[safeAge?safeAge+" yrs":"",location].filter(Boolean).join(" Â· ");
+  const community=[profile.community,profile.surname].filter(Boolean).join(" Â· ");
+  return `<article class="ss-feature-card"><div class="ss-feature-photo">${photoUrl?`<img src="${escapeHtml(photoUrl)}" alt="${name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${photoUrl?"none":"grid"}">&#128100;</div><span class="ss-verified">âœ“ Verified</span></div><div class="ss-feature-body"><div class="ss-feature-text"><b>${name}</b><small>${escapeHtml(meta||"Community member")}</small>${community?`<small>${escapeHtml(community)}</small>`:""}</div><button type="button" class="ss-heart" aria-label="View ${name}" onclick="viewProfile('${escapeHtml(profile.id)}')">â™¡</button></div></article>`;
 }
-
 
 // ============================================================
 // FIND YOUR MATCHES
