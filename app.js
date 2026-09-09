@@ -2649,374 +2649,193 @@ function createMatchCard(
 // VIEW PROFILE
 // ============================================================
 
+function getProfileAge(profile) {
+  if (!profile) return null;
+  const dobAge = profile.date_of_birth ? calculateAge(profile.date_of_birth) : null;
+  if (Number.isFinite(dobAge)) return dobAge;
+  const storedAge = Number(profile.age);
+  return Number.isFinite(storedAge) ? storedAge : null;
+}
+
+function getProfileCompletion(profile) {
+  const fields = [
+    ['full_name', profile?.full_name],
+    ['gender', profile?.gender],
+    ['date_of_birth', profile?.date_of_birth],
+    ['city', profile?.city],
+    ['state', profile?.state],
+    ['community', profile?.community],
+    ['surname', profile?.surname],
+    ['kul', profile?.kul],
+    ['marital_status', profile?.marital_status],
+    ['height', profile?.height],
+    ['education', profile?.education],
+    ['occupation', profile?.occupation],
+    ['bio', profile?.bio],
+    ['native_place', profile?.native_place],
+    ['family_type', profile?.family_type],
+    ['father_occupation', profile?.father_occupation],
+    ['mother_occupation', profile?.mother_occupation],
+    ['siblings', profile?.siblings],
+    ['income', profile?.income],
+    ['work_location', profile?.work_location],
+    ['food_preference', profile?.food_preference],
+    ['smoking', profile?.smoking],
+    ['drinking', profile?.drinking],
+    ['interests', profile?.interests],
+    ['partner_age_min', profile?.partner_age_min],
+    ['partner_age_max', profile?.partner_age_max],
+    ['partner_city', profile?.partner_city],
+    ['partner_education', profile?.partner_education],
+    ['partner_occupation', profile?.partner_occupation],
+    ['partner_marital_status', profile?.partner_marital_status],
+    ['partner_community', profile?.partner_community],
+    ['partner_expectations', profile?.partner_expectations]
+  ];
+  const filled = fields.filter(([, value]) => value !== null && value !== undefined && String(value).trim() !== '').length;
+  return Math.round((filled / fields.length) * 100);
+}
+
+function profileCompletionHtml(profile) {
+  const percent = getProfileCompletion(profile);
+  const missing = [];
+  const checks = [
+    ['Education', profile?.education],
+    ['Occupation', profile?.occupation],
+    ['Height', profile?.height],
+    ['About Me', profile?.bio],
+    ['Native Place', profile?.native_place],
+    ['Family Details', profile?.family_type || profile?.father_occupation || profile?.mother_occupation],
+    ['Lifestyle', profile?.food_preference || profile?.smoking || profile?.drinking],
+    ['Partner Preferences', profile?.partner_age_min || profile?.partner_age_max || profile?.partner_city || profile?.partner_education || profile?.partner_occupation || profile?.partner_expectations]
+  ];
+  checks.forEach(([label, value]) => { if (!value) missing.push(label); });
+  return `
+    <div style="margin:20px 0;padding:18px 20px;background:linear-gradient(135deg,#fff7f8,#f8f1f3);border:1px solid #ead8df;border-radius:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px;">
+        <div><strong style="font-size:15px;">Profile Completion</strong><div style="font-size:12px;color:#806b73;margin-top:3px;">Complete your profile to receive better matches.</div></div>
+        <strong style="font-size:20px;color:#6f1025;">${percent}%</strong>
+      </div>
+      <div style="height:9px;background:#eadfe3;border-radius:999px;overflow:hidden;"><div style="height:100%;width:${percent}%;background:linear-gradient(90deg,#6f1025,#7a3bd2);border-radius:999px;transition:width .3s ease;"></div></div>
+      ${missing.length ? `<div style="margin-top:12px;font-size:12px;color:#765c65;"><strong>Still missing:</strong> ${missing.map(escapeHtml).join(' Â· ')}</div>` : `<div style="margin-top:12px;font-size:12px;color:#39734a;font-weight:700;">âœ“ Your profile is complete.</div>`}
+    </div>`;
+}
+
 async function viewProfile(
   profileId
 ) {
+  if (!profileId || !isSupabaseReady()) return;
 
-  if (!profileId) {
-    return;
-  }
-
-  if (!isSupabaseReady()) {
-    return;
-  }
-
-
-  const result =
-    await supabaseClient
-      .from("profiles")
-      .select(`
-        id,
-        full_name,
-        gender,
-        date_of_birth,
-        age,
-        city,
-        state,
-        community,
-        surname,
-        kul,
-        bio,
-        education,
-        occupation,
-        height,
-        marital_status,
-        profile_photo,
-        photo_url
-      `)
-      .eq(
-        "id",
-        profileId
-      )
-      .maybeSingle();
-
+  const result = await supabaseClient
+    .from("profiles")
+    .select(`
+      id, full_name, gender, date_of_birth, age, city, state,
+      community, surname, kul, bio, education, occupation, height,
+      marital_status, profile_photo, photo_url, native_place,
+      family_type, family_status, father_occupation, mother_occupation,
+      siblings, income, work_location, food_preference, smoking,
+      drinking, interests, partner_age_min, partner_age_max,
+      partner_city, partner_education, partner_occupation,
+      partner_marital_status, partner_community, partner_expectations
+    `)
+    .eq("id", profileId)
+    .maybeSingle();
 
   if (result.error) {
-
-    alert(
-      "Profile could not be loaded: " +
-      result.error.message
-    );
-
+    alert("Profile could not be loaded: " + result.error.message);
     return;
   }
-
-
   if (!result.data) {
-
-    alert(
-      "Profile not found."
-    );
-
+    alert("Profile not found.");
     return;
   }
 
+  const profile = result.data;
+  const age = getProfileAge(profile);
+  document.getElementById("samajProfileViewer")?.remove();
 
-  const profile =
-    result.data;
+  const photoPath = profile.profile_photo || profile.photo_url || null;
+  const photoUrl = getProfilePhotoUrl(photoPath);
+  const photoHtml = photoUrl
+    ? `<img src="${escapeHtml(photoUrl)}" alt="${escapeHtml(profile.full_name || "Profile")}" style="width:150px;height:150px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 20px;" onerror="this.style.display='none';">`
+    : `<div style="width:150px;height:150px;border-radius:50%;background:#f1e5e8;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:55px;">&#128100;</div>`;
 
+  const section = (title, items) => `
+    <div style="margin-top:22px;">
+      <h3 style="margin:0 0 10px;font-size:15px;color:#6f1025;">${escapeHtml(title)}</h3>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;">${items.join('')}</div>
+    </div>`;
 
-  document
-    .getElementById(
-      "samajProfileViewer"
-    )
-    ?.remove();
+  const location = [profile.city, profile.state].filter(Boolean).join(", ");
+  const partnerAge = [profile.partner_age_min, profile.partner_age_max].filter(v => v !== null && v !== undefined && v !== '').join('â€“');
 
-
-  const photoPath =
-    profile.profile_photo ||
-    profile.photo_url ||
-    null;
-
-
-  const photoUrl =
-    getProfilePhotoUrl(
-      photoPath
-    );
-
-
-  let photoHtml = `
-
-    <div style="
-      width:150px;
-      height:150px;
-      border-radius:50%;
-      background:#f1e5e8;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      margin:0 auto 20px;
-      font-size:55px;
-    ">
-      \u{1F464}
-    </div>
-
-  `;
-
-
-  if (photoUrl) {
-
-    photoHtml = `
-
-      <img
-        src="${escapeHtml(
-          photoUrl
-        )}"
-        alt="${escapeHtml(
-          profile.full_name ||
-          "Profile"
-        )}"
-        style="
-          width:150px;
-          height:150px;
-          border-radius:50%;
-          object-fit:cover;
-          display:block;
-          margin:0 auto 20px;
-        "
-        onerror="
-          this.style.display='none';
-        "
-      >
-
-    `;
-
-  }
-
-
-  const modal =
-    document.createElement(
-      "div"
-    );
-
-
-  modal.id =
-    "samajProfileViewer";
-
-
-  modal.style.cssText = `
-
-    position:fixed;
-    inset:0;
-    z-index:10001;
-    background:rgba(20,10,15,.72);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    padding:20px;
-    overflow:auto;
-
-  `;
-
-
+  const modal = document.createElement("div");
+  modal.id = "samajProfileViewer";
+  modal.style.cssText = "position:fixed;inset:0;z-index:10001;background:rgba(20,10,15,.72);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   modal.innerHTML = `
-
-    <div style="
-      width:min(650px,100%);
-      max-height:90vh;
-      overflow:auto;
-      background:#fff;
-      border-radius:22px;
-      padding:30px;
-      position:relative;
-      box-shadow:0 25px 80px rgba(0,0,0,.25);
-    ">
-
-      <button
-        type="button"
-        onclick="
-          document
-            .getElementById(
-              'samajProfileViewer'
-            )
-            ?.remove()
-        "
-        style="
-          position:absolute;
-          top:15px;
-          right:15px;
-          width:38px;
-          height:38px;
-          border:0;
-          border-radius:50%;
-          background:#f5edef;
-          cursor:pointer;
-          font-size:20px;
-        "
-      >
-        \u{00D7}
-      </button>
-
+    <div style="width:min(650px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
+      <button type="button" onclick="document.getElementById('samajProfileViewer')?.remove()" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ã—</button>
       ${photoHtml}
-
-      <div style="
-        text-align:center;
-      ">
-
-        <span class="eyebrow">
-          SAMAJSAATHI MEMBER
-        </span>
-
-        <h2 style="
-          margin:8px 0;
-        ">
-
-          ${escapeHtml(
-            profile.full_name ||
-            "Member"
-          )}
-
-          ${
-            profile.age
-              ? ", " +
-                escapeHtml(
-                  profile.age
-                )
-              : ""
-          }
-
-        </h2>
-
+      <div style="text-align:center;">
+        <span class="eyebrow">SAMAJSAATHI MEMBER</span>
+        <h2 style="margin:8px 0;">${escapeHtml(profile.full_name || "Member")}${age !== null ? ", " + escapeHtml(age) : ""}</h2>
+        ${location ? `<div style="color:#806b73;font-size:13px;">ðŸ“ ${escapeHtml(location)}</div>` : ''}
       </div>
 
-      <div style="
-        display:grid;
-        grid-template-columns:
-        repeat(auto-fit,minmax(180px,1fr));
-        gap:12px;
-        margin-top:25px;
-      ">
+      ${section("Basic & Community", [
+        profileViewerItem("Gender", profile.gender),
+        profileViewerItem("Age", age),
+        profileViewerItem("City", location),
+        profileViewerItem("Native Place", profile.native_place),
+        profileViewerItem("Community / Jati", profile.community),
+        profileViewerItem("Surname", profile.surname),
+        profileViewerItem("Kul / Clan", profile.kul),
+        profileViewerItem("Marital Status", profile.marital_status)
+      ])}
 
-        ${profileViewerItem(
-          "Gender",
-          profile.gender
-        )}
+      ${section("Education & Career", [
+        profileViewerItem("Education", profile.education),
+        profileViewerItem("Occupation", profile.occupation),
+        profileViewerItem("Work Location", profile.work_location),
+        profileViewerItem("Income", profile.income),
+        profileViewerItem("Height", profile.height)
+      ])}
 
-        ${profileViewerItem(
-          "Age",
-          profile.age
-        )}
+      ${section("Family", [
+        profileViewerItem("Family Type", profile.family_type),
+        profileViewerItem("Family Status", profile.family_status),
+        profileViewerItem("Father's Occupation", profile.father_occupation),
+        profileViewerItem("Mother's Occupation", profile.mother_occupation),
+        profileViewerItem("Siblings", profile.siblings)
+      ])}
 
-        ${profileViewerItem(
-          "City",
-          [
-            profile.city,
-            profile.state
-          ]
-            .filter(Boolean)
-            .join(", ")
-        )}
+      ${section("Lifestyle & Interests", [
+        profileViewerItem("Food Preference", profile.food_preference),
+        profileViewerItem("Smoking", profile.smoking),
+        profileViewerItem("Drinking", profile.drinking),
+        profileViewerItem("Interests", profile.interests)
+      ])}
 
-        ${profileViewerItem(
-          "Community",
-          profile.community
-        )}
+      ${profile.bio ? `<div style="margin-top:22px;padding:18px;background:#f8f1f3;border-radius:14px;"><strong>About Me</strong><p style="margin:8px 0 0;white-space:pre-wrap;">${escapeHtml(profile.bio)}</p></div>` : ''}
 
-        ${profileViewerItem(
-          "Surname",
-          profile.surname
-        )}
+      ${section("Partner Preferences", [
+        profileViewerItem("Preferred Age", partnerAge),
+        profileViewerItem("Preferred Location", profile.partner_city),
+        profileViewerItem("Education", profile.partner_education),
+        profileViewerItem("Occupation", profile.partner_occupation),
+        profileViewerItem("Marital Status", profile.partner_marital_status),
+        profileViewerItem("Community", profile.partner_community)
+      ])}
 
-        ${profileViewerItem(
-          "Kul / Clan",
-          profile.kul
-        )}
+      ${profile.partner_expectations ? `<div style="margin-top:12px;padding:16px;background:#faf6f7;border-radius:14px;"><strong style="font-size:13px;">Partner Expectations</strong><p style="margin:7px 0 0;white-space:pre-wrap;">${escapeHtml(profile.partner_expectations)}</p></div>` : ''}
 
-        ${profileViewerItem(
-          "Education",
-          profile.education
-        )}
-
-        ${profileViewerItem(
-          "Occupation",
-          profile.occupation
-        )}
-
-        ${profileViewerItem(
-          "Height",
-          profile.height
-        )}
-
-        ${profileViewerItem(
-          "Marital Status",
-          profile.marital_status
-        )}
-
+      <div style="margin-top:25px;text-align:center;">
+        <button type="button" class="samaj-interest-btn" onclick="sendInterest('${profile.id}')">â™¥ Send Interest</button>
       </div>
-
-      ${
-        profile.bio
-          ? `
-            <div style="
-              margin-top:20px;
-              padding:18px;
-              background:#f8f1f3;
-              border-radius:14px;
-            ">
-
-              <strong>
-                About
-              </strong>
-
-              <p>
-                ${escapeHtml(
-                  profile.bio
-                )}
-              </p>
-
-            </div>
-          `
-          : ""
-      }
-
-      <div style="
-        margin-top:25px;
-        text-align:center;
-      ">
-
-        <button
-          type="button"
-          class="samaj-interest-btn"
-          onclick="
-            sendInterest('${profile.id}')
-          "
-        >
-          \u{2764}\u{FE0F} Send Interest
-        </button>
-
-      </div>
-
-    </div>
-
-  `;
-
-
-  document.body.appendChild(
-    modal
-  );
-
-
-  modal.addEventListener(
-    "click",
-    function(event) {
-
-      if (
-        event.target === modal
-      ) {
-
-        modal.remove();
-
-      }
-
-    }
-  );
-
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener("click", event => { if (event.target === modal) modal.remove(); });
 }
-
-
-// ============================================================
-// PROFILE VIEW ITEM
-// ============================================================
 
 function profileViewerItem(
   label,
@@ -6177,7 +5996,29 @@ async function openDashboard() {
                 profile.marital_status
               )}
 
+              ${dashboardItem(
+                "Education",
+                profile.education
+              )}
+
+              ${dashboardItem(
+                "Occupation",
+                profile.occupation
+              )}
+
+              ${dashboardItem(
+                "Height",
+                profile.height
+              )}
+
+              ${dashboardItem(
+                "Native Place",
+                profile.native_place
+              )}
+
             </div>
+
+            ${profileCompletionHtml(profile)}
 
 
             <div style="
@@ -6206,331 +6047,71 @@ async function openDashboard() {
 
           <section
             id="dashboardSection-edit"
-            class="
-              samaj-dashboard-section
-              samaj-section-hidden
-            "
-            style="
-              display:none;
-            "
+            class="samaj-dashboard-section samaj-section-hidden"
+            style="display:none;"
           >
+            <span class="eyebrow">PROFILE SETTINGS</span>
+            <h2>âœŽ Edit Profile</h2>
+            <p style="color:#806b73;margin-top:-5px;">Keep your matrimonial profile complete and up to date. Fields are grouped so members can understand you better.</p>
 
-            <span class="eyebrow">
-              PROFILE SETTINGS
-            </span>
+            ${profileCompletionHtml(profile)}
 
-            <h2>
-              \u{270F}\u{FE0F} Edit Profile
-            </h2>
-
+            <div style="margin:22px 0 10px;"><h3 style="margin:0;color:#6f1025;">1. Basic & Community</h3><p style="font-size:12px;color:#806b73;">Your core identity and community information.</p></div>
             <div class="form-grid">
-
-              <div class="field full">
-
-                <label>
-                  Full Name
-                </label>
-
-                <input
-                  id="editFullName"
-                  value="${escapeHtml(
-                    profile.full_name ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Gender
-                </label>
-
-                <select id="editGender">
-
-                  <option
-                    value="female"
-                    ${
-                      profile.gender ===
-                      "female"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Woman
-                  </option>
-
-                  <option
-                    value="male"
-                    ${
-                      profile.gender ===
-                      "male"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Man
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Date of Birth
-                </label>
-
-                <input
-                  id="editDob"
-                  type="date"
-                  value="${escapeHtml(
-                    profile.date_of_birth ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Community / Jati
-                </label>
-
-                <select id="editCommunity">
-
-                  <option
-                    value="Dom"
-                    ${
-                      profile.community ===
-                      "Dom"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Dom
-                  </option>
-
-                  <option
-                    value="Other SC Community"
-                    ${
-                      profile.community ===
-                      "Other SC Community"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other SC Community
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Surname
-                </label>
-
-                <select id="editSurname">
-
-                  <option
-                    value="Rauth"
-                    ${
-                      profile.surname ===
-                      "Rauth"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Rauth
-                  </option>
-
-                  <option
-                    value="Basfor"
-                    ${
-                      profile.surname ===
-                      "Basfor"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Basfor
-                  </option>
-
-                  <option
-                    value="Bansfor"
-                    ${
-                      profile.surname ===
-                      "Bansfor"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Bansfor
-                  </option>
-
-                  <option
-                    value="Other"
-                    ${
-                      profile.surname ===
-                      "Other"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  Kul / Clan
-                </label>
-
-                <select id="editKul">
-
-                  <option
-                    value="Piari Baiswar"
-                    ${
-                      profile.kul ===
-                      "Piari Baiswar"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Piari Baiswar
-                  </option>
-
-                  <option
-                    value="Other"
-                    ${
-                      profile.kul ===
-                      "Other"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Other
-                  </option>
-
-                  <option
-                    value="Not Known"
-                    ${
-                      profile.kul ===
-                      "Not Known"
-                        ? "selected"
-                        : ""
-                    }
-                  >
-                    Not Known
-                  </option>
-
-                </select>
-
-              </div>
-
-
-              <div class="field">
-
-                <label>
-                  State / Province
-                </label>
-
-                <input
-                  id="editState"
-                  value="${escapeHtml(profile.state || "")}"
-                >
-
-              </div>
-
-              <div class="field">
-
-                <label>
-                  Current City
-                </label>
-
-                <input
-                  id="editCity"
-                  value="${escapeHtml(
-                    profile.city ||
-                    ""
-                  )}"
-                >
-
-              </div>
-
-              <div class="field">
-                <label>Marital Status</label>
-                <select id="editMaritalStatus">
-                  <option value="">Select</option>
-                  <option value="Never Married" ${profile.marital_status === "Never Married" ? "selected" : ""}>Never Married</option>
-                  <option value="Divorced" ${profile.marital_status === "Divorced" ? "selected" : ""}>Divorced</option>
-                  <option value="Widowed" ${profile.marital_status === "Widowed" ? "selected" : ""}>Widowed</option>
-                  <option value="Separated" ${profile.marital_status === "Separated" ? "selected" : ""}>Separated</option>
-                </select>
-              </div>
-
-              <div class="field">
-                <label>Height</label>
-                <input id="editHeight" value="${escapeHtml(profile.height || "")}" placeholder="e.g. 5 ft 6 in">
-              </div>
-
-              <div class="field">
-                <label>Education</label>
-                <input id="editEducation" value="${escapeHtml(profile.education || "")}" placeholder="e.g. Graduate">
-              </div>
-
-              <div class="field">
-                <label>Occupation / Profession</label>
-                <input id="editOccupation" value="${escapeHtml(profile.occupation || "")}" placeholder="e.g. Business / Teacher">
-              </div>
-
-              <div class="field full">
-                <label>About You</label>
-                <textarea id="editBio" rows="4" placeholder="Tell a little about yourself...">${escapeHtml(profile.bio || "")}</textarea>
-              </div>
-
+              <div class="field full"><label>Full Name *</label><input id="editFullName" value="${escapeHtml(profile.full_name || "")}"></div>
+              <div class="field"><label>Gender</label><select id="editGender"><option value="">Select</option><option value="female" ${profile.gender === "female" ? "selected" : ""}>Woman</option><option value="male" ${profile.gender === "male" ? "selected" : ""}>Man</option></select></div>
+              <div class="field"><label>Date of Birth</label><input id="editDob" type="date" value="${escapeHtml(profile.date_of_birth || "")}"><small style="color:#806b73;">Age is calculated automatically from DOB.</small></div>
+              <div class="field"><label>Community / Jati</label><select id="editCommunity"><option value="Dom" ${profile.community === "Dom" ? "selected" : ""}>Dom</option><option value="Other SC Community" ${profile.community === "Other SC Community" ? "selected" : ""}>Other SC Community</option><option value="" ${!profile.community ? "selected" : ""}>Not specified</option></select></div>
+              <div class="field"><label>Surname</label><select id="editSurname"><option value="Rauth" ${profile.surname === "Rauth" ? "selected" : ""}>Rauth</option><option value="Basfor" ${profile.surname === "Basfor" ? "selected" : ""}>Basfor</option><option value="Bansfor" ${profile.surname === "Bansfor" ? "selected" : ""}>Bansfor</option><option value="Other" ${profile.surname === "Other" ? "selected" : ""}>Other</option></select></div>
+              <div class="field"><label>Kul / Clan</label><select id="editKul"><option value="Piari Baiswar" ${profile.kul === "Piari Baiswar" ? "selected" : ""}>Piari Baiswar</option><option value="Other" ${profile.kul === "Other" ? "selected" : ""}>Other</option><option value="Not Known" ${profile.kul === "Not Known" ? "selected" : ""}>Not Known</option></select></div>
+              <div class="field"><label>State / Province</label><input id="editState" value="${escapeHtml(profile.state || "")}" placeholder="e.g. West Bengal"></div>
+              <div class="field"><label>Current City *</label><input id="editCity" value="${escapeHtml(profile.city || "")}" placeholder="e.g. Siliguri"></div>
+              <div class="field"><label>Native Place</label><input id="editNativePlace" value="${escapeHtml(profile.native_place || "")}" placeholder="Village / town / district"></div>
+              <div class="field"><label>Marital Status</label><select id="editMaritalStatus"><option value="">Select</option><option value="Never Married" ${profile.marital_status === "Never Married" ? "selected" : ""}>Never Married</option><option value="Divorced" ${profile.marital_status === "Divorced" ? "selected" : ""}>Divorced</option><option value="Widowed" ${profile.marital_status === "Widowed" ? "selected" : ""}>Widowed</option><option value="Separated" ${profile.marital_status === "Separated" ? "selected" : ""}>Separated</option></select></div>
             </div>
 
-
-            <div
-              id="updateProfileMessage"
-              style="
-                margin-top:15px;
-              "
-            ></div>
-
-
-            <div class="modal-actions">
-
-              <button
-                type="button"
-                class="btn primary"
-                onclick="
-                  updateProfile()
-                "
-              >
-                \u{1F4BE} Save Profile Changes
-              </button>
-
+            <div style="margin:28px 0 10px;"><h3 style="margin:0;color:#6f1025;">2. Education & Career</h3></div>
+            <div class="form-grid">
+              <div class="field"><label>Education</label><input id="editEducation" value="${escapeHtml(profile.education || "")}" placeholder="e.g. Graduate / Post Graduate"></div>
+              <div class="field"><label>Occupation / Profession</label><input id="editOccupation" value="${escapeHtml(profile.occupation || "")}" placeholder="e.g. Teacher / Business / Private Job"></div>
+              <div class="field"><label>Work Location</label><input id="editWorkLocation" value="${escapeHtml(profile.work_location || "")}" placeholder="City / area"></div>
+              <div class="field"><label>Income Range <span style="font-weight:400;">(optional)</span></label><input id="editIncome" value="${escapeHtml(profile.income || "")}" placeholder="e.g. â‚¹2â€“5 lakh/year"></div>
+              <div class="field"><label>Height</label><input id="editHeight" value="${escapeHtml(profile.height || "")}" placeholder="e.g. 5 ft 6 in"></div>
             </div>
 
+            <div style="margin:28px 0 10px;"><h3 style="margin:0;color:#6f1025;">3. Family Details</h3></div>
+            <div class="form-grid">
+              <div class="field"><label>Family Type</label><select id="editFamilyType"><option value="">Select</option><option value="Nuclear" ${profile.family_type === "Nuclear" ? "selected" : ""}>Nuclear</option><option value="Joint" ${profile.family_type === "Joint" ? "selected" : ""}>Joint</option><option value="Extended" ${profile.family_type === "Extended" ? "selected" : ""}>Extended</option></select></div>
+              <div class="field"><label>Family Status</label><input id="editFamilyStatus" value="${escapeHtml(profile.family_status || "")}" placeholder="e.g. Middle class"></div>
+              <div class="field"><label>Father's Occupation</label><input id="editFatherOccupation" value="${escapeHtml(profile.father_occupation || "")}"></div>
+              <div class="field"><label>Mother's Occupation</label><input id="editMotherOccupation" value="${escapeHtml(profile.mother_occupation || "")}"></div>
+              <div class="field"><label>Siblings</label><input id="editSiblings" value="${escapeHtml(profile.siblings || "")}" placeholder="e.g. 1 brother, 1 sister"></div>
+            </div>
+
+            <div style="margin:28px 0 10px;"><h3 style="margin:0;color:#6f1025;">4. Lifestyle & Interests</h3></div>
+            <div class="form-grid">
+              <div class="field"><label>Food Preference</label><select id="editFoodPreference"><option value="">Select</option><option value="Vegetarian" ${profile.food_preference === "Vegetarian" ? "selected" : ""}>Vegetarian</option><option value="Non-Vegetarian" ${profile.food_preference === "Non-Vegetarian" ? "selected" : ""}>Non-Vegetarian</option><option value="Eggetarian" ${profile.food_preference === "Eggetarian" ? "selected" : ""}>Eggetarian</option><option value="Other" ${profile.food_preference === "Other" ? "selected" : ""}>Other</option></select></div>
+              <div class="field"><label>Smoking</label><select id="editSmoking"><option value="">Select</option><option value="No" ${profile.smoking === "No" ? "selected" : ""}>No</option><option value="Occasionally" ${profile.smoking === "Occasionally" ? "selected" : ""}>Occasionally</option><option value="Yes" ${profile.smoking === "Yes" ? "selected" : ""}>Yes</option></select></div>
+              <div class="field"><label>Drinking</label><select id="editDrinking"><option value="">Select</option><option value="No" ${profile.drinking === "No" ? "selected" : ""}>No</option><option value="Occasionally" ${profile.drinking === "Occasionally" ? "selected" : ""}>Occasionally</option><option value="Yes" ${profile.drinking === "Yes" ? "selected" : ""}>Yes</option></select></div>
+              <div class="field full"><label>Interests / Hobbies</label><input id="editInterests" value="${escapeHtml(profile.interests || "")}" placeholder="e.g. Music, football, travel, reading"></div>
+              <div class="field full"><label>About Me</label><textarea id="editBio" rows="5" placeholder="Tell a little about yourself, your family, interests and what you are looking for...">${escapeHtml(profile.bio || "")}</textarea></div>
+            </div>
+
+            <div style="margin:28px 0 10px;"><h3 style="margin:0;color:#6f1025;">5. Partner Preferences</h3><p style="font-size:12px;color:#806b73;">These preferences will help SamajSaathi improve match suggestions.</p></div>
+            <div class="form-grid">
+              <div class="field"><label>Preferred Age â€” From</label><input id="editPartnerAgeMin" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_min ?? "")}" placeholder="e.g. 24"></div>
+              <div class="field"><label>Preferred Age â€” To</label><input id="editPartnerAgeMax" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_max ?? "")}" placeholder="e.g. 32"></div>
+              <div class="field"><label>Preferred City / Location</label><input id="editPartnerCity" value="${escapeHtml(profile.partner_city || "")}" placeholder="e.g. Jaigaon / Alipurduar / Siliguri"></div>
+              <div class="field"><label>Preferred Education</label><input id="editPartnerEducation" value="${escapeHtml(profile.partner_education || "")}" placeholder="e.g. Graduate"></div>
+              <div class="field"><label>Preferred Occupation</label><input id="editPartnerOccupation" value="${escapeHtml(profile.partner_occupation || "")}" placeholder="Any / Teacher / Business etc."></div>
+              <div class="field"><label>Preferred Marital Status</label><input id="editPartnerMaritalStatus" value="${escapeHtml(profile.partner_marital_status || "")}" placeholder="e.g. Never Married"></div>
+              <div class="field"><label>Preferred Community</label><input id="editPartnerCommunity" value="${escapeHtml(profile.partner_community || "")}" placeholder="e.g. Dom / SC / Any"></div>
+              <div class="field full"><label>Partner Expectations</label><textarea id="editPartnerExpectations" rows="4" placeholder="What qualities or expectations matter to you?">${escapeHtml(profile.partner_expectations || "")}</textarea></div>
+            </div>
+
+            <div id="updateProfileMessage" style="margin-top:15px;"></div>
+            <div class="modal-actions"><button type="button" class="btn primary" onclick="updateProfile()">ðŸ’¾ Save Profile Changes</button></div>
           </section>
-
 
           <!-- =================================================
                MATCHES
@@ -7375,6 +6956,29 @@ async function updateProfile() {
       "editBio"
     )?.value.trim() || null;
 
+  const nativePlace = document.getElementById("editNativePlace")?.value.trim() || null;
+  const workLocation = document.getElementById("editWorkLocation")?.value.trim() || null;
+  const income = document.getElementById("editIncome")?.value.trim() || null;
+  const familyType = document.getElementById("editFamilyType")?.value || null;
+  const familyStatus = document.getElementById("editFamilyStatus")?.value.trim() || null;
+  const fatherOccupation = document.getElementById("editFatherOccupation")?.value.trim() || null;
+  const motherOccupation = document.getElementById("editMotherOccupation")?.value.trim() || null;
+  const siblings = document.getElementById("editSiblings")?.value.trim() || null;
+  const foodPreference = document.getElementById("editFoodPreference")?.value || null;
+  const smoking = document.getElementById("editSmoking")?.value || null;
+  const drinking = document.getElementById("editDrinking")?.value || null;
+  const interests = document.getElementById("editInterests")?.value.trim() || null;
+  const partnerAgeMinRaw = document.getElementById("editPartnerAgeMin")?.value;
+  const partnerAgeMaxRaw = document.getElementById("editPartnerAgeMax")?.value;
+  const partnerAgeMin = partnerAgeMinRaw ? Number(partnerAgeMinRaw) : null;
+  const partnerAgeMax = partnerAgeMaxRaw ? Number(partnerAgeMaxRaw) : null;
+  const partnerCity = document.getElementById("editPartnerCity")?.value.trim() || null;
+  const partnerEducation = document.getElementById("editPartnerEducation")?.value.trim() || null;
+  const partnerOccupation = document.getElementById("editPartnerOccupation")?.value.trim() || null;
+  const partnerMaritalStatus = document.getElementById("editPartnerMaritalStatus")?.value.trim() || null;
+  const partnerCommunity = document.getElementById("editPartnerCommunity")?.value.trim() || null;
+  const partnerExpectations = document.getElementById("editPartnerExpectations")?.value.trim() || null;
+
 
   if (
     !fullName ||
@@ -7402,6 +7006,13 @@ async function updateProfile() {
       "error"
     );
 
+    return;
+  }
+
+  if ((partnerAgeMin !== null && (partnerAgeMin < 18 || partnerAgeMin > 100)) ||
+      (partnerAgeMax !== null && (partnerAgeMax < 18 || partnerAgeMax > 100)) ||
+      (partnerAgeMin !== null && partnerAgeMax !== null && partnerAgeMin > partnerAgeMax)) {
+    showMessage(message, "Please enter a valid preferred age range (18â€“100).", "error");
     return;
   }
 
@@ -7459,7 +7070,28 @@ async function updateProfile() {
           occupation,
 
         bio:
-          bio
+          bio,
+
+        native_place: nativePlace,
+        work_location: workLocation,
+        income: income,
+        family_type: familyType,
+        family_status: familyStatus,
+        father_occupation: fatherOccupation,
+        mother_occupation: motherOccupation,
+        siblings: siblings,
+        food_preference: foodPreference,
+        smoking: smoking,
+        drinking: drinking,
+        interests: interests,
+        partner_age_min: partnerAgeMin,
+        partner_age_max: partnerAgeMax,
+        partner_city: partnerCity,
+        partner_education: partnerEducation,
+        partner_occupation: partnerOccupation,
+        partner_marital_status: partnerMaritalStatus,
+        partner_community: partnerCommunity,
+        partner_expectations: partnerExpectations
 
       })
       .eq(
