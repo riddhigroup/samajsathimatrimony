@@ -8464,10 +8464,14 @@ console.log(
 );
 
 
+
 /* ============================================================
-   SAMAJSAATHI \u{2014} CLEAN MATCH / VIEW PROFILE / CHAT FIX
-   Added as a final runtime layer. Existing app structure kept.
+   SAMAJSAATHI V2 â€” MATCH + FAMILY INTRODUCTION FLOW
+   Chat intentionally disabled. Mutual matches can request a
+   SamajSaathi family introduction after payment.
    ============================================================ */
+
+const SS_FAMILY_INTRO_AMOUNT = 29900; // â‚¹299 in paise
 
 function ssPair(a, b) {
   return String(a) < String(b)
@@ -8482,26 +8486,22 @@ async function ssSession() {
 }
 
 async function ssConfirmed(a, b) {
-  if (!a || !b || a === b) return false;
+  if (!a || !b || a === b || !supabaseClient) return false;
 
   const pair = ssPair(a, b);
   const r = await supabaseClient
-    .from("matches")
-    .select("id")
-    .eq("user1_id", pair.user1_id)
-    .eq("user2_id", pair.user2_id)
+    .from('matches')
+    .select('id')
+    .eq('user1_id', pair.user1_id)
+    .eq('user2_id', pair.user2_id)
     .maybeSingle();
 
   if (r.error) {
-    console.error("CONFIRMED MATCH CHECK:", r.error);
+    console.error('CONFIRMED MATCH CHECK:', r.error);
     return false;
   }
 
   if (r.data) return true;
-
-  // If both users have accepted each other but the match row was not
-  // created earlier, create it now. This keeps Chat/Profile actions
-  // consistent with the real reciprocal-interest state.
   return await ssCreateConfirmedMatch(a, b);
 }
 
@@ -8510,44 +8510,39 @@ async function ssCreateConfirmedMatch(a, b) {
 
   try {
     const ab = await supabaseClient
-      .from("interests")
-      .select("id")
-      .eq("sender_id", a)
-      .eq("receiver_id", b)
-      .eq("status", "accepted")
+      .from('interests')
+      .select('id')
+      .eq('sender_id', a)
+      .eq('receiver_id', b)
+      .eq('status', 'accepted')
       .maybeSingle();
 
     if (ab.error) throw ab.error;
 
     const ba = await supabaseClient
-      .from("interests")
-      .select("id")
-      .eq("sender_id", b)
-      .eq("receiver_id", a)
-      .eq("status", "accepted")
+      .from('interests')
+      .select('id')
+      .eq('sender_id', b)
+      .eq('receiver_id', a)
+      .eq('status', 'accepted')
       .maybeSingle();
 
     if (ba.error) throw ba.error;
-
     if (!ab.data || !ba.data) return false;
 
     const pair = ssPair(a, b);
-
     const existing = await supabaseClient
-      .from("matches")
-      .select("id")
-      .eq("user1_id", pair.user1_id)
-      .eq("user2_id", pair.user2_id)
+      .from('matches')
+      .select('id')
+      .eq('user1_id', pair.user1_id)
+      .eq('user2_id', pair.user2_id)
       .maybeSingle();
 
-    if (existing.error && existing.error.code !== "PGRST116") {
-      throw existing.error;
-    }
-
+    if (existing.error && existing.error.code !== 'PGRST116') throw existing.error;
     if (existing.data) return true;
 
     const inserted = await supabaseClient
-      .from("matches")
+      .from('matches')
       .insert({
         user1_id: pair.user1_id,
         user2_id: pair.user2_id,
@@ -8555,1061 +8550,378 @@ async function ssCreateConfirmedMatch(a, b) {
       });
 
     if (inserted.error) {
-      if (
-        inserted.error.code === "23505" ||
-        String(inserted.error.message || "").toLowerCase().includes("duplicate")
-      ) {
-        return true;
-      }
+      if (inserted.error.code === '23505') return true;
       throw inserted.error;
     }
 
     return true;
   } catch (e) {
-    console.error("CREATE CONFIRMED MATCH:", e);
+    console.error('CREATE CONFIRMED MATCH:', e);
     return false;
   }
 }
 
-/* ---------- VIEW PROFILE: clean standalone implementation ---------- */
+async function ssGetFamilyRequest(otherUserId) {
+  const session = await ssSession();
+  if (!session || !otherUserId || !supabaseClient) return null;
+
+  const r = await supabaseClient
+    .from('family_contact_requests')
+    .select('id,status,amount_paise,razorpay_order_id,created_at,paid_at,admin_notes')
+    .eq('requester_id', session.user.id)
+    .eq('receiver_id', otherUserId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (r.error) {
+    console.warn('FAMILY REQUEST LOOKUP:', r.error);
+    return null;
+  }
+  return r.data || null;
+}
+
+function ssFamilyStatusText(status) {
+  const map = {
+    payment_pending: 'Payment pending',
+    paid: 'Payment received',
+    admin_review: 'Under SamajSaathi review',
+    approved: 'Family introduction approved',
+    rejected: 'Request rejected',
+    refunded: 'Payment refunded'
+  };
+  return map[status] || 'Request pending';
+}
+
+async function ssStartFamilyIntroduction(otherUserId) {
+  if (!otherUserId) return;
+
+  const session = await ssSession();
+  if (!session) {
+    openModal('login');
+    return;
+  }
+
+  const confirmed = await ssConfirmed(session.user.id, otherUserId);
+  if (!confirmed) {
+    alert('Family introduction is available only after both people accept each other.');
+    return;
+  }
+
+  const existing = await ssGetFamilyRequest(otherUserId);
+  if (existing && ['paid', 'admin_review', 'approved'].includes(existing.status)) {
+    alert('Your family introduction request is already ' + ssFamilyStatusText(existing.status).toLowerCase() + '.');
+    return;
+  }
+
+  if (!window.Razorpay) {
+    alert('Payment checkout is not loaded yet. Please refresh the page and try again.');
+    return;
+  }
+
+  const btn = document.getElementById('ssFamilyIntroBtn');
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Preparing payment...';
+  }
+
+  try {
+    const orderResult = await supabaseClient.functions.invoke('create-family-contact-order', {
+      body: { receiver_id: otherUserId }
+    });
+
+    if (orderResult.error) throw orderResult.error;
+    const data = orderResult.data || {};
+    if (!data.order_id || !data.request_id || !data.key_id) {
+      throw new Error(data.error || 'Payment order could not be created.');
+    }
+
+    const pr = await supabaseClient
+      .from('profiles')
+      .select('full_name')
+      .eq('id', otherUserId)
+      .maybeSingle();
+
+    const receiverName = pr.data?.full_name || 'SamajSaathi Member';
+
+    const options = {
+      key: data.key_id,
+      amount: data.amount_paise || SS_FAMILY_INTRO_AMOUNT,
+      currency: 'INR',
+      name: 'SamajSaathi',
+      description: 'Family Introduction Request',
+      order_id: data.order_id,
+      prefill: {
+        name: (window.currentProfileData?.full_name || session.user.email || 'SamajSaathi Member'),
+        email: session.user.email || ''
+      },
+      notes: {
+        request_id: data.request_id,
+        member: receiverName
+      },
+      theme: { color: '#7a102b' },
+      handler: async function(response) {
+        try {
+          const verifyResult = await supabaseClient.functions.invoke('verify-family-contact-payment', {
+            body: {
+              request_id: data.request_id,
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature
+            }
+          });
+
+          if (verifyResult.error) throw verifyResult.error;
+          const verified = verifyResult.data || {};
+          if (!verified.success) throw new Error(verified.error || 'Payment verification failed.');
+
+          alert('Payment successful. Your family introduction request has been sent to SamajSaathi for review.');
+          await ssRefreshFamilyIntroductionUI(otherUserId);
+        } catch (e) {
+          console.error('PAYMENT VERIFICATION:', e);
+          alert('Payment was received by the gateway, but verification is still pending. Please contact SamajSaathi support with your payment ID: ' + (response.razorpay_payment_id || 'N/A'));
+          await ssRefreshFamilyIntroductionUI(otherUserId);
+        }
+      },
+      modal: {
+        ondismiss: async function() {
+          await ssRefreshFamilyIntroductionUI(otherUserId);
+        }
+      }
+    };
+
+    const checkout = new Razorpay(options);
+    checkout.on('payment.failed', function(response) {
+      console.error('RAZORPAY PAYMENT FAILED:', response?.error || response);
+      alert('Payment failed or was cancelled. No family contact details were shared.');
+    });
+    checkout.open();
+  } catch (e) {
+    console.error('FAMILY INTRO PAYMENT:', e);
+    alert('Unable to start payment: ' + (e.message || e));
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = 'Request Family Introduction â€” â‚¹299';
+    }
+  }
+}
+
+async function ssRefreshFamilyIntroductionUI(otherUserId) {
+  const statusEl = document.getElementById('ssFamilyIntroStatus');
+  const btn = document.getElementById('ssFamilyIntroBtn');
+  const request = await ssGetFamilyRequest(otherUserId);
+
+  if (request && statusEl) {
+    statusEl.textContent = ssFamilyStatusText(request.status);
+  }
+
+  if (request && ['paid', 'admin_review', 'approved'].includes(request.status)) {
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = 'Request Submitted';
+    }
+  }
+}
 
 async function ssViewProfile(profileId) {
-  if (!profileId) return;
-
-  if (!isSupabaseReady()) return;
+  if (!profileId || !isSupabaseReady()) return;
 
   try {
     const r = await supabaseClient
-      .from("profiles")
+      .from('profiles')
       .select(`
-        id,
-        full_name,
-        gender,
-        date_of_birth,
-        age,
-        city,
-        state,
-        community,
-        surname,
-        kul,
-        bio,
-        education,
-        occupation,
-        height,
-        marital_status,
-        profile_photo,
-        photo_url
+        id, full_name, gender, date_of_birth, age, city, state,
+        community, surname, kul, bio, education, occupation, height,
+        marital_status, profile_photo, photo_url,
+        native_place, family_type, family_status, father_occupation,
+        mother_occupation, siblings, income, work_location,
+        food_preference, smoking, drinking, interests,
+        partner_age_min, partner_age_max, partner_city,
+        partner_education, partner_occupation, partner_marital_status,
+        partner_community, partner_expectations
       `)
-      .eq("id", profileId)
+      .eq('id', profileId)
       .maybeSingle();
 
-    if (r.error) {
-      console.error("VIEW PROFILE DATABASE ERROR:", r.error);
-      alert("Profile could not be loaded: " + r.error.message);
-      return;
-    }
-
+    if (r.error) throw r.error;
     if (!r.data) {
-      alert("Profile not found.");
+      alert('Profile not found.');
       return;
     }
 
     const p = r.data;
-    const name = p.full_name || "SamajSaathi Member";
-    const location = [p.city, p.state].filter(Boolean).join(", ");
+    const name = p.full_name || 'SamajSaathi Member';
+    const location = [p.city, p.state].filter(Boolean).join(', ');
     const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
-
-    document.getElementById("samajProfileViewer")?.remove();
-
-    const viewer = document.createElement("div");
-    viewer.id = "samajProfileViewer";
-    viewer.style.cssText =
-      "position:fixed;inset:0;z-index:10001;background:rgba(20,10,15,.72);" +
-      "display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
-
     const session = await ssSession();
-    const isOwn = session && session.user.id === profileId;
-    const isMatch = session && !isOwn
-      ? await ssConfirmed(session.user.id, profileId)
-      : false;
+    const isOwn = session?.user?.id === profileId;
+    const isMatch = session && !isOwn ? await ssConfirmed(session.user.id, profileId) : false;
+    const request = session && isMatch && !isOwn ? await ssGetFamilyRequest(profileId) : null;
+
+    document.getElementById('samajProfileViewer')?.remove();
+
+    const viewer = document.createElement('div');
+    viewer.id = 'samajProfileViewer';
+    viewer.style.cssText = 'position:fixed;inset:0;z-index:10001;background:rgba(20,10,15,.72);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;';
 
     const photoHtml = photo
-      ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(name)}"
-           style="width:150px;height:150px;border-radius:50%;object-fit:cover;
-           display:block;margin:0 auto 20px;"
-           onerror="this.style.display='none';">`
-      : `<div style="width:150px;height:150px;border-radius:50%;background:#f1e5e8;
-           display:flex;align-items:center;justify-content:center;margin:0 auto 20px;
-           font-size:55px;">\u{1F464}</div>`;
+      ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(name)}" style="width:150px;height:150px;border-radius:50%;object-fit:cover;display:block;margin:0 auto 20px;" onerror="this.style.display='none';">`
+      : `<div style="width:150px;height:150px;border-radius:50%;background:#f1e5e8;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:55px;">\u{1F464}</div>`;
 
     const item = (label, value) => `
       <div style="background:#faf7f8;border:1px solid #eee0e4;border-radius:12px;padding:12px;">
         <small style="display:block;color:#8a747b;font-size:11px;">${escapeHtml(label)}</small>
-        <strong style="display:block;margin-top:4px;color:#24151a;font-size:13px;">
-          ${escapeHtml(value || "Not specified")}
-        </strong>
+        <strong style="display:block;margin-top:4px;color:#24151a;font-size:13px;">${escapeHtml(value || 'Not specified')}</strong>
       </div>`;
 
-    let actionHtml = "";
-
+    let actionHtml = '';
     if (!isOwn) {
       if (isMatch) {
+        const status = request ? ssFamilyStatusText(request.status) : '';
+        const submitted = request && ['paid', 'admin_review', 'approved'].includes(request.status);
         actionHtml = `
-          <button type="button" id="ssProfileChatBtn"
-            style="border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);
-            color:#fff;border-radius:10px;padding:11px 18px;font-weight:800;cursor:pointer;">
-            \u{1F4AC} Chat
-          </button>`;
+          <div style="width:100%;text-align:center;">
+            <div style="background:#f7f0f2;border-radius:12px;padding:12px;margin-bottom:12px;color:#6f1025;font-size:13px;">
+              <strong>Mutual Match confirmed</strong><br>
+              <span id="ssFamilyIntroStatus">${escapeHtml(status || 'You can request a family introduction.')}</span>
+            </div>
+            <button type="button" id="ssFamilyIntroBtn"
+              ${submitted ? 'disabled' : ''}
+              style="border:0;background:#6f1025;color:#fff;border-radius:10px;padding:12px 18px;font-weight:800;cursor:${submitted ? 'not-allowed' : 'pointer'};opacity:${submitted ? '.65' : '1'};">
+              ${submitted ? 'Request Submitted' : 'Request Family Introduction â€” â‚¹299'}
+            </button>
+            <div style="font-size:11px;color:#88747b;margin-top:8px;">SamajSaathi reviews the request before any family contact details are shared.</div>
+          </div>`;
       } else {
         actionHtml = `
           <button type="button" id="ssProfileInterestBtn"
-            style="border:0;background:#6f1025;color:#fff;border-radius:10px;
-            padding:11px 18px;font-weight:800;cursor:pointer;">
+            style="border:0;background:#6f1025;color:#fff;border-radius:10px;padding:11px 18px;font-weight:800;cursor:pointer;">
             \u{2764}\u{FE0F} Send Interest
           </button>`;
       }
     }
 
+    const familyRows = [
+      ['Native Place', p.native_place], ['Family Type', p.family_type],
+      ['Family Status', p.family_status], ['Father', p.father_occupation],
+      ['Mother', p.mother_occupation], ['Siblings', p.siblings],
+      ['Income', p.income], ['Work Location', p.work_location]
+    ].filter(x => x[1]);
+
+    const lifestyleRows = [
+      ['Food', p.food_preference], ['Smoking', p.smoking],
+      ['Drinking', p.drinking], ['Interests', p.interests]
+    ].filter(x => x[1]);
+
+    const partnerRows = [
+      ['Age', p.partner_age_min || p.partner_age_max ? `${p.partner_age_min || ''} - ${p.partner_age_max || ''}` : ''],
+      ['City', p.partner_city], ['Education', p.partner_education],
+      ['Occupation', p.partner_occupation], ['Marital Status', p.partner_marital_status],
+      ['Community', p.partner_community], ['Expectations', p.partner_expectations]
+    ].filter(x => x[1]);
+
+    const grid = rows => rows.map(x => item(x[0], x[1])).join('');
+
     viewer.innerHTML = `
-      <div style="width:min(650px,100%);max-height:90vh;overflow:auto;background:#fff;
-        border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
-        <button type="button" id="ssProfileClose"
-          style="position:absolute;top:15px;right:15px;width:38px;height:38px;
-          border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">\u{00D7}</button>
-
+      <div style="width:min(700px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
+        <button type="button" id="ssProfileClose" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ã—</button>
         ${photoHtml}
-
         <div style="text-align:center;">
           <span class="eyebrow">SAMAJSAATHI MEMBER</span>
-          <h2 style="margin:8px 0;">${escapeHtml(name)}${p.age ? ", " + escapeHtml(p.age) : ""}</h2>
-          <p style="margin:0 0 20px;color:#7b626a;">
-            ${escapeHtml(location || "Location not specified")}
-          </p>
+          <h2 style="margin:8px 0;">${escapeHtml(name)}${p.age ? ', ' + escapeHtml(p.age) : ''}</h2>
+          <p style="margin:0 0 20px;color:#7b626a;">${escapeHtml(location || 'Location not specified')}</p>
         </div>
-
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;">
-          ${item("Community", p.community)}
-          ${item("Surname", p.surname)}
-          ${item("Kul", p.kul)}
-          ${item("Education", p.education)}
-          ${item("Occupation", p.occupation)}
-          ${item("Height", p.height)}
-          ${item("Marital Status", p.marital_status)}
+          ${item('Community', p.community)}${item('Surname', p.surname)}${item('Kul', p.kul)}
+          ${item('Education', p.education)}${item('Occupation', p.occupation)}${item('Height', p.height)}${item('Marital Status', p.marital_status)}
         </div>
-
         <div style="margin-top:15px;background:#faf7f8;border-radius:12px;padding:15px;">
           <strong style="display:block;margin-bottom:6px;">About</strong>
-          <div style="color:#5f4d54;font-size:13px;line-height:1.6;">
-            ${escapeHtml(p.bio || "No bio added yet.")}
-          </div>
+          <div style="color:#5f4d54;font-size:13px;line-height:1.6;">${escapeHtml(p.bio || 'No bio added yet.')}</div>
         </div>
-
-        <div id="ssProfileActions"
-          style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px;">
-          ${actionHtml}
-        </div>
+        ${familyRows.length ? `<div style="margin-top:15px;"><strong>Family</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px;">${grid(familyRows)}</div></div>` : ''}
+        ${lifestyleRows.length ? `<div style="margin-top:15px;"><strong>Lifestyle & Interests</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px;">${grid(lifestyleRows)}</div></div>` : ''}
+        ${partnerRows.length ? `<div style="margin-top:15px;"><strong>Partner Preferences</strong><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px;">${grid(partnerRows)}</div></div>` : ''}
+        <div id="ssProfileActions" style="display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-top:20px;">${actionHtml}</div>
       </div>`;
 
     document.body.appendChild(viewer);
+    document.getElementById('ssProfileClose').onclick = () => viewer.remove();
 
-    document.getElementById("ssProfileClose").onclick = () => viewer.remove();
-
-    if (document.getElementById("ssProfileChatBtn")) {
-      document.getElementById("ssProfileChatBtn").onclick = () => {
-        viewer.remove();
-        ssOpenChat(profileId);
-      };
-    }
-
-    if (document.getElementById("ssProfileInterestBtn")) {
-      document.getElementById("ssProfileInterestBtn").onclick = async () => {
-        const ok = await sendInterest(profileId);
-        if (ok !== false) viewer.remove();
-      };
-    }
-
-    viewer.addEventListener("click", e => {
-      if (e.target === viewer) viewer.remove();
+    document.getElementById('ssProfileInterestBtn')?.addEventListener('click', async () => {
+      const ok = await sendInterest(profileId);
+      if (ok !== false) viewer.remove();
     });
 
+    document.getElementById('ssFamilyIntroBtn')?.addEventListener('click', () => ssStartFamilyIntroduction(profileId));
+    viewer.addEventListener('click', e => { if (e.target === viewer) viewer.remove(); });
   } catch (e) {
-    console.error("VIEW PROFILE ERROR:", e);
-    alert("Unable to open profile: " + (e.message || e));
+    console.error('VIEW PROFILE ERROR:', e);
+    alert('Unable to open profile: ' + (e.message || e));
   }
 }
-
-/* ---------- CHAT ---------- */
-
-async function ssOpenChat(otherUserId) {
-  if (!otherUserId) return;
-
-  const session = await ssSession();
-  if (!session) {
-    openModal("login");
-    return;
-  }
-
-  const confirmed = await ssConfirmed(session.user.id, otherUserId);
-  if (!confirmed) {
-    alert("\u{1F4AC} Chat is available only after both people accept each other's interest.");
-    return;
-  }
-
-  const pr = await supabaseClient
-    .from("profiles")
-    .select("id,full_name,profile_photo,photo_url")
-    .eq("id", otherUserId)
-    .maybeSingle();
-
-  if (pr.error || !pr.data) {
-    alert("Could not load this profile.");
-    return;
-  }
-
-  const p = pr.data;
-  const name = p.full_name || "SamajSaathi Member";
-
-  document.getElementById("ssChatModal")?.remove();
-
-  const modal = document.createElement("div");
-  modal.id = "ssChatModal";
-  modal.style.cssText =
-    "position:fixed;inset:0;z-index:10002;background:rgba(20,10,25,.62);" +
-    "display:flex;align-items:center;justify-content:center;padding:15px;";
-
-  modal.innerHTML = `
-    <div style="width:min(520px,100%);height:min(700px,90vh);background:#fff;
-      border-radius:22px;overflow:hidden;display:flex;flex-direction:column;
-      box-shadow:0 25px 70px rgba(0,0,0,.25);">
-
-      <header style="padding:15px 17px;background:linear-gradient(135deg,#7c3aed,#5b21b6);
-        color:#fff;display:flex;align-items:center;justify-content:space-between;">
-        <div>
-          <div style="font-weight:900;font-size:17px;">\u{1F4AC} ${escapeHtml(name)}</div>
-          <div style="font-size:11px;opacity:.85;">Confirmed Match</div>
-        </div>
-        <button type="button" id="ssChatClose"
-          style="border:0;background:rgba(255,255,255,.18);color:#fff;
-          width:34px;height:34px;border-radius:50%;font-size:20px;cursor:pointer;">\u{00D7}</button>
-      </header>
-
-      <div id="ssChatMessages"
-        style="flex:1;overflow-y:auto;padding:16px;background:#faf8fc;
-        display:flex;flex-direction:column;gap:8px;">
-        <div style="text-align:center;color:#8a788f;padding:25px;">Loading messages...</div>
-      </div>
-
-      <form id="ssChatForm"
-        style="display:flex;gap:8px;padding:12px;border-top:1px solid #eee;background:#fff;">
-        <input id="ssChatInput" maxlength="1000" autocomplete="off"
-          placeholder="Type a message..."
-          style="flex:1;border:1px solid #ddd;border-radius:12px;padding:12px;outline:none;">
-        <button type="submit"
-          style="border:0;background:#7c3aed;color:#fff;border-radius:12px;
-          padding:0 17px;font-weight:800;cursor:pointer;">Send</button>
-      </form>
-    </div>`;
-
-  document.body.appendChild(modal);
-
-  document.getElementById("ssChatClose").onclick = () => modal.remove();
-
-  document.getElementById("ssChatForm").onsubmit = async e => {
-    e.preventDefault();
-
-    const input = document.getElementById("ssChatInput");
-    const body = String(input.value || "").trim();
-
-    if (!body) return;
-
-    const send = await supabaseClient
-      .from("messages")
-      .insert({
-        sender_id: session.user.id,
-        receiver_id: otherUserId,
-        body
-      });
-
-    if (send.error) {
-      console.error("SEND MESSAGE:", send.error);
-      alert("Message could not be sent: " + send.error.message);
-      return;
-    }
-
-    input.value = "";
-    await ssLoadChat(session.user.id, otherUserId);
-    input.focus();
-  };
-
-  modal.addEventListener("click", e => {
-    if (e.target === modal) modal.remove();
-  });
-
-  await ssLoadChat(session.user.id, otherUserId);
-  document.getElementById("ssChatInput")?.focus();
-}
-
-async function ssLoadChat(currentUserId, otherUserId) {
-  const box = document.getElementById("ssChatMessages");
-  if (!box) return;
-
-  const r = await supabaseClient
-    .from("messages")
-    .select("id,sender_id,receiver_id,body,created_at")
-    .or(
-      "and(sender_id.eq." + currentUserId + ",receiver_id.eq." + otherUserId + ")," +
-      "and(sender_id.eq." + otherUserId + ",receiver_id.eq." + currentUserId + ")"
-    )
-    .order("created_at", { ascending: true });
-
-  if (r.error) {
-    box.innerHTML =
-      `<div style="text-align:center;color:#b42318;padding:25px;">
-        Unable to load messages.<br>${escapeHtml(r.error.message)}
-      </div>`;
-    return;
-  }
-
-  const rows = r.data || [];
-
-  box.innerHTML = rows.length
-    ? rows.map(m => {
-        const mine = m.sender_id === currentUserId;
-        const time = m.created_at
-          ? new Date(m.created_at).toLocaleTimeString([], {hour:"2-digit",minute:"2-digit"})
-          : "";
-
-        return `
-          <div style="align-self:${mine ? "flex-end" : "flex-start"};
-            max-width:78%;background:${mine ? "#7c3aed" : "#fff"};
-            color:${mine ? "#fff" : "#24151a"};padding:9px 12px;border-radius:15px;
-            box-shadow:0 2px 8px rgba(0,0,0,.06);">
-            <div style="white-space:pre-wrap;word-break:break-word;font-size:14px;">
-              ${escapeHtml(m.body)}
-            </div>
-            <div style="font-size:9px;opacity:.7;margin-top:4px;text-align:right;">
-              ${escapeHtml(time)}
-            </div>
-          </div>`;
-      }).join("")
-    : `<div style="margin:auto;text-align:center;color:#8a788f;font-size:13px;">
-         No messages yet.<br>Say hello \u{1F44B}
-       </div>`;
-
-  box.scrollTop = box.scrollHeight;
-}
-
-/* ---------- ACCEPT = CHECK BOTH DIRECTIONS ---------- */
-
-async function ssRespondToInterest(interestId, status) {
-  if (!interestId || !["accepted","rejected"].includes(status)) return;
-
-  const session = await ssSession();
-  if (!session) {
-    openModal("login");
-    return;
-  }
-
-  try {
-    const ir = await supabaseClient
-      .from("interests")
-      .select("id,sender_id,receiver_id,status")
-      .eq("id", interestId)
-      .eq("receiver_id", session.user.id)
-      .maybeSingle();
-
-    if (ir.error) throw ir.error;
-    if (!ir.data) {
-      alert("Interest not found.");
-      return;
-    }
-
-    const interest = ir.data;
-
-    const up = await supabaseClient
-      .from("interests")
-      .update({
-        status,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", interestId)
-      .eq("receiver_id", session.user.id);
-
-    if (up.error) throw up.error;
-
-    let matched = false;
-
-    if (status === "accepted") {
-      matched = await ssCreateConfirmedMatch(
-        session.user.id,
-        interest.sender_id
-      );
-    }
-
-    await loadReceivedInterests();
-    await loadMyInterests();
-    await loadMatches();
-    await loadNotifications();
-    await updateHomepageUserUI();
-    await loadHomepageMatches();
-
-    if (status === "accepted") {
-      alert(
-        matched
-          ? "\u{2764}\u{FE0F} Match confirmed! Both of you accepted. Chat is now available."
-          : "\u{1F49A} Interest accepted. Waiting for the other person's acceptance."
-      );
-    } else {
-      alert("\u{274C} Interest rejected.");
-    }
-
-  } catch (e) {
-    console.error("RESPOND INTEREST FIX:", e);
-    alert("Something went wrong: " + (e.message || e));
-  }
-}
-
-/* ---------- FIND MATCHES: keep original cards, then add Chat
-   only to confirmed matches. ---------- */
-
-const ssOriginalLoadMatches = window.loadMatches;
-
-async function ssLoadMatchesFixed() {
-  window.__ssConfirmedIds = new Set();
-
-  const session = await ssSession();
-
-  if (session) {
-    const r = await supabaseClient
-      .from("matches")
-      .select("user1_id,user2_id")
-      .or(
-        "user1_id.eq." + session.user.id +
-        ",user2_id.eq." + session.user.id
-      );
-
-    if (!r.error) {
-      (r.data || []).forEach(row => {
-        const other =
-          row.user1_id === session.user.id
-            ? row.user2_id
-            : row.user1_id;
-
-        if (other) window.__ssConfirmedIds.add(other);
-      });
-    }
-  }
-
-  await ssOriginalLoadMatches();
-
-  document.querySelectorAll(".samaj-match-card").forEach(card => {
-    const view = card.querySelector(".samaj-view-profile-btn");
-    if (!view) return;
-
-    const onclick = view.getAttribute("onclick") || "";
-    const m = onclick.match(/viewProfile\(['"]([^'"]+)['"]\)/);
-    if (!m) return;
-
-    const profileId = m[1];
-
-    if (!window.__ssConfirmedIds.has(profileId)) return;
-    if (card.querySelector(".ss-card-chat-btn")) return;
-
-    const actions = card.querySelector(".samaj-match-actions");
-    if (!actions) return;
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "ss-card-chat-btn";
-    btn.textContent = "\u{1F4AC} Chat";
-    btn.style.cssText =
-      "border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);" +
-      "color:#fff;border-radius:10px;padding:10px 14px;font-weight:800;cursor:pointer;";
-
-    btn.onclick = () => ssOpenChat(profileId);
-    actions.appendChild(btn);
-  });
-}
-
-/* ---------- HOMEPAGE: ONLY confirmed matches ---------- */
 
 async function ssLoadHomepageMatches() {
   if (!supabaseClient || !isPublicHomeRoute()) return;
 
-  document.getElementById("samajHomepageMatches")?.remove();
-
+  document.getElementById('samajHomepageMatches')?.remove();
   const session = await ssSession();
   if (!session) return;
 
   try {
     const mr = await supabaseClient
-      .from("matches")
-      .select("id,user1_id,user2_id,created_at")
-      .or(
-        "user1_id.eq." + session.user.id +
-        ",user2_id.eq." + session.user.id
-      )
-      .order("created_at", { ascending:false });
+      .from('matches')
+      .select('id,user1_id,user2_id,created_at')
+      .or('user1_id.eq.' + session.user.id + ',user2_id.eq.' + session.user.id)
+      .order('created_at', { ascending: false });
 
     if (mr.error) throw mr.error;
 
-    const ids = (mr.data || []).map(row =>
-      row.user1_id === session.user.id ? row.user2_id : row.user1_id
-    );
-
+    const ids = (mr.data || []).map(row => row.user1_id === session.user.id ? row.user2_id : row.user1_id);
     let profiles = [];
-
     if (ids.length) {
       const pr = await supabaseClient
-        .from("profiles")
-        .select("id,full_name,age,city,state,profile_photo,photo_url,surname")
-        .in("id", ids)
-        .eq("is_active", true);
-
+        .from('profiles')
+        .select('id,full_name,age,city,state,profile_photo,photo_url,surname')
+        .in('id', ids)
+        .eq('is_active', true);
       if (pr.error) throw pr.error;
       profiles = pr.data || [];
     }
 
-    const map = new Map(profiles.map(p => [p.id,p]));
-
+    const map = new Map(profiles.map(p => [p.id, p]));
     const cards = (mr.data || []).map(row => {
-      const id =
-        row.user1_id === session.user.id
-          ? row.user2_id
-          : row.user1_id;
-
+      const id = row.user1_id === session.user.id ? row.user2_id : row.user1_id;
       const p = map.get(id);
-      if (!p) return "";
-
-      const name = p.full_name || "SamajSaathi Member";
-      const location = [p.city,p.state].filter(Boolean).join(", ");
+      if (!p) return '';
+      const name = p.full_name || 'SamajSaathi Member';
+      const location = [p.city, p.state].filter(Boolean).join(', ');
       const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
+      return `<article style="background:#fff;border:1px solid rgba(111,16,37,.10);border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(52,19,30,.08);">
+        <div style="display:flex;align-items:center;gap:12px;"><div style="width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:#f2e7ff;display:flex;align-items:center;justify-content:center;">
+          ${photo ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(name)}" style="width:100%;height:100%;object-fit:cover;">` : '<span style="font-size:28px;">\u{1F464}</span>'}
+        </div><div style="flex:1;min-width:0;"><div style="font-weight:800;color:#24151a;">${escapeHtml(name)}</div><div style="font-size:12px;color:#7b626a;margin-top:4px;">${escapeHtml(location || 'Location not specified')}</div><div style="display:inline-block;margin-top:7px;padding:4px 9px;border-radius:999px;background:#e9f8ef;color:#18794e;font-size:11px;font-weight:800;">\u{2764}\u{FE0F} Matched</div></div></div>
+        <div style="display:flex;gap:8px;margin-top:13px;"><button type="button" onclick="viewProfile('${escapeHtml(id)}')" style="flex:1;border:1px solid #7a102b;background:#fff;color:#6f1025;border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer;">View Profile</button><button type="button" onclick="viewProfile('${escapeHtml(id)}')" style="flex:1;border:0;background:#6f1025;color:#fff;border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer;">Family Introduction</button></div>
+      </article>`;
+    }).filter(Boolean).join('');
 
-      return `
-        <article style="background:#fff;border:1px solid rgba(111,16,37,.10);
-          border-radius:20px;padding:14px;box-shadow:0 10px 28px rgba(52,19,30,.08);">
-          <div style="display:flex;align-items:center;gap:12px;">
-            <div style="width:64px;height:64px;border-radius:50%;overflow:hidden;
-              flex:none;background:#f2e7ff;display:flex;align-items:center;justify-content:center;">
-              ${photo
-                ? `<img src="${escapeHtml(photo)}" alt="${escapeHtml(name)}"
-                    style="width:100%;height:100%;object-fit:cover;">`
-                : `<span style="font-size:28px;">\u{1F464}</span>`}
-            </div>
-            <div style="flex:1;min-width:0;">
-              <div style="font-weight:800;color:#24151a;">${escapeHtml(name)}</div>
-              <div style="font-size:12px;color:#7b626a;margin-top:4px;">
-                ${escapeHtml(location || "Location not specified")}
-              </div>
-              <div style="display:inline-block;margin-top:7px;padding:4px 9px;
-                border-radius:999px;background:#e9f8ef;color:#18794e;font-size:11px;font-weight:800;">
-                \u{2764}\u{FE0F} Matched
-              </div>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;margin-top:13px;">
-            <button type="button" onclick="viewProfile('${id}')"
-              style="flex:1;border:1px solid #7c3aed;background:#fff;color:#5b21b6;
-              border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer;">
-              View Profile
-            </button>
-            <button type="button" onclick="openChat('${id}')"
-              style="flex:1;border:0;background:linear-gradient(135deg,#7c3aed,#5b21b6);
-              color:#fff;border-radius:10px;padding:9px 10px;font-weight:800;cursor:pointer;">
-              \u{1F4AC} Chat
-            </button>
-          </div>
-        </article>`;
-    }).filter(Boolean).join("");
+    const section = document.createElement('section');
+    section.id = 'samajHomepageMatches';
+    section.style.cssText = 'max-width:1180px;margin:28px auto 36px;padding:0 20px;';
+    section.innerHTML = `<div style="margin-bottom:14px;"><div style="font-size:12px;color:#6f1025;font-weight:900;letter-spacing:.08em;text-transform:uppercase;">SamajSaathi</div><h2 style="margin:3px 0;color:#24151a;font-size:25px;">\u{2764}\u{FE0F} Your Matches</h2><p style="margin:5px 0;color:#7b626a;font-size:13px;">Mutual matches can request a family introduction through SamajSaathi.</p></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:13px;">${cards || `<div style="grid-column:1/-1;background:#fff;border:1px solid rgba(111,16,37,.10);border-radius:20px;padding:25px;text-align:center;"><div style="font-size:36px;">\u{1F49A}</div><h3 style="margin:8px 0 6px;color:#24151a;">No confirmed matches yet</h3><p style="margin:0;color:#7b626a;font-size:13px;">A match appears only after both people accept each other's interest.</p></div>`}</div>`;
 
-    const section = document.createElement("section");
-    section.id = "samajHomepageMatches";
-    section.style.cssText = "max-width:1180px;margin:28px auto 36px;padding:0 20px;";
-
-    section.innerHTML = `
-      <div style="margin-bottom:14px;">
-        <div style="font-size:12px;color:#7c3aed;font-weight:900;
-          letter-spacing:.08em;text-transform:uppercase;">SamajSaathi</div>
-        <h2 style="margin:3px 0;color:#24151a;font-size:25px;">\u{2764}\u{FE0F} Your Matches</h2>
-        <p style="margin:5px 0;color:#7b626a;font-size:13px;">
-          Confirmed matches can chat with each other.
-        </p>
-      </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:13px;">
-        ${cards || `
-          <div style="grid-column:1/-1;background:#fff;border:1px solid rgba(111,16,37,.10);
-            border-radius:20px;padding:25px;text-align:center;">
-            <div style="font-size:36px;">\u{1F4AC}</div>
-            <h3 style="margin:8px 0 6px;color:#24151a;">No confirmed matches yet</h3>
-            <p style="margin:0;color:#7b626a;font-size:13px;">
-              A match appears only after both people accept each other's interest.
-            </p>
-          </div>`}
-      </div>`;
-
-    const footer = document.querySelector("footer");
-    if (footer && footer.parentNode) footer.parentNode.insertBefore(section,footer);
-    else (document.querySelector("main") || document.body).appendChild(section);
-
+    const footer = document.querySelector('footer');
+    if (footer?.parentNode) footer.parentNode.insertBefore(section, footer);
+    else (document.querySelector('main') || document.body).appendChild(section);
   } catch (e) {
-    console.error("HOMEPAGE MATCH FIX:", e);
+    console.error('HOMEPAGE MATCHES:', e);
   }
 }
-
-/* ---------- Replace the HTML onclick entry points ---------- */
 
 window.viewProfile = ssViewProfile;
-window.openChat = ssOpenChat;
-window.closeChat = function() {
-  document.getElementById("ssChatModal")?.remove();
-};
-window.loadChatMessages = ssLoadChat;
-window.respondToInterest = ssRespondToInterest;
-window.loadMatches = ssLoadMatchesFixed;
 window.loadHomepageMatches = ssLoadHomepageMatches;
 window.ensureConfirmedMatch = ssCreateConfirmedMatch;
+window.requestFamilyIntroduction = ssStartFamilyIntroduction;
 
-/* Important: dashboard section uses window.loadMatches, so no second
-   navigation system is introduced. */
-
-console.log("SamajSaathi: clean match/view/chat fix loaded.");
-
-
-/* ============================================================
-   SAMAJSAATHI CHAT UI FINAL POLISH
-   Fixes:
-   - broken/mojibake chat-header text
-   - missing profile photo in chat header
-   - visible emoji + Send controls
-   - realtime messages
-   ============================================================ */
-
-let ssChatChannelFinal = null;
-let ssPresenceChannelFinal = null;
-let ssChatCurrentUserFinal = null;
-let ssChatOtherUserFinal = null;
-
-function ssFinalTime(iso) {
-  if (!iso) return "";
-  try {
-    return new Date(iso).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit"
-    });
-  } catch (_) {
-    return "";
-  }
-}
-
-function ssFinalText(row) {
-  return String(row?.body ?? row?.message ?? "");
-}
-
-async function ssFinalLoadMessages(me, other) {
-  const box = document.getElementById("ssFinalChatMessages");
-  if (!box) return;
-
-  const r = await supabaseClient
-    .from("messages")
-    .select("id,sender_id,receiver_id,message,body,created_at")
-    .or(
-      "and(sender_id.eq." + me + ",receiver_id.eq." + other + ")," +
-      "and(sender_id.eq." + other + ",receiver_id.eq." + me + ")"
-    )
-    .order("created_at", { ascending: true });
-
-  if (r.error) {
-    box.innerHTML =
-      '<div style="margin:auto;text-align:center;color:#b42318;padding:25px;">' +
-      'Unable to load messages.<br><small>' +
-      escapeHtml(r.error.message) + "</small></div>";
-    return;
-  }
-
-  const rows = r.data || [];
-
-  if (!rows.length) {
-    box.innerHTML =
-      '<div id="ssFinalEmptyChat" style="margin:auto;text-align:center;color:#8b7b91;padding:35px 20px;">' +
-      '<div style="font-size:40px;margin-bottom:8px;">&#128172;</div>' +
-      '<strong style="color:#4a354f;">Start your conversation</strong>' +
-      '<div style="font-size:12px;margin-top:5px;">Say hello &#128075;</div>' +
-      '</div>';
-    return;
-  }
-
-  box.innerHTML = rows.map(m => {
-    const mine = m.sender_id === me;
-    const text = ssFinalText(m);
-    return `
-      <div data-final-message-id="${escapeHtml(m.id)}"
-        style="display:flex;justify-content:${mine ? "flex-end" : "flex-start"};margin:3px 0;">
-        <div style="max-width:min(78%,420px);">
-          <div style="background:${mine ? "linear-gradient(135deg,#7c3aed,#5b21b6)" : "#fff"};
-            color:${mine ? "#fff" : "#24151a"};
-            padding:10px 13px;border-radius:${mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
-            box-shadow:0 2px 10px rgba(44,20,55,.08);
-            border:${mine ? "0" : "1px solid #eee7f1"};
-            word-break:break-word;white-space:pre-wrap;font-size:14px;line-height:1.45;">
-            ${escapeHtml(text)}
-          </div>
-          <div style="font-size:9px;color:#9a8da0;margin:4px 6px;text-align:${mine ? "right" : "left"};">
-            ${escapeHtml(ssFinalTime(m.created_at))}
-          </div>
-        </div>
-      </div>`;
-  }).join("");
-
-  box.scrollTop = box.scrollHeight;
-}
-
-function ssFinalAppendMessage(row, me) {
-  const box = document.getElementById("ssFinalChatMessages");
-  if (!box || !row) return;
-
-  if (box.querySelector(`[data-final-message-id="${CSS.escape(String(row.id))}"]`)) {
-    return;
-  }
-
-  document.getElementById("ssFinalEmptyChat")?.remove();
-
-  const mine = row.sender_id === me;
-  const wrap = document.createElement("div");
-  wrap.dataset.finalMessageId = row.id;
-  wrap.style.cssText =
-    `display:flex;justify-content:${mine ? "flex-end" : "flex-start"};margin:3px 0;`;
-
-  wrap.innerHTML = `
-    <div style="max-width:min(78%,420px);">
-      <div style="background:${mine ? "linear-gradient(135deg,#7c3aed,#5b21b6)" : "#fff"};
-        color:${mine ? "#fff" : "#24151a"};padding:10px 13px;
-        border-radius:${mine ? "18px 18px 5px 18px" : "18px 18px 18px 5px"};
-        box-shadow:0 2px 10px rgba(44,20,55,.08);
-        border:${mine ? "0" : "1px solid #eee7f1"};
-        word-break:break-word;white-space:pre-wrap;font-size:14px;line-height:1.45;">
-        ${escapeHtml(ssFinalText(row))}
-      </div>
-      <div style="font-size:9px;color:#9a8da0;margin:4px 6px;text-align:${mine ? "right" : "left"};">
-        ${escapeHtml(ssFinalTime(row.created_at))}
-      </div>
-    </div>`;
-
-  box.appendChild(wrap);
-  box.scrollTop = box.scrollHeight;
-}
-
-async function ssFinalSendMessage() {
-  const input = document.getElementById("ssFinalChatInput");
-  const btn = document.getElementById("ssFinalChatSend");
-  const text = String(input?.value || "").trim();
-
-  if (!text || !ssChatCurrentUserFinal || !ssChatOtherUserFinal) return;
-
-  if (btn) {
-    btn.disabled = true;
-    btn.textContent = "...";
-  }
-
-  try {
-    const r = await supabaseClient
-      .from("messages")
-      .insert({
-        sender_id: ssChatCurrentUserFinal,
-        receiver_id: ssChatOtherUserFinal,
-        message: text,
-        body: text
-      })
-      .select("id,sender_id,receiver_id,message,body,created_at")
-      .single();
-
-    if (r.error) {
-      alert("Message could not be sent: " + r.error.message);
-      return;
-    }
-
-    input.value = "";
-    input.style.height = "44px";
-    ssFinalAppendMessage(r.data, ssChatCurrentUserFinal);
-    input.focus();
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.textContent = "\u{27A4}";
-    }
-  }
-}
-
-function ssFinalStartRealtime() {
-  if (!supabaseClient || !ssChatCurrentUserFinal || !ssChatOtherUserFinal) return;
-
-  if (ssChatChannelFinal) {
-    try { supabaseClient.removeChannel(ssChatChannelFinal); } catch (_) {}
-  }
-
-  ssChatChannelFinal = supabaseClient
-    .channel("ss-final-chat-" + Date.now())
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: "messages",
-        filter: "receiver_id=eq." + ssChatCurrentUserFinal
-      },
-      payload => {
-        const m = payload.new;
-        if (
-          m &&
-          m.sender_id === ssChatOtherUserFinal &&
-          m.receiver_id === ssChatCurrentUserFinal
-        ) {
-          ssFinalAppendMessage(m, ssChatCurrentUserFinal);
-        }
-      }
-    )
-    .subscribe(status => {
-      const el = document.getElementById("ssFinalLiveStatus");
-      if (!el) return;
-      el.textContent = status === "SUBSCRIBED" ? "\u{25CF} Live chat" : "\u{25CB} Connecting...";
-    });
-}
-
-function ssFinalStartPresence() {
-  if (!supabaseClient || !ssChatCurrentUserFinal || !ssChatOtherUserFinal) return;
-
-  if (ssPresenceChannelFinal) {
-    try { supabaseClient.removeChannel(ssPresenceChannelFinal); } catch (_) {}
-  }
-
-  const key = [ssChatCurrentUserFinal, ssChatOtherUserFinal].sort().join("-");
-
-  ssPresenceChannelFinal = supabaseClient
-    .channel("ss-final-presence-" + key, {
-      config: { presence: { key: ssChatCurrentUserFinal } }
-    })
-    .on("presence", { event: "sync" }, () => {
-      const state = ssPresenceChannelFinal.presenceState();
-      const online = !!state[ssChatOtherUserFinal];
-      const el = document.getElementById("ssFinalOnlineStatus");
-      if (el) el.textContent = online ? "\u{25CF} Online" : "\u{25CB} Offline";
-    })
-    .subscribe(async status => {
-      if (status === "SUBSCRIBED") {
-        try {
-          await ssPresenceChannelFinal.track({
-            online_at: new Date().toISOString()
-          });
-        } catch (_) {}
-      }
-    });
-}
-
-async function ssFinalOpenChat(otherUserId) {
-  const session = await ssSession();
-  if (!session) {
-    openModal("login");
-    return;
-  }
-
-  const confirmed = await ssConfirmed(session.user.id, otherUserId);
-  if (!confirmed) {
-    alert("\u{1F4AC} Chat is available only after both people accept each other's interest.");
-    return;
-  }
-
-  const r = await supabaseClient
-    .from("profiles")
-    .select("id,full_name,profile_photo,photo_url,city,state")
-    .eq("id", otherUserId)
-    .maybeSingle();
-
-  if (r.error || !r.data) {
-    alert("Could not load this profile.");
-    return;
-  }
-
-  const p = r.data;
-  const name = p.full_name || "SamajSaathi Member";
-  const photo = getProfilePhotoUrl(p.profile_photo || p.photo_url);
-
-  ssChatCurrentUserFinal = session.user.id;
-  ssChatOtherUserFinal = otherUserId;
-
-  document.getElementById("ssFinalChatModal")?.remove();
-
-  const modal = document.createElement("div");
-  modal.id = "ssFinalChatModal";
-  modal.style.cssText =
-    "position:fixed;inset:0;z-index:10050;background:rgba(18,9,25,.72);" +
-    "display:flex;align-items:center;justify-content:center;padding:12px;";
-
-  const avatar = photo
-    ? `<img src="${escapeHtml(photo)}" alt=""
-        style="width:100%;height:100%;object-fit:cover;display:block;"
-        onerror="this.style.display='none';this.parentElement.innerHTML='&#128100;';">`
-    : `<span style="font-size:22px;">&#128100;</span>`;
-
-  modal.innerHTML = `
-    <div style="width:min(560px,100%);height:min(760px,94vh);background:#fff;
-      border-radius:24px;overflow:hidden;display:flex;flex-direction:column;
-      box-shadow:0 30px 100px rgba(0,0,0,.32);">
-
-      <header style="flex:none;padding:12px 15px;background:linear-gradient(135deg,#7c3aed,#5b21b6);
-        color:#fff;display:flex;align-items:center;gap:11px;">
-
-        <div style="width:46px;height:46px;border-radius:50%;overflow:hidden;
-          background:rgba(255,255,255,.20);display:flex;align-items:center;
-          justify-content:center;flex:none;font-size:21px;">
-          ${avatar}
-        </div>
-
-        <div style="min-width:0;flex:1;">
-          <div style="font-weight:900;font-size:16px;white-space:nowrap;
-            overflow:hidden;text-overflow:ellipsis;">
-            ${escapeHtml(name)}
-          </div>
-          <div id="ssFinalOnlineStatus"
-            style="font-size:10px;color:rgba(255,255,255,.75);margin-top:2px;">
-            \u{25CB} Offline
-          </div>
-          <div id="ssFinalLiveStatus"
-            style="font-size:9px;opacity:.75;margin-top:1px;">
-            \u{25CB} Connecting...
-          </div>
-        </div>
-
-        <button type="button" id="ssFinalChatClose"
-          style="border:0!important;background:rgba(255,255,255,.16)!important;
-          color:#fff!important;width:38px!important;height:38px!important;
-          border-radius:50%!important;font-size:22px!important;cursor:pointer!important;">
-          \u{00D7}
-        </button>
-      </header>
-
-      <div id="ssFinalChatMessages"
-        style="flex:1;min-height:0;overflow-y:auto;padding:18px;
-        background:linear-gradient(180deg,#faf7ff 0%,#f7f3fa 100%);
-        display:flex;flex-direction:column;">
-        <div style="margin:auto;color:#8b7b91;">Loading...</div>
-      </div>
-
-      <div style="flex:none!important;padding:7px 10px 0!important;
-        background:#fff!important;border-top:1px solid #eee7f1!important;">
-
-        <div id="ssFinalEmojiBar"
-          style="display:none;flex-wrap:wrap;gap:5px;padding:4px 0 8px;">
-          ${["\u{1F60A}","\u{2764}\u{FE0F}","\u{1F602}","\u{1F60D}","\u{1F44D}","\u{1F64F}","\u{1F970}","\u{1F618}","\u{1F339}","\u{2728}","\u{1F44B}","\u{1F91D}","\u{1F490}","\u{1F609}","\u{1F604}","\u{1F389}"]
-            .map(e => `<button type="button" class="ss-final-emoji"
-              style="display:inline-flex!important;align-items:center!important;
-              justify-content:center!important;border:0!important;background:#f5f0f8!important;
-              border-radius:9px!important;width:35px!important;height:32px!important;
-              font-size:18px!important;cursor:pointer!important;">${e}</button>`)
-            .join("")}
-        </div>
-
-        <div style="display:flex!important;flex-direction:row!important;
-          align-items:center!important;gap:7px!important;width:100%!important;
-          box-sizing:border-box!important;padding-bottom:8px!important;">
-
-          <button type="button" id="ssFinalEmojiToggle"
-            style="display:flex!important;align-items:center!important;
-            justify-content:center!important;visibility:visible!important;
-            opacity:1!important;flex:0 0 43px!important;width:43px!important;
-            height:44px!important;border:1px solid #ded5e4!important;
-            background:#fff!important;color:#24151a!important;border-radius:13px!important;
-            font-size:20px!important;cursor:pointer!important;">
-            \u{1F60A}
-          </button>
-
-          <textarea id="ssFinalChatInput" maxlength="1000" rows="1"
-            placeholder="Type a message..."
-            style="display:block!important;visibility:visible!important;
-            opacity:1!important;flex:1 1 auto!important;min-width:0!important;
-            width:auto!important;height:44px!important;box-sizing:border-box!important;
-            resize:none!important;border:1px solid #ded5e4!important;
-            border-radius:14px!important;padding:11px 13px!important;
-            outline:none!important;font-family:inherit!important;font-size:14px!important;
-            line-height:20px!important;background:#fff!important;color:#24151a!important;">
-          </textarea>
-
-          <button type="button" id="ssFinalChatSend"
-            style="display:flex!important;align-items:center!important;
-            justify-content:center!important;visibility:visible!important;
-            opacity:1!important;flex:0 0 47px!important;width:47px!important;
-            height:44px!important;border:0!important;
-            background:linear-gradient(135deg,#7c3aed,#5b21b6)!important;
-            color:#fff!important;border-radius:13px!important;font-size:20px!important;
-            font-weight:900!important;cursor:pointer!important;">
-            \u{27A4}
-          </button>
-        </div>
-
-        <div style="text-align:center;color:#aa9dac;font-size:8px;padding-bottom:7px;">
-          &#128274; Private chat between confirmed matches
-        </div>
-      </div>
-    </div>`;
-
-  document.body.appendChild(modal);
-
-  document.getElementById("ssFinalChatClose").onclick = ssFinalCloseChat;
-  document.getElementById("ssFinalChatSend").onclick = ssFinalSendMessage;
-
-  const input = document.getElementById("ssFinalChatInput");
-
-  input.onkeydown = e => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      ssFinalSendMessage();
-    }
-  };
-
-  input.oninput = () => {
-    input.style.height = "44px";
-    input.style.height = Math.min(input.scrollHeight, 110) + "px";
-  };
-
-  document.getElementById("ssFinalEmojiToggle").onclick = () => {
-    const bar = document.getElementById("ssFinalEmojiBar");
-    bar.style.display = bar.style.display === "flex" ? "none" : "flex";
-  };
-
-  modal.querySelectorAll(".ss-final-emoji").forEach(btn => {
-    btn.onclick = () => {
-      input.value += btn.textContent;
-      input.focus();
-      input.dispatchEvent(new Event("input"));
-    };
-  });
-
-  modal.addEventListener("click", e => {
-    if (e.target === modal) ssFinalCloseChat();
-  });
-
-  await ssFinalLoadMessages(ssChatCurrentUserFinal, ssChatOtherUserFinal);
-  ssFinalStartRealtime();
-  ssFinalStartPresence();
-  input.focus();
-}
-
-function ssFinalCloseChat() {
-  if (ssChatChannelFinal) {
-    try { supabaseClient.removeChannel(ssChatChannelFinal); } catch (_) {}
-    ssChatChannelFinal = null;
-  }
-
-  if (ssPresenceChannelFinal) {
-    try { supabaseClient.removeChannel(ssPresenceChannelFinal); } catch (_) {}
-    ssPresenceChannelFinal = null;
-  }
-
-  document.getElementById("ssFinalChatModal")?.remove();
-  ssChatCurrentUserFinal = null;
-  ssChatOtherUserFinal = null;
-}
-
-/* Final entry point: replaces only the chat opener. */
-window.openChat = ssFinalOpenChat;
-window.closeChat = ssFinalCloseChat;
-
-console.log("SamajSaathi: final chat header + composer fix loaded.");
+console.log('SamajSaathi V2: chat disabled; family introduction flow enabled.');
