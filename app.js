@@ -2003,11 +2003,8 @@ function createPublicProfileCard(
           )}
 
           ${
-            profile.age
-              ? ", " +
-                escapeHtml(
-                  profile.age
-                )
+            (profile.date_of_birth ? calculateAge(profile.date_of_birth) : Number(profile.age)) >= 18
+              ? ", " + escapeHtml(profile.date_of_birth ? calculateAge(profile.date_of_birth) : Number(profile.age))
               : ""
           }
 
@@ -4505,6 +4502,7 @@ async function loadMyInterests() {
         .select(`
           id,
           full_name,
+          date_of_birth,
           age,
           city,
           state,
