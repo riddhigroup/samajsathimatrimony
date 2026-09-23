@@ -1,0 +1,7 @@
+SamajSaathi mobile/PWA update
+1. Upload/replace index.html and app.js in the GitHub Pages root.
+2. Upload manifest.json, sw.js and the icons/ folder.
+3. Keep style.css in the same root.
+4. Open the HTTPS GitHub Pages URL on Android Chrome and choose â€œInstall appâ€ / â€œAdd to Home screenâ€.
+5. On iPhone, open in Safari â†’ Share â†’ Add to Home Screen.
+No Play Store is required. This is a web app/PWA, not an APK.
