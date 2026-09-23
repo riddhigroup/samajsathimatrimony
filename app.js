@@ -1885,7 +1885,7 @@ async function loadProfiles() {
 
 
 // ============================================================
-// HOMEPAGE HERO â€” REAL COMMUNITY PROFILES
+// HOMEPAGE HERO Ã¢â‚¬â€ REAL COMMUNITY PROFILES
 // Replaces demo names/photos such as Rahul & Ananya with active
 // profiles from the public profiles list.
 // ============================================================
@@ -1907,8 +1907,8 @@ async function loadHeroFeaturedProfiles() {
       return Number.isFinite(age) && age >= 18;
     });
     if (!profiles.length) {
-      photoBox.innerHTML='<div class="ss-photo-fallback" style="display:grid">&#128100;</div><span class="verified">âœ“ Verified</span>';
-      infoBox.innerHTML='<div><b>SamajSaathi Members</b><small>New profiles are joining</small></div><span class="heart">â™¡</span>';
+      photoBox.innerHTML='<div class="ss-photo-fallback" style="display:grid">&#128100;</div><span class="verified">Ã¢Å“â€œ Verified</span>';
+      infoBox.innerHTML='<div><b>SamajSaathi Members</b><small>New profiles are joining</small></div><span class="heart">Ã¢â„¢Â¡</span>';
       if (secondBox) secondBox.style.display="none";
       return;
     }
@@ -1920,16 +1920,16 @@ async function loadHeroFeaturedProfiles() {
     const secondPhoto=second?getProfilePhotoUrl(second.profile_photo||second.photo_url):null;
     const firstName=escapeHtml(first.full_name||"SamajSaathi Member");
     const secondName=escapeHtml(second?.full_name||"New Member");
-    const firstMeta=escapeHtml([Number.isFinite(firstAge)?firstAge+" yrs":"",[first.city,first.state].filter(Boolean).join(", ")].filter(Boolean).join(" Â· ")||"Community member");
-    const secondMeta=escapeHtml([Number.isFinite(secondAge)?secondAge+" yrs":"",[second?.city,second?.state].filter(Boolean).join(", ")].filter(Boolean).join(" Â· ")||"Community member");
+    const firstMeta=escapeHtml([Number.isFinite(firstAge)?firstAge+" yrs":"",[first.city,first.state].filter(Boolean).join(", ")].filter(Boolean).join(" Ã‚Â· ")||"Community member");
+    const secondMeta=escapeHtml([Number.isFinite(secondAge)?secondAge+" yrs":"",[second?.city,second?.state].filter(Boolean).join(", ")].filter(Boolean).join(" Ã‚Â· ")||"Community member");
 
-    photoBox.innerHTML=`${firstPhoto?`<img src="${escapeHtml(firstPhoto)}" alt="${firstName}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${firstPhoto?"none":"grid"}">&#128100;</div><span class="verified">âœ“ Verified</span>`;
-    infoBox.innerHTML=`<div><b>${firstName}</b><small>${firstMeta}</small></div><button type="button" class="heart" onclick="viewProfile('${escapeHtml(first.id)}')" aria-label="View profile">â™¡</button>`;
+    photoBox.innerHTML=`${firstPhoto?`<img src="${escapeHtml(firstPhoto)}" alt="${firstName}" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${firstPhoto?"none":"grid"}">&#128100;</div><span class="verified">Ã¢Å“â€œ Verified</span>`;
+    infoBox.innerHTML=`<div><b>${firstName}</b><small>${firstMeta}</small></div><button type="button" class="heart" onclick="viewProfile('${escapeHtml(first.id)}')" aria-label="View profile">Ã¢â„¢Â¡</button>`;
 
     if (!secondBox) return;
     if (!second) { secondBox.style.display="none"; return; }
     secondBox.style.display="flex";
-    secondBox.innerHTML=`${secondPhoto?`<span class="ss-float-photo"><img src="${escapeHtml(secondPhoto)}" alt="${secondName}"></span>`:'<span class="mini-icon">â™¡</span>'}<div><b>${secondName}</b><small>${secondMeta}</small></div>`;
+    secondBox.innerHTML=`${secondPhoto?`<span class="ss-float-photo"><img src="${escapeHtml(secondPhoto)}" alt="${secondName}"></span>`:'<span class="mini-icon">Ã¢â„¢Â¡</span>'}<div><b>${secondName}</b><small>${secondMeta}</small></div>`;
   } catch(error) { console.error("LOAD HERO PROFILES ERROR:",error); }
 }
 
@@ -1943,9 +1943,9 @@ function createPublicProfileCard(profile) {
   const age=profile.date_of_birth?calculateAge(profile.date_of_birth):Number(profile.age);
   const safeAge=Number.isFinite(age)&&age>=18?age:null;
   const name=escapeHtml(profile.full_name||"SamajSaathi Member");
-  const meta=[safeAge?safeAge+" yrs":"",location].filter(Boolean).join(" Â· ");
-  const community=[profile.community,profile.surname].filter(Boolean).join(" Â· ");
-  return `<article class="ss-feature-card"><div class="ss-feature-photo">${photoUrl?`<img src="${escapeHtml(photoUrl)}" alt="${name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${photoUrl?"none":"grid"}">&#128100;</div><span class="ss-verified">âœ“ Verified</span></div><div class="ss-feature-body"><div class="ss-feature-text"><b>${name}</b><small>${escapeHtml(meta||"Community member")}</small>${community?`<small>${escapeHtml(community)}</small>`:""}</div><button type="button" class="ss-heart" aria-label="View ${name}" onclick="viewProfile('${escapeHtml(profile.id)}')">â™¡</button></div></article>`;
+  const meta=[safeAge?safeAge+" yrs":"",location].filter(Boolean).join(" Ã‚Â· ");
+  const community=[profile.community,profile.surname].filter(Boolean).join(" Ã‚Â· ");
+  return `<article class="ss-feature-card"><div class="ss-feature-photo">${photoUrl?`<img src="${escapeHtml(photoUrl)}" alt="${name}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='grid';">`:""}<div class="ss-photo-fallback" style="display:${photoUrl?"none":"grid"}">&#128100;</div><span class="ss-verified">Ã¢Å“â€œ Verified</span></div><div class="ss-feature-body"><div class="ss-feature-text"><b>${name}</b><small>${escapeHtml(meta||"Community member")}</small>${community?`<small>${escapeHtml(community)}</small>`:""}</div><button type="button" class="ss-heart" aria-label="View ${name}" onclick="viewProfile('${escapeHtml(profile.id)}')">Ã¢â„¢Â¡</button></div></article>`;
 }
 
 // ============================================================
@@ -2798,7 +2798,7 @@ function profileCompletionHtml(profile) {
         <strong style="font-size:20px;color:#6f1025;">${percent}%</strong>
       </div>
       <div style="height:9px;background:#eadfe3;border-radius:999px;overflow:hidden;"><div style="height:100%;width:${percent}%;background:linear-gradient(90deg,#6f1025,#7a3bd2);border-radius:999px;transition:width .3s ease;"></div></div>
-      ${missing.length ? `<div style="margin-top:12px;font-size:12px;color:#765c65;"><strong>Still missing:</strong> ${missing.map(escapeHtml).join(' Â· ')}</div>` : `<div style="margin-top:12px;font-size:12px;color:#39734a;font-weight:700;">âœ“ Your profile is complete.</div>`}
+      ${missing.length ? `<div style="margin-top:12px;font-size:12px;color:#765c65;"><strong>Still missing:</strong> ${missing.map(escapeHtml).join(' Ã‚Â· ')}</div>` : `<div style="margin-top:12px;font-size:12px;color:#39734a;font-weight:700;">Ã¢Å“â€œ Your profile is complete.</div>`}
     </div>`;
 }
 
@@ -2848,19 +2848,19 @@ async function viewProfile(
     </div>`;
 
   const location = [profile.city, profile.state].filter(Boolean).join(", ");
-  const partnerAge = [profile.partner_age_min, profile.partner_age_max].filter(v => v !== null && v !== undefined && v !== '').join('â€“');
+  const partnerAge = [profile.partner_age_min, profile.partner_age_max].filter(v => v !== null && v !== undefined && v !== '').join('Ã¢â‚¬â€œ');
 
   const modal = document.createElement("div");
   modal.id = "samajProfileViewer";
   modal.style.cssText = "position:fixed;inset:0;z-index:10001;background:rgba(20,10,15,.72);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto;";
   modal.innerHTML = `
     <div style="width:min(650px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
-      <button type="button" onclick="document.getElementById('samajProfileViewer')?.remove()" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ã—</button>
+      <button type="button" onclick="document.getElementById('samajProfileViewer')?.remove()" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ãƒâ€”</button>
       ${photoHtml}
       <div style="text-align:center;">
         <span class="eyebrow">SAMAJSAATHI MEMBER</span>
         <h2 style="margin:8px 0;">${escapeHtml(profile.full_name || "Member")}${age !== null ? ", " + escapeHtml(age) : ""}</h2>
-        ${location ? `<div style="color:#806b73;font-size:13px;">ðŸ“ ${escapeHtml(location)}</div>` : ''}
+        ${location ? `<div style="color:#806b73;font-size:13px;">Ã°Å¸â€œÂ ${escapeHtml(location)}</div>` : ''}
       </div>
 
       ${section("Basic & Community", [
@@ -2911,7 +2911,7 @@ async function viewProfile(
       ${profile.partner_expectations ? `<div style="margin-top:12px;padding:16px;background:#faf6f7;border-radius:14px;"><strong style="font-size:13px;">Partner Expectations</strong><p style="margin:7px 0 0;white-space:pre-wrap;">${escapeHtml(profile.partner_expectations)}</p></div>` : ''}
 
       <div style="margin-top:25px;text-align:center;">
-        <button type="button" class="samaj-interest-btn" onclick="sendInterest('${profile.id}')">â™¥ Send Interest</button>
+        <button type="button" class="samaj-interest-btn" onclick="sendInterest('${profile.id}')">Ã¢â„¢Â¥ Send Interest</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -6132,7 +6132,7 @@ async function openDashboard() {
             style="display:none;"
           >
             <span class="eyebrow">PROFILE SETTINGS</span>
-            <h2>âœŽ Edit Profile</h2>
+            <h2>Ã¢Å“Å½ Edit Profile</h2>
             <p style="color:#806b73;margin-top:-5px;">Keep your matrimonial profile complete and up to date. Fields are grouped so members can understand you better.</p>
 
             ${profileCompletionHtml(profile)}
@@ -6156,7 +6156,7 @@ async function openDashboard() {
               <div class="field"><label>Education</label><input id="editEducation" value="${escapeHtml(profile.education || "")}" placeholder="e.g. Graduate / Post Graduate"></div>
               <div class="field"><label>Occupation / Profession</label><input id="editOccupation" value="${escapeHtml(profile.occupation || "")}" placeholder="e.g. Teacher / Business / Private Job"></div>
               <div class="field"><label>Work Location</label><input id="editWorkLocation" value="${escapeHtml(profile.work_location || "")}" placeholder="City / area"></div>
-              <div class="field"><label>Income Range <span style="font-weight:400;">(optional)</span></label><input id="editIncome" value="${escapeHtml(profile.income || "")}" placeholder="e.g. â‚¹2â€“5 lakh/year"></div>
+              <div class="field"><label>Income Range <span style="font-weight:400;">(optional)</span></label><input id="editIncome" value="${escapeHtml(profile.income || "")}" placeholder="e.g. Ã¢â€šÂ¹2Ã¢â‚¬â€œ5 lakh/year"></div>
               <div class="field"><label>Height</label><input id="editHeight" value="${escapeHtml(profile.height || "")}" placeholder="e.g. 5 ft 6 in"></div>
             </div>
 
@@ -6180,8 +6180,8 @@ async function openDashboard() {
 
             <div style="margin:28px 0 10px;"><h3 style="margin:0;color:#6f1025;">5. Partner Preferences</h3><p style="font-size:12px;color:#806b73;">These preferences will help SamajSaathi improve match suggestions.</p></div>
             <div class="form-grid">
-              <div class="field"><label>Preferred Age â€” From</label><input id="editPartnerAgeMin" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_min ?? "")}" placeholder="e.g. 24"></div>
-              <div class="field"><label>Preferred Age â€” To</label><input id="editPartnerAgeMax" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_max ?? "")}" placeholder="e.g. 32"></div>
+              <div class="field"><label>Preferred Age Ã¢â‚¬â€ From</label><input id="editPartnerAgeMin" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_min ?? "")}" placeholder="e.g. 24"></div>
+              <div class="field"><label>Preferred Age Ã¢â‚¬â€ To</label><input id="editPartnerAgeMax" type="number" min="18" max="100" value="${escapeHtml(profile.partner_age_max ?? "")}" placeholder="e.g. 32"></div>
               <div class="field"><label>Preferred City / Location</label><input id="editPartnerCity" value="${escapeHtml(profile.partner_city || "")}" placeholder="e.g. Jaigaon / Alipurduar / Siliguri"></div>
               <div class="field"><label>Preferred Education</label><input id="editPartnerEducation" value="${escapeHtml(profile.partner_education || "")}" placeholder="e.g. Graduate"></div>
               <div class="field"><label>Preferred Occupation</label><input id="editPartnerOccupation" value="${escapeHtml(profile.partner_occupation || "")}" placeholder="Any / Teacher / Business etc."></div>
@@ -6191,7 +6191,7 @@ async function openDashboard() {
             </div>
 
             <div id="updateProfileMessage" style="margin-top:15px;"></div>
-            <div class="modal-actions"><button type="button" class="btn primary" onclick="updateProfile()">ðŸ’¾ Save Profile Changes</button></div>
+            <div class="modal-actions"><button type="button" class="btn primary" onclick="updateProfile()">Ã°Å¸â€™Â¾ Save Profile Changes</button></div>
           </section>
 
           <!-- =================================================
@@ -7093,7 +7093,7 @@ async function updateProfile() {
   if ((partnerAgeMin !== null && (partnerAgeMin < 18 || partnerAgeMin > 100)) ||
       (partnerAgeMax !== null && (partnerAgeMax < 18 || partnerAgeMax > 100)) ||
       (partnerAgeMin !== null && partnerAgeMax !== null && partnerAgeMin > partnerAgeMax)) {
-    showMessage(message, "Please enter a valid preferred age range (18â€“100).", "error");
+    showMessage(message, "Please enter a valid preferred age range (18Ã¢â‚¬â€œ100).", "error");
     return;
   }
 
@@ -8466,12 +8466,12 @@ console.log(
 
 
 /* ============================================================
-   SAMAJSAATHI V2 â€” MATCH + FAMILY INTRODUCTION FLOW
+   SAMAJSAATHI V2 Ã¢â‚¬â€ MATCH + FAMILY INTRODUCTION FLOW
    Chat intentionally disabled. Mutual matches can request a
    SamajSaathi family introduction after payment.
    ============================================================ */
 
-const SS_FAMILY_INTRO_AMOUNT = 29900; // â‚¹299 in paise
+const SS_FAMILY_INTRO_AMOUNT = 29900; // Ã¢â€šÂ¹299 in paise
 
 function ssPair(a, b) {
   return String(a) < String(b)
@@ -8702,7 +8702,7 @@ async function ssStartFamilyIntroduction(otherUserId) {
   } finally {
     if (btn) {
       btn.disabled = false;
-      btn.textContent = 'Request Family Introduction â€” â‚¹299';
+      btn.textContent = 'Request Family Introduction Ã¢â‚¬â€ Ã¢â€šÂ¹299';
     }
   }
 }
@@ -8789,7 +8789,7 @@ async function ssViewProfile(profileId) {
             <button type="button" id="ssFamilyIntroBtn"
               ${submitted ? 'disabled' : ''}
               style="border:0;background:#6f1025;color:#fff;border-radius:10px;padding:12px 18px;font-weight:800;cursor:${submitted ? 'not-allowed' : 'pointer'};opacity:${submitted ? '.65' : '1'};">
-              ${submitted ? 'Request Submitted' : 'Request Family Introduction â€” â‚¹299'}
+              ${submitted ? 'Request Submitted' : 'Request Family Introduction Ã¢â‚¬â€ Ã¢â€šÂ¹299'}
             </button>
             <div style="font-size:11px;color:#88747b;margin-top:8px;">SamajSaathi reviews the request before any family contact details are shared.</div>
           </div>`;
@@ -8825,7 +8825,7 @@ async function ssViewProfile(profileId) {
 
     viewer.innerHTML = `
       <div style="width:min(700px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:22px;padding:30px;position:relative;box-shadow:0 25px 80px rgba(0,0,0,.25);">
-        <button type="button" id="ssProfileClose" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ã—</button>
+        <button type="button" id="ssProfileClose" style="position:absolute;top:15px;right:15px;width:38px;height:38px;border:0;border-radius:50%;background:#f5edef;cursor:pointer;font-size:20px;">Ãƒâ€”</button>
         ${photoHtml}
         <div style="text-align:center;">
           <span class="eyebrow">SAMAJSAATHI MEMBER</span>
@@ -8925,3 +8925,169 @@ window.ensureConfirmedMatch = ssCreateConfirmedMatch;
 window.requestFamilyIntroduction = ssStartFamilyIntroduction;
 
 console.log('SamajSaathi V2: chat disabled; family introduction flow enabled.');
+
+
+/* ============================================================
+   SAMAJSAATHI MOBILE + PWA RESPONSIVE LAYER
+   ============================================================ */
+@media (max-width: 700px) {
+  html, body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden !important;
+  }
+
+  #samajSaathiDashboard {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 100dvh !important;
+    overflow-x: hidden !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 20 !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-header > div {
+    min-width: 0 !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-header h1,
+  #samajSaathiDashboard .samaj-dashboard-header .samaj-dashboard-brand-name {
+    font-size: 17px !important;
+    line-height: 1.15 !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-header .samaj-dashboard-brand-sub {
+    font-size: 8px !important;
+    letter-spacing: 1.5px !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-header button {
+    min-height: 40px !important;
+    padding: 8px 10px !important;
+    font-size: 11px !important;
+  }
+
+  #samajSaathiDashboard > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 16px 12px 42px !important;
+    overflow-x: hidden !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+    margin-bottom: 18px !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-menu-btn {
+    min-height: 78px !important;
+    padding: 9px 6px !important;
+    border-radius: 14px !important;
+  }
+
+  #samajSaathiDashboard .samaj-menu-icon {
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 9px !important;
+    font-size: 17px !important;
+  }
+
+  #samajSaathiDashboard .samaj-menu-title {
+    font-size: 11px !important;
+  }
+
+  #samajSaathiDashboard .samaj-menu-description {
+    font-size: 8px !important;
+  }
+
+  #samajSaathiDashboard .samaj-dashboard-section,
+  #samajSaathiDashboard .samaj-dashboard-section-header,
+  #samajSaathiDashboard .samaj-profile-details-grid {
+    max-width: 100% !important;
+  }
+
+  #samajSaathiDashboard .samaj-profile-details-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  #samajSaathiDashboard .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  #samajSaathiDashboard input,
+  #samajSaathiDashboard select,
+  #samajSaathiDashboard textarea,
+  #samajSaathiDashboard button {
+    max-width: 100% !important;
+  }
+
+  #samajSaathiDashboard input,
+  #samajSaathiDashboard select,
+  #samajSaathiDashboard textarea {
+    font-size: 16px !important; /* prevents iOS zoom */
+  }
+
+  #samajSaathiDashboard [style*="grid-template-columns:"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  #samajSaathiDashboard [style*="display:flex"] {
+    max-width: 100%;
+  }
+
+  .modal {
+    padding: 10px !important;
+    align-items: flex-start !important;
+  }
+
+  .modal-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: calc(100dvh - 20px) !important;
+    margin-top: 10px !important;
+    border-radius: 18px !important;
+    padding: 20px 15px !important;
+  }
+
+  .modal-box .form-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .modal-box input,
+  .modal-box select,
+  .modal-box textarea {
+    width: 100% !important;
+    font-size: 16px !important;
+  }
+
+  .hero-art {
+    overflow: visible !important;
+  }
+
+  .float-card {
+    transform: scale(.9);
+    transform-origin: center;
+  }
+
+  .main-card {
+    max-width: 280px !important;
+  }
+
+  .photo {
+    max-height: 275px;
+  }
+
+  .footer-links {
+    flex-wrap: wrap;
+  }
+}
+
