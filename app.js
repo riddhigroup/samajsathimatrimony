@@ -2860,7 +2860,7 @@ async function viewProfile(
       <div style="text-align:center;">
         <span class="eyebrow">SAMAJSAATHI MEMBER</span>
         <h2 style="margin:8px 0;">${escapeHtml(profile.full_name || "Member")}${age !== null ? ", " + escapeHtml(age) : ""}</h2>
-        ${location ? `<div style="color:#806b73;font-size:13px;">Ã°Å¸â€œÂ ${escapeHtml(location)}</div>` : ''}
+        ${location ? `<div style="color:#806b73;font-size:13px;">ðŸ“ ${escapeHtml(location)}</div>` : ''}
       </div>
 
       ${section("Basic & Community", [
@@ -6191,7 +6191,7 @@ async function openDashboard() {
             </div>
 
             <div id="updateProfileMessage" style="margin-top:15px;"></div>
-            <div class="modal-actions"><button type="button" class="btn primary" onclick="updateProfile()">Ã°Å¸â€™Â¾ Save Profile Changes</button></div>
+            <div class="modal-actions"><button type="button" class="btn primary" onclick="updateProfile()">ðŸ’¾ Save Profile Changes</button></div>
           </section>
 
           <!-- =================================================
