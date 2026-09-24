@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#7a102b"><title>SamajSaathi Admin Panel</title>
+<link rel="stylesheet" href="admin.css"></head><body>
+<div id="loginView" class="login-wrap"><div class="login-card">
+<div class="brand-mark">â™¡</div><h1>SamajSaathi Admin</h1><p>Secure website management</p>
+<form id="loginForm"><label>Email<input id="adminEmail" type="email" required></label>
+<label>Password<input id="adminPassword" type="password" required></label>
+<button class="primary full">Login to Admin</button><div id="loginMessage" class="message"></div></form>
+</div></div>
+<div id="appView" class="app hidden"><aside class="sidebar">
+<div class="side-brand"><div class="brand-mark small">â™¡</div><div><b>SamajSaathi</b><small>ADMIN</small></div></div>
+<nav>
+<button data-page="dashboard" class="nav-btn active">Dashboard</button><button data-page="profiles" class="nav-btn">Profiles</button>
+<button data-page="homepage" class="nav-btn">Homepage</button><button data-page="requests" class="nav-btn">Interests & Family</button>
+<button data-page="payments" class="nav-btn">Payments</button><button data-page="reports" class="nav-btn">Reports</button>
+<button data-page="content" class="nav-btn">Website Content</button><button data-page="settings" class="nav-btn">Settings</button>
+</nav><button id="logoutBtn" class="logout">Logout</button></aside>
+<main class="main"><header class="top"><div><h2 id="pageTitle">Dashboard</h2><p>SamajSaathi control center</p></div>
+<div class="top-actions"><span id="adminUser"></span><button id="refreshBtn" class="ghost">Refresh</button></div></header>
+<section id="dashboard" class="page active-page"><div class="cards">
+<div class="stat"><span>Total Profiles</span><b id="totalProfiles">â€”</b></div><div class="stat"><span>Active Profiles</span><b id="activeProfiles">â€”</b></div>
+<div class="stat"><span>New Profiles</span><b id="newProfiles">â€”</b></div><div class="stat"><span>Family Requests</span><b id="familyRequests">â€”</b></div></div>
+<div class="panel"><h3>Quick Actions</h3><div class="quick-grid"><button data-page="profiles">Manage Profiles</button>
+<button data-page="homepage">Edit Homepage</button><button data-page="content">Website Content</button><button data-page="reports">Review Reports</button></div></div></section>
+<section id="profiles" class="page"><div class="panel"><div class="panel-head"><h3>Profile Management</h3>
+<input id="profileSearch" class="search" placeholder="Search name, city, surname..."></div>
+<div class="table-wrap"><table><thead><tr><th>Profile</th><th>Gender</th><th>Age</th><th>City</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="profilesBody"></tbody></table></div></div></section>
+<section id="homepage" class="page"><div class="panel"><div class="panel-head"><h3>Homepage Control</h3><span>Saved in Supabase</span></div>
+<form id="homepageForm" class="form-grid"><label>Hero Eyebrow<input id="homeEyebrow"></label><label>Hero Heading<input id="homeHeading"></label>
+<label class="wide">Hero Description<textarea id="homeDescription"></textarea></label><label>Primary Button<input id="homePrimary"></label>
+<label>Secondary Button<input id="homeSecondary"></label><label>Featured Profile ID<input id="featuredProfileId"></label>
+<label>Logo URL<input id="siteLogoUrl"></label><label class="wide">Announcement<textarea id="homeAnnouncement"></textarea></label>
+<div class="wide"><button class="primary">Save Homepage Settings</button><span id="homeMsg" class="message"></span></div></form></div></section>
+<section id="requests" class="page"><div class="panel"><h3>Interests & Family Introduction</h3><div id="requestsBox" class="empty">Connect this to your existing interests/family tables.</div></div></section>
+<section id="payments" class="page"><div class="panel"><h3>Payments</h3><div class="empty">Connect your existing Razorpay/payment table. No table name is assumed.</div></div></section>
+<section id="reports" class="page"><div class="panel"><h3>Reports</h3><div class="empty">Connect your existing reports table. No table name is assumed.</div></div></section>
+<section id="content" class="page"><div class="panel"><h3>Website Content</h3><form id="contentForm" class="form-grid">
+<label>About Title<input id="aboutTitle"></label><label class="wide">About Text<textarea id="aboutText"></textarea></label>
+<label>Contact Email<input id="contactEmail" type="email"></label><label>WhatsApp<input id="contactWhatsapp"></label>
+<label>Privacy Text<textarea id="privacyText"></textarea></label><label>Terms Text<textarea id="termsText"></textarea></label>
+<div class="wide"><button class="primary">Save Website Content</button><span id="contentMsg" class="message"></span></div></form></div></section>
+<section id="settings" class="page"><div class="panel"><h3>Settings</h3>
+<div class="settings-grid"><label><input id="registrationToggle" type="checkbox"> Allow new registrations</label>
+<label><input id="approvalToggle" type="checkbox"> Require profile approval</label><label><input id="maintenanceToggle" type="checkbox"> Maintenance mode</label></div>
+<p class="warning">Use Supabase Auth + Row Level Security. Never place a service-role key in browser code.</p></div></section>
+</main></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="admin.js"></script>
+</body></html>
