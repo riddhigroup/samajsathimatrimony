@@ -1,4 +1,4 @@
-const SUPABASE_URL="YOUR_SUPABASE_URL";const SUPABASE_ANON_KEY="YOUR_SUPABASE_ANON_KEY";
+const SUPABASE_URL="https://drrsborerbgzthxdazqu.supabase.co";const SUPABASE_ANON_KEY="sb_publishable_ACdKChyHYC11rSK9_HZ0Jg_l22KO06k";
 let sb=null;if(window.supabase&&SUPABASE_URL.startsWith("http")&&!SUPABASE_ANON_KEY.startsWith("YOUR_"))sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
 const $=id=>document.getElementById(id);
 const pages=["dashboard","profiles","homepage","requests","payments","reports","content","settings"];
