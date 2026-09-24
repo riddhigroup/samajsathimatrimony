@@ -1,50 +1,191 @@
 <!doctype html>
-<html lang="en"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#7a102b"><title>SamajSaathi Admin Panel</title>
-<link rel="stylesheet" href="admin.css"></head><body>
-<div id="loginView" class="login-wrap"><div class="login-card">
-<div class="brand-mark">â™¡</div><h1>SamajSaathi Admin</h1><p>Secure website management</p>
-<form id="loginForm"><label>Email<input id="adminEmail" type="email" required></label>
-<label>Password<input id="adminPassword" type="password" required></label>
-<button class="primary full">Login to Admin</button><div id="loginMessage" class="message"></div></form>
-</div></div>
-<div id="appView" class="app hidden"><aside class="sidebar">
-<div class="side-brand"><div class="brand-mark small">â™¡</div><div><b>SamajSaathi</b><small>ADMIN</small></div></div>
-<nav>
-<button data-page="dashboard" class="nav-btn active">Dashboard</button><button data-page="profiles" class="nav-btn">Profiles</button>
-<button data-page="homepage" class="nav-btn">Homepage</button><button data-page="requests" class="nav-btn">Interests & Family</button>
-<button data-page="payments" class="nav-btn">Payments</button><button data-page="reports" class="nav-btn">Reports</button>
-<button data-page="content" class="nav-btn">Website Content</button><button data-page="settings" class="nav-btn">Settings</button>
-</nav><button id="logoutBtn" class="logout">Logout</button></aside>
-<main class="main"><header class="top"><div><h2 id="pageTitle">Dashboard</h2><p>SamajSaathi control center</p></div>
-<div class="top-actions"><span id="adminUser"></span><button id="refreshBtn" class="ghost">Refresh</button></div></header>
-<section id="dashboard" class="page active-page"><div class="cards">
-<div class="stat"><span>Total Profiles</span><b id="totalProfiles">â€”</b></div><div class="stat"><span>Active Profiles</span><b id="activeProfiles">â€”</b></div>
-<div class="stat"><span>New Profiles</span><b id="newProfiles">â€”</b></div><div class="stat"><span>Family Requests</span><b id="familyRequests">â€”</b></div></div>
-<div class="panel"><h3>Quick Actions</h3><div class="quick-grid"><button data-page="profiles">Manage Profiles</button>
-<button data-page="homepage">Edit Homepage</button><button data-page="content">Website Content</button><button data-page="reports">Review Reports</button></div></div></section>
-<section id="profiles" class="page"><div class="panel"><div class="panel-head"><h3>Profile Management</h3>
-<input id="profileSearch" class="search" placeholder="Search name, city, surname..."></div>
-<div class="table-wrap"><table><thead><tr><th>Profile</th><th>Gender</th><th>Age</th><th>City</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="profilesBody"></tbody></table></div></div></section>
-<section id="homepage" class="page"><div class="panel"><div class="panel-head"><h3>Homepage Control</h3><span>Saved in Supabase</span></div>
-<form id="homepageForm" class="form-grid"><label>Hero Eyebrow<input id="homeEyebrow"></label><label>Hero Heading<input id="homeHeading"></label>
-<label class="wide">Hero Description<textarea id="homeDescription"></textarea></label><label>Primary Button<input id="homePrimary"></label>
-<label>Secondary Button<input id="homeSecondary"></label><label>Featured Profile ID<input id="featuredProfileId"></label>
-<label>Logo URL<input id="siteLogoUrl"></label><label class="wide">Announcement<textarea id="homeAnnouncement"></textarea></label>
-<div class="wide"><button class="primary">Save Homepage Settings</button><span id="homeMsg" class="message"></span></div></form></div></section>
-<section id="requests" class="page"><div class="panel"><h3>Interests & Family Introduction</h3><div id="requestsBox" class="empty">Connect this to your existing interests/family tables.</div></div></section>
-<section id="payments" class="page"><div class="panel"><h3>Payments</h3><div class="empty">Connect your existing Razorpay/payment table. No table name is assumed.</div></div></section>
-<section id="reports" class="page"><div class="panel"><h3>Reports</h3><div class="empty">Connect your existing reports table. No table name is assumed.</div></div></section>
-<section id="content" class="page"><div class="panel"><h3>Website Content</h3><form id="contentForm" class="form-grid">
-<label>About Title<input id="aboutTitle"></label><label class="wide">About Text<textarea id="aboutText"></textarea></label>
-<label>Contact Email<input id="contactEmail" type="email"></label><label>WhatsApp<input id="contactWhatsapp"></label>
-<label>Privacy Text<textarea id="privacyText"></textarea></label><label>Terms Text<textarea id="termsText"></textarea></label>
-<div class="wide"><button class="primary">Save Website Content</button><span id="contentMsg" class="message"></span></div></form></div></section>
-<section id="settings" class="page"><div class="panel"><h3>Settings</h3>
-<div class="settings-grid"><label><input id="registrationToggle" type="checkbox"> Allow new registrations</label>
-<label><input id="approvalToggle" type="checkbox"> Require profile approval</label><label><input id="maintenanceToggle" type="checkbox"> Maintenance mode</label></div>
-<p class="warning">Use Supabase Auth + Row Level Security. Never place a service-role key in browser code.</p></div></section>
-</main></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="admin.js"></script>
-</body></html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#7a102b">
+<title>SamajSaathi Admin</title>
+<link rel="stylesheet" href="admin.css">
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <div class="brand-mark">SS</div>
+    <div class="brand-kicker">SAMAJSAATHI</div>
+    <h1>Admin Panel</h1>
+    <p>Secure website management</p>
+
+    <form id="loginForm" autocomplete="off">
+      <label>Admin Email
+        <input id="adminEmail" name="samajsaathi_admin_email" type="email" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Enter admin email" required>
+      </label>
+      <label>Password
+        <input id="adminPassword" name="samajsaathi_admin_password" type="password" autocomplete="new-password" placeholder="Enter password" required>
+      </label>
+      <button class="primary full" type="submit">Login to Admin</button>
+      <button id="forgotBtn" class="link-btn" type="button">Forgot password?</button>
+      <div id="loginMessage" class="message"></div>
+    </form>
+  </div>
+</div>
+
+<!-- FORGOT PASSWORD -->
+<div id="forgotView" class="login-wrap hidden">
+  <div class="login-card">
+    <div class="brand-mark">SS</div>
+    <div class="brand-kicker">PASSWORD RECOVERY</div>
+    <h1>Reset Password</h1>
+    <p>Enter your SamajSaathi admin email. We will send a password reset link.</p>
+    <form id="forgotForm" autocomplete="off">
+      <label>Admin Email
+        <input id="resetEmail" name="samajsaathi_reset_email" type="email" autocomplete="off" inputmode="email" placeholder="Enter admin email" required>
+      </label>
+      <button class="primary full" type="submit">Send Reset Link</button>
+      <button id="backLoginBtn" class="link-btn" type="button">Back to Login</button>
+      <div id="forgotMessage" class="message"></div>
+    </form>
+  </div>
+</div>
+
+<!-- NEW PASSWORD / RECOVERY -->
+<div id="recoveryView" class="login-wrap hidden">
+  <div class="login-card">
+    <div class="brand-mark">SS</div>
+    <div class="brand-kicker">SAMAJSAATHI</div>
+    <h1>Create New Password</h1>
+    <p>Choose a new password for your admin account.</p>
+    <form id="recoveryForm" autocomplete="off">
+      <label>New Password
+        <input id="newPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Minimum 8 characters" required>
+      </label>
+      <label>Confirm Password
+        <input id="confirmPassword" type="password" autocomplete="new-password" minlength="8" placeholder="Repeat new password" required>
+      </label>
+      <button class="primary full" type="submit">Update Password</button>
+      <div id="recoveryMessage" class="message"></div>
+    </form>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-mark small">SS</div>
+      <div><b>SamajSaathi</b><small>ADMIN PANEL</small></div>
+    </div>
+    <nav>
+      <button data-page="dashboard" class="nav-btn active">Dashboard</button>
+      <button data-page="profiles" class="nav-btn">Profiles</button>
+      <button data-page="homepage" class="nav-btn">Homepage</button>
+      <button data-page="requests" class="nav-btn">Interests & Family</button>
+      <button data-page="payments" class="nav-btn">Payments</button>
+      <button data-page="reports" class="nav-btn">Reports</button>
+      <button data-page="content" class="nav-btn">Website Content</button>
+      <button data-page="settings" class="nav-btn">Settings & Security</button>
+    </nav>
+    <button id="logoutBtn" class="logout">Logout</button>
+  </aside>
+
+  <main class="main">
+    <header class="top">
+      <div>
+        <h2 id="pageTitle">Dashboard</h2>
+        <p>SamajSaathi control center</p>
+      </div>
+      <div class="top-actions">
+        <span id="adminUser"></span>
+        <button id="refreshBtn" class="ghost">Refresh</button>
+      </div>
+    </header>
+
+    <section id="dashboard" class="page active-page">
+      <div class="welcome panel">
+        <div><span class="eyebrow">WELCOME BACK</span><h3>SamajSaathi Administration</h3><p>Manage members, homepage content and website settings from one place.</p></div>
+        <span class="secure-badge">SECURE</span>
+      </div>
+      <div class="cards">
+        <div class="stat"><span>Total Profiles</span><b id="totalProfiles">â€”</b></div>
+        <div class="stat"><span>Active Profiles</span><b id="activeProfiles">â€”</b></div>
+        <div class="stat"><span>New Profiles Â· 7 days</span><b id="newProfiles">â€”</b></div>
+        <div class="stat"><span>Admin Account</span><b class="small-stat">Protected</b></div>
+      </div>
+      <div class="panel"><h3>Quick Actions</h3><div class="quick-grid">
+        <button data-page="profiles">Manage Profiles</button>
+        <button data-page="homepage">Edit Homepage</button>
+        <button data-page="content">Website Content</button>
+        <button data-page="settings">Password & Security</button>
+      </div></div>
+    </section>
+
+    <section id="profiles" class="page">
+      <div class="panel"><div class="panel-head"><div><h3>Profile Management</h3><p>Activate or deactivate member profiles.</p></div><input id="profileSearch" class="search" placeholder="Search name, city, surname..."></div>
+      <div class="table-wrap"><table><thead><tr><th>Profile</th><th>Gender</th><th>Age</th><th>City</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="profilesBody"></tbody></table></div></div>
+    </section>
+
+    <section id="homepage" class="page">
+      <div class="panel"><div class="panel-head"><div><h3>Homepage Control</h3><p>Edit homepage text without changing code.</p></div></div>
+      <form id="homepageForm" class="form-grid">
+        <label>Hero Eyebrow<input id="homeEyebrow"></label>
+        <label>Hero Heading<input id="homeHeading"></label>
+        <label class="wide">Hero Description<textarea id="homeDescription"></textarea></label>
+        <label>Primary Button<input id="homePrimary"></label>
+        <label>Secondary Button<input id="homeSecondary"></label>
+        <label>Featured Profile ID<input id="featuredProfileId"></label>
+        <label>Logo URL<input id="siteLogoUrl"></label>
+        <label class="wide">Announcement<textarea id="homeAnnouncement"></textarea></label>
+        <div class="wide form-actions"><button class="primary">Save Homepage Settings</button><span id="homeMsg" class="message"></span></div>
+      </form></div>
+    </section>
+
+    <section id="requests" class="page"><div class="panel"><h3>Interests & Family Introduction</h3><div class="empty">This section is ready for the existing interests/family tables. We will connect it after checking the exact table names so nothing in your working app is disturbed.</div></div></section>
+    <section id="payments" class="page"><div class="panel"><h3>Payments</h3><div class="empty">Razorpay/payment records will be connected to the exact existing table after schema verification.</div></div></section>
+    <section id="reports" class="page"><div class="panel"><h3>Reports & Verification</h3><div class="empty">Reports/verification will be connected to the exact existing tables after schema verification.</div></div></section>
+
+    <section id="content" class="page">
+      <div class="panel"><h3>Website Content</h3><p>Edit basic public website content from here.</p>
+      <form id="contentForm" class="form-grid">
+        <label>About Title<input id="aboutTitle"></label>
+        <label class="wide">About Text<textarea id="aboutText"></textarea></label>
+        <label>Contact Email<input id="contactEmail" type="email"></label>
+        <label>WhatsApp<input id="contactWhatsapp"></label>
+        <label>Privacy Text<textarea id="privacyText"></textarea></label>
+        <label>Terms Text<textarea id="termsText"></textarea></label>
+        <div class="wide form-actions"><button class="primary">Save Website Content</button><span id="contentMsg" class="message"></span></div>
+      </form></div>
+    </section>
+
+    <section id="settings" class="page">
+      <div class="panel"><div class="panel-head"><div><h3>Settings & Security</h3><p>Manage your admin account password.</p></div><span class="secure-badge">AUTHENTICATION</span></div>
+        <div class="security-card">
+          <h4>Change Password</h4>
+          <p>Already logged in? Set a new password here.</p>
+          <form id="changePasswordForm" class="form-grid compact">
+            <label>New Password<input id="changePassword" type="password" minlength="8" autocomplete="new-password" required></label>
+            <label>Confirm Password<input id="changePasswordConfirm" type="password" minlength="8" autocomplete="new-password" required></label>
+            <div class="wide form-actions"><button class="primary">Change Password</button><span id="changePasswordMsg" class="message"></span></div>
+          </form>
+        </div>
+        <div class="security-card">
+          <h4>Forgot Password Later?</h4>
+          <p>If you are logged out and cannot remember the password, use the <b>Forgot password?</b> option on the login screen.</p>
+          <button id="securityResetBtn" class="ghost" type="button">Send Password Reset Link</button>
+          <span id="securityResetMsg" class="message"></span>
+        </div>
+        <div class="settings-grid">
+          <label><input id="registrationToggle" type="checkbox"> Allow new registrations</label>
+          <label><input id="approvalToggle" type="checkbox"> Require profile approval</label>
+          <label><input id="maintenanceToggle" type="checkbox"> Maintenance mode</label>
+        </div>
+        <p class="warning">Security: only the Supabase publishable/anon key is used in this browser panel. Never put a service-role/secret key here.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="admin.js"></script>
+</body>
+</html>
